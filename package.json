@@ -1,0 +1,25 @@
+{
+  "name": "reelkit",
+  "version": "0.1.0",
+  "description": "Open-source AI reel maker for Claude Code: one line in, a finished vertical video out.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "doctor": "node scripts/doctor.mjs",
+    "new": "node scripts/new.mjs",
+    "voice": "node scripts/voice.mjs",
+    "check": "node scripts/check.mjs",
+    "render": "node scripts/render.mjs",
+    "preview": "node scripts/preview.mjs"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@fontsource/anton": "^5.0.0",
+    "@fontsource/inter": "^5.0.0",
+    "@fontsource/instrument-serif": "^5.0.0",
+    "@fontsource/jetbrains-mono": "^5.0.0",
+    "ffmpeg-static": "^5.2.0",
+    "ffprobe-static": "^3.1.0",
+    "playwright": "^1.47.0"
+  }
+}
