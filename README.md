@@ -23,7 +23,7 @@ reelkit is a [Claude Code](https://claude.com/claude-code) skill plus a small re
 1. **Install Claude Code** (desktop app or CLI): https://claude.com/claude-code
 2. **Get this folder:**
    ```bash
-   git clone https://github.com/<you>/reelkit.git
+   git clone https://github.com/nathanaelhub/reelkit.git
    cd reelkit
    ```
    (or download the ZIP and unzip it anywhere, e.g. `~/Desktop/reelkit`)
