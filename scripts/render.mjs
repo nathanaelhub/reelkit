@@ -28,7 +28,10 @@ async function renderChunk(k, f0, f1) {
   const seg = path.join(tmp, `seg${k}.mp4`);
   const { page, close, errors } = await openReel(dir, { scale });
   const enc = spawn(ff, ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'mjpeg', '-i', '-',
-    '-c:v', 'libx264', '-preset', draft ? 'ultrafast' : 'veryfast', '-crf', draft ? '28' : '18', '-pix_fmt', 'yuv420p', '-r', String(fps), seg], { stdio: ['pipe', 'inherit', 'inherit'] });
+    // screenshots are full-range JPEG; convert to limited-range bt709 yuv420p, the standard for social video
+    '-vf', 'scale=in_range=pc:out_range=tv:out_color_matrix=bt709,format=yuv420p',
+    '-c:v', 'libx264', '-preset', draft ? 'ultrafast' : 'veryfast', '-crf', draft ? '28' : '18', '-pix_fmt', 'yuv420p',
+    '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', '-color_range', 'tv', '-r', String(fps), seg], { stdio: ['pipe', 'inherit', 'inherit'] });
   const done = new Promise((res, rej) => enc.on('close', c => (c === 0 ? res() : rej(new Error('ffmpeg exited ' + c)))));
   const stage = await page.$('#stage');
   for (let f = f0; f < f1; f++) {

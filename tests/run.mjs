@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { ffmpegPath } from '../scripts/lib.mjs';
+import { ffmpegPath, ffprobePath } from '../scripts/lib.mjs';
 
 const node = (script, args) => {
   const r = spawnSync(process.execPath, [script, ...args], { encoding: 'utf8' });
@@ -19,6 +19,15 @@ const expectRun = (r, { exit, expect = [], forbid = [] }) => {
 };
 
 const cases = [
+  ['render: a 1 s draft is standard yuv420p, limited range, bt709', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'reelkit-test-')), out = path.join(tmp, 'clip.mp4');
+    const r = spawnSync(process.execPath, ['scripts/render.mjs', 'airplane-food', '--draft', '--from', '0', '--to', '1', '--out', out], { encoding: 'utf8' });
+    if (r.status !== 0) return { ok: false, detail: r.stdout + r.stderr };
+    const p = spawnSync(ffprobePath(), ['-v', 'error', '-select_streams', 'v', '-show_entries', 'stream=pix_fmt,color_range,color_space', '-of', 'csv=p=0', out], { encoding: 'utf8' }).stdout.trim().replace(/,+$/, '');
+    fs.rmSync(tmp, { recursive: true, force: true });
+    return { ok: p === 'yuv420p,tv,bt709', detail: `ffprobe: ${p} (wanted yuv420p,tv,bt709)` };
+  }],
+
   ['example reel passes the self-check', () => expectRun(node('scripts/check.mjs', ['airplane-food']), { exit: 0 })],
 
   ['design rules: each banned pattern fails for its own reason, controls pass', () => expectRun(node('scripts/check.mjs', [path.resolve('tests/fixtures/rules')]), {
