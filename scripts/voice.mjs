@@ -126,6 +126,28 @@ function speechBounds(wav, dur) {
   return [s0, Math.max(s0 + 0.2, s1)];
 }
 
+// ---------- pronunciation: say a word one way, caption it another ----------
+// script.json "pronounce": { "Saba": "Sayba", "sabanrealty.com": "Saban Realty dot com" }
+const PRON = Object.fromEntries(Object.entries(script.pronounce || {}).map(([k, v]) => [k.toLowerCase(), v]));
+function toSpoken(text) {
+  const groups = [], out = [];
+  for (const tok of text.split(/\s+/).filter(Boolean)) {
+    const m = tok.match(/^([^\p{L}\p{N}]*)(.*?)([,.!?;:"')\]]*)$/u);
+    const rep = PRON[m[2].toLowerCase()];
+    const words = rep ? rep.split(/\s+/).filter(Boolean) : [m[2]];
+    words[0] = m[1] + words[0]; words[words.length - 1] += m[3];
+    out.push(...words); groups.push({ display: tok, n: words.length });
+  }
+  return { spoken: out.join(' '), groups };
+}
+// Spoken words back to written words: each written word spans its replacement's first to last word.
+function toWritten(words, groups) {
+  const total = groups.reduce((a, g) => a + g.n, 0);
+  if (words.length !== total) { console.warn(`  ⚠ ${words.length} spoken words for ${total} expected; captions keep the spoken spelling`); return words; }
+  let i = 0;
+  return groups.map(g => { const first = words[i], last = words[i + g.n - 1]; i += g.n; return { w: g.display, start: first.start, end: last.end }; });
+}
+
 // ---------- main ----------
 const scenes = script.scenes || [];
 if (!scenes.length) die('script.json has no scenes');
@@ -136,15 +158,16 @@ console.log(`\n▸ voicing ${scenes.length} scenes with ${provider}${provider ==
 const clips = [];
 for (const s of scenes) {
   const text = s.say.trim();
-  const h = crypto.createHash('sha1').update(JSON.stringify([provider, vcfg[provider] || {}, vcfg.speed ?? 1, text])).digest('hex').slice(0, 12);
+  const { spoken, groups } = toSpoken(text);
+  const h = crypto.createHash('sha1').update(JSON.stringify([provider, vcfg[provider] || {}, vcfg.speed ?? 1, spoken, text])).digest('hex').slice(0, 12);
   const wav = path.join(cacheDir, `${s.id}-${h}.wav`), meta = wav.replace(/\.wav$/, '.json');
   let words;
   if (fs.existsSync(wav) && fs.existsSync(meta)) { words = readJSON(meta).words; process.stdout.write(`  · ${s.id} (cached)\n`); }
   else {
     process.stdout.write(`  · ${s.id} …`);
-    const r = await PROVIDERS[provider](text, wav);
+    const r = await PROVIDERS[provider](spoken, wav);
     const d = mediaDuration(wav);
-    words = r.words || estimateWords(text, ...speechBounds(wav, d));
+    words = toWritten(r.words || estimateWords(spoken, ...speechBounds(wav, d)), groups);
     writeJSON(meta, { text, words });
     process.stdout.write(` ${d.toFixed(2)}s\n`);
   }

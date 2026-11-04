@@ -19,6 +19,19 @@ const expectRun = (r, { exit, expect = [], forbid = [] }) => {
 };
 
 const cases = [
+  ['pronounce: the voice gets the replacement, captions keep the written words', () => {
+    const fx = path.resolve('tests/fixtures/pronounce');
+    fs.rmSync(path.join(fx, '.voice-cache'), { recursive: true, force: true });
+    const r = node('scripts/voice.mjs', [fx, '--provider', 'none']);
+    if (r.status !== 0) return { ok: false, detail: r.out };
+    const sc = JSON.parse(fs.readFileSync(path.join(fx, 'timeline.json'), 'utf8')).scenes[0];
+    const got = sc.words.map(w => w.w).join(' '), want = 'Welcome to Saba. Visit sabanrealty.com.';
+    const ordered = sc.words.every((w, i) => w.end > w.start && (i === 0 || w.start >= sc.words[i - 1].end - 1e-6));
+    // 9 spoken words take longer than the 5 written ones would: the last word must end late in the clip
+    const lastEnd = sc.words[sc.words.length - 1].end;
+    return { ok: got === want && ordered && lastEnd > 2.5, detail: `words "${got}" (want "${want}"), ordered ${ordered}, last word ends ${lastEnd}s` };
+  }],
+
   ['clips: every rendered frame shows its exact source frame', () => {
     const fx = path.resolve('tests/fixtures/clip'), vid = path.join(fx, 'assets', 'ramp.webm');
     fs.mkdirSync(path.dirname(vid), { recursive: true });

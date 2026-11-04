@@ -1,0 +1,3 @@
+{ "title": "Pronunciation fixture", "voice": { "provider": "none" }, "captions": true,
+  "pronounce": { "Saba": "Say ba", "sabanrealty.com": "Saban Realty dot com" },
+  "scenes": [ { "id": "one", "say": "Welcome to Saba. Visit sabanrealty.com." } ] }
