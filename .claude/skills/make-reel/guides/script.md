@@ -44,6 +44,8 @@ A reel script is spoken language for a thumb that wants to keep scrolling. It is
 }
 ```
 
+Names the voice gets wrong: add `"pronounce": { "Saba": "Sayba", "sabanrealty.com": "Saban Realty dot com" }` to script.json. The voice says the replacement; captions and `@word` targets keep the written word (use the written word in `@saba`). Check a doubtful name by listening, or by running speech-to-text on the clip.
+
 Per-scene options: `pause` (silence after the line, default 0.2s, 0.8s on the last scene), `min` (minimum scene length, for a visual that needs time to land).
 
 ## Facts

@@ -6,3 +6,5 @@ reels/*/.voice-cache/
 taste/*
 !taste/README.md
 tests/fixtures/clip/assets/
+tests/fixtures/pronounce/timeline.json
+tests/fixtures/pronounce/.voice-cache/
