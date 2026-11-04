@@ -58,6 +58,19 @@ Then give notes like you would to a human editor: *"the hook is weak"*, *"scene 
 
 Your video lands in `out/<name>.mp4`.
 
+## Give it taste
+
+Reels look generic without a reference. Give reelkit 3 to 5 videos whose look you like:
+
+> make a taste called my-brand from these: https://… https://… ~/Downloads/ad.mp4
+
+`npm run ref` downloads them (yt-dlp), measures how often they cut, how much moves, how loud they are and their colours, and makes contact sheets. Claude writes notes on captions, type, colour and motion into `taste/my-brand/taste.md`. Reels with `"taste": "my-brand"` are planned from those notes, and `npm run check` compares each reel's pacing and frames with the references before rendering. Reference videos stay local (gitignored). See [taste/README.md](taste/README.md).
+
+## Design rules, enforced
+
+- All motion runs on closed-form spring physics (`spring`, `spring-snappy`, `spring-bouncy`, or `spring:k,c,m`).
+- `npm run check` fails on CSS transitions or animations and on all-caps centred text over a colour gradient: the two most generic looks in AI video.
+
 ## How it works
 
 ```
@@ -83,7 +96,8 @@ reel.html (scenes + data-anim) ────┤
 npm run doctor [-- --fix]          # check / install everything
 npm run new -- my-reel "Title"     # scaffold reels/my-reel/
 npm run voice -- my-reel           # voiceover + timeline.json
-npm run check -- my-reel           # lint + motion check + contact sheets in out/
+npm run ref -- my-brand <links>    # add reference videos to a taste, measure them
+npm run check -- my-reel           # lint + design rules + motion + taste check, contact sheets in out/
 npm run preview -- my-reel         # watch in your browser with audio (space, ←/→)
 npm run render -- my-reel          # out/my-reel.mp4   (--draft for fast half-res, --from/--to for a section)
 ```

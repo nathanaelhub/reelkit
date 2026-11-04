@@ -11,7 +11,8 @@
     "check": "node scripts/check.mjs",
     "render": "node scripts/render.mjs",
     "preview": "node scripts/preview.mjs",
-    "test": "node tests/run.mjs"
+    "test": "node tests/run.mjs",
+    "ref": "node scripts/ref.mjs"
   },
   "engines": {
     "node": ">=18"
