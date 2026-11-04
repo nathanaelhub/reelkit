@@ -36,7 +36,7 @@ async function renderChunk(k, f0, f1) {
   const stage = await page.$('#stage');
   for (let f = f0; f < f1; f++) {
     const t = from + f / fps;
-    await page.evaluate(t => window.__reel.seek(t), t);
+    await page.evaluate(async t => { window.__reel.seek(t); await window.__reel.settle(); }, t);
     const buf = await stage.screenshot({ type: 'jpeg', quality: draft ? 80 : 94 });
     if (!enc.stdin.write(buf)) await new Promise(r => enc.stdin.once('drain', r));
     progress[k] = f - f0 + 1;

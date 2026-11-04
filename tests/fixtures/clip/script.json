@@ -1,0 +1,2 @@
+{ "title": "Video clip sync fixture", "theme": "paper", "fps": 30, "voice": { "provider": "none" }, "captions": false,
+  "scenes": [ { "id": "clip", "say": "one", "min": 2, "pause": 0 } ] }

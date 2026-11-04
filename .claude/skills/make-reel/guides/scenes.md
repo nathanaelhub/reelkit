@@ -107,6 +107,21 @@ Reel.every(({ T }) => { /* runs on every frame, T = reel time */ });
 
 `<canvas data-fit>` is sized to its CSS box; draw into it from a hook. No `Math.random()` without a seed (use `Reel.noise(x)`), no `Date.now()`, no `setTimeout`.
 
+## Video clips
+
+Real footage plays inside a scene, frame-accurate in renders:
+
+```html
+<video class="abs" data-clip src="assets/cliffs.mp4" data-from="3.2" data-at="@island" data-rate="1"
+       style="left:0;top:560px;width:1080px;height:608px;object-fit:cover;border-radius:24px"></video>
+```
+
+- At scene time `t` it shows source time `from + (t - at) * rate`; before `at` it holds the first frame. `data-rate="0.5"` is slow motion.
+- Clips are muted; the reel's audio is the voice and music.
+- Trim long sources first: `npm run clip -- <reel> <file> <from> <to> [name]` writes a seek-friendly `assets/<name>.mp4` (no audio, 30 fps, keyframe every 10 frames). For online videos you own, download with yt-dlp first.
+- Keep footage near its native size: a 1920×1080 source looks sharp as a full-width band (1080×608) or a 608×1080 portrait crop; filling the whole 1080×1920 frame upscales it 1.8×.
+- Clips can take `data-anim` like any element (wipe, iris, rise) for their entrance.
+
 ## Images
 
 Put files in `reels/<slug>/assets/` and reference `assets/name.png`. Transparent PNGs/SVGs look best as cut-outs with `filter: drop-shadow(...)`. A host character (`assets/host.png`) placed in the global layer with `data-loop="talk"` gives the "creator explaining" look.

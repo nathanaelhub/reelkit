@@ -5,3 +5,4 @@ out/
 reels/*/.voice-cache/
 taste/*
 !taste/README.md
+tests/fixtures/clip/assets/

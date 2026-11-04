@@ -33,7 +33,7 @@ const motion = [];
 for (const sc of sceneList) {
   const dur = sc.end - sc.start; const step = 0.25; let lastHash = null, frozenSince = sc.start, longest = 0, longestAt = 0;
   for (let t = sc.start + 0.05; t < sc.end - 0.02; t += step) {
-    await page.evaluate(t => window.__reel.seek(t), t);
+    await page.evaluate(async t => { window.__reel.seek(t); await window.__reel.settle(); }, t);
     const buf = await stage.screenshot({ type: 'jpeg', quality: 40, scale: 'css' });
     const h = crypto.createHash('md5').update(buf).digest('hex');
     if (h !== lastHash) { frozenSince = t; lastHash = h; }
@@ -66,7 +66,7 @@ for (const sc of sceneList) {
   const dur = sc.end - sc.start;
   for (let i = 0; i < per; i++) {
     const t = sc.start + Math.min(dur - 0.05, (dur * (i + 0.6)) / per);
-    await page.evaluate(t => window.__reel.seek(t), t);
+    await page.evaluate(async t => { window.__reel.seek(t); await window.__reel.settle(); }, t);
     const b = await stage.screenshot({ type: 'jpeg', quality: 70 });
     shots.push({ scene: sc.id, t, src: 'data:image/jpeg;base64,' + b.toString('base64') });
   }
