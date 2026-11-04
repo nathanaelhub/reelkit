@@ -26,6 +26,8 @@ A reel script is spoken language for a thumb that wants to keep scrolling. It is
 {
   "title": "Why airplane food tastes so bland",
   "theme": "paper",                // paper | ink | pop | cork
+  "format": "9:16",                // 9:16 (1080x1920, default) | 16:9 (1920x1080) | 1:1 (1080x1080)
+  "loudness": -14,                 // final mix target in LUFS (render normalises the finished file)
   "fps": 30,
   "voice": {
     "provider": "auto",            // auto | elevenlabs | openai | say | piper | none
@@ -44,7 +46,7 @@ A reel script is spoken language for a thumb that wants to keep scrolling. It is
 }
 ```
 
-Names the voice gets wrong: add `"pronounce": { "Saba": "Sayba", "sabanrealty.com": "Saban Realty dot com" }` to script.json. The voice says the replacement; captions and `@word` targets keep the written word (use the written word in `@saba`). Check a doubtful name by listening, or by running speech-to-text on the clip.
+Names the voice gets wrong: add `"pronounce": { "Saba": "Sayba", "sabanrealty.com": "Saban Realty dot com" }` to script.json. When a respelling isn't reliable, give a phoneme: `"Saba": { "cmu": "S EY1 B AH0" }` (or `"ipa"`). Phonemes need an ElevenLabs English model: set `voice.elevenlabs.model` to `eleven_turbo_v2` or `eleven_flash_v2`; other providers say the written word. The voice says the replacement; captions and `@word` targets keep the written word (use the written word in `@saba`). Check a doubtful name by listening, or by running speech-to-text on the clip.
 
 Per-scene options: `pause` (silence after the line, default 0.2s, 0.8s on the last scene), `min` (minimum scene length, for a visual that needs time to land).
 

@@ -119,7 +119,8 @@ export async function openReel(dir, { scale = 1 } = {}) {
   let browser;
   try { browser = await chromium.launch(); }
   catch (e) { server.srv.close(); die(`Chromium is not installed for Playwright. Run: npx playwright install chromium\n${e.message.split('\n')[0]}`); }
-  const page = await browser.newPage({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: scale });
+  const { width = 1080, height = 1920 } = readJSON(path.join(dir, 'timeline.json'));
+  const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: scale });
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });

@@ -1,0 +1,4 @@
+{ "title": "Wide fixture", "format": "16:9", "theme": "paper", "voice": { "provider": "none" }, "captions": true,
+  "music": "music.wav", "musicVolume": 1, "loudness": -14,
+  "pronounce": { "Saba": { "cmu": "S EY1 B AH0" } },
+  "scenes": [ { "id": "one", "say": "Welcome to Saba today.", "min": 4.5, "pause": 0 } ] }

@@ -8,3 +8,6 @@ taste/*
 tests/fixtures/clip/assets/
 tests/fixtures/pronounce/timeline.json
 tests/fixtures/pronounce/.voice-cache/
+tests/fixtures/wide/timeline.json
+tests/fixtures/wide/.voice-cache/
+tests/fixtures/wide/music.wav

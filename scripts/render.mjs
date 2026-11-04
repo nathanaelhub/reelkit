@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { parseArgs, reelDir, openReel, ffmpegPath, OUT, ROOT, readJSON, run, die } from './lib.mjs';
 
 const args = parseArgs();
@@ -57,7 +57,8 @@ const timer = setInterval(() => {
   else if (pct >= (timer.lastPct ?? -10) + 10) { timer.lastPct = pct - (pct % 10); console.log(`  ${pct}% (${n}/${total} frames, ${el.toFixed(0)}s)`); }
 }, 500);
 
-console.log(`\n▸ ${name}: ${(to - from).toFixed(2)}s @ ${fps}fps, ${draft ? '540x960 draft' : '1080x1920'}, ${workers} worker${workers > 1 ? 's' : ''}`);
+const W = tl.width || 1080, H = tl.height || 1920;
+console.log(`\n▸ ${name}: ${(to - from).toFixed(2)}s @ ${fps}fps, ${draft ? `${W / 2}x${H / 2} draft` : `${W}x${H}`}, ${workers} worker${workers > 1 ? 's' : ''}`);
 const per = Math.ceil(total / workers);
 let segs;
 try {
@@ -90,5 +91,19 @@ a.push(...maps, '-c:v', 'copy');
 if (ai || filter) a.push('-c:a', 'aac', '-b:a', '192k');
 a.push('-t', String(to - from), '-movflags', '+faststart', outFile);
 run(ff, a);
+
+// Final loudness pass (two-pass loudnorm): the voice is normalised alone, so music, pauses and the end
+// card pull the mix away from the target. Skipped for clips under 3 s, where the measurement is unreliable.
+const target = tl.loudness ?? -14;
+if ((ai || filter) && to - from >= 3) {
+  const meas = spawnSync(ff, ['-hide_banner', '-nostats', '-i', outFile, '-vn', '-af', `loudnorm=I=${target}:TP=-1.5:LRA=11:print_format=json`, '-f', 'null', '-'], { encoding: 'utf8' }).stderr;
+  const j = JSON.parse(meas.slice(meas.lastIndexOf('{'), meas.lastIndexOf('}') + 1));
+  const norm = path.join(tmp, 'norm.mp4');
+  run(ff, ['-y', '-loglevel', 'error', '-i', outFile, '-c:v', 'copy', '-af',
+    `loudnorm=I=${target}:TP=-1.5:LRA=11:measured_I=${j.input_i}:measured_TP=${j.input_tp}:measured_LRA=${j.input_lra}:measured_thresh=${j.input_thresh}:offset=${j.target_offset}:linear=true,aresample=48000`,
+    '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', norm]);
+  fs.copyFileSync(norm, outFile);
+  console.log(`  loudness ${(+j.input_i).toFixed(1)} → ${target} LUFS`);
+}
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log(`✓ ${path.relative(process.cwd(), outFile) || outFile}`);

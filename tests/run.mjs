@@ -19,6 +19,31 @@ const expectRun = (r, { exit, expect = [], forbid = [] }) => {
 };
 
 const cases = [
+  ['16:9: voices at 1920x1080, keeps phoneme words written, passes the check, renders wide at the target loudness', () => {
+    const fx = path.resolve('tests/fixtures/wide'), problems = [];
+    // a quiet tone as music, so the final loudness pass has real work to do (about -30 LUFS in, -14 out)
+    spawnSync(ffmpegPath(), ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'sine=f=330:d=6,volume=-28dB', '-ac', '2', path.join(fx, 'music.wav')]);
+    fs.rmSync(path.join(fx, '.voice-cache'), { recursive: true, force: true });
+    const v = node('scripts/voice.mjs', [fx]);
+    if (v.status !== 0) return { ok: false, detail: v.out };
+    const tl = JSON.parse(fs.readFileSync(path.join(fx, 'timeline.json'), 'utf8'));
+    if (tl.width !== 1920 || tl.height !== 1080) problems.push(`timeline ${tl.width}x${tl.height}`);
+    const words = tl.scenes[0].words.map(w => w.w).join(' ');
+    if (words !== 'Welcome to Saba today.') problems.push(`words "${words}"`);
+    const c = node('scripts/check.mjs', [fx]);
+    if (c.status !== 0) problems.push('check failed:\n' + c.out);
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'reelkit-test-')), out = path.join(tmp, 'w.mp4');
+    const r = spawnSync(process.execPath, ['scripts/render.mjs', fx, '--draft', '--out', out], { encoding: 'utf8' });
+    if (r.status !== 0) return { ok: false, detail: problems.join('\n') + r.stdout + r.stderr };
+    const size = spawnSync(ffprobePath(), ['-v', 'error', '-select_streams', 'v', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', out], { encoding: 'utf8' }).stdout.trim().replace(/,+$/, '');
+    if (size !== '960,540') problems.push(`draft size ${size}, wanted 960,540`);
+    const e = spawnSync(ffmpegPath(), ['-hide_banner', '-nostats', '-i', out, '-af', 'ebur128', '-f', 'null', '-'], { encoding: 'utf8' }).stderr;
+    const lufs = +(e.slice(e.lastIndexOf('Summary:')).match(/I:\s+(-?[\d.]+) LUFS/) || [])[1];
+    if (!(Math.abs(lufs + 14) <= 1)) problems.push(`loudness ${lufs} LUFS, wanted -14 ±1`);
+    fs.rmSync(tmp, { recursive: true, force: true });
+    return { ok: !problems.length, detail: problems.join('\n  ') };
+  }],
+
   ['pronounce: the voice gets the replacement, captions keep the written words', () => {
     const fx = path.resolve('tests/fixtures/pronounce');
     fs.rmSync(path.join(fx, '.voice-cache'), { recursive: true, force: true });
