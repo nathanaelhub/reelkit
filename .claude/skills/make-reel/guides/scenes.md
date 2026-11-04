@@ -19,15 +19,17 @@
 
 ## Entrances: `data-anim`
 
+Every entrance that moves runs on a spring by default (see Motion below).
+
 | value | what it does | default ease |
 |---|---|---|
-| `fade` `rise` `drop` `slide-left` `slide-right` | fade in, optionally moving up/down/sideways | out |
-| `fly-left` `fly-right` `fly-up` | travel in from off-screen, no fade | out |
-| `pop` | scale from 0 with overshoot | back |
-| `zoom` | shrink in from 1.8× | out |
-| `stamp` | slam down from 2.6× (pair with `.stamp`) | snap |
-| `spin` `flip` `blur` | rotate in / flip vertically / unblur | |
-| `wipe` `wipe-up` `wipe-down` `iris` | reveal with a clip mask | out |
+| `fade` `rise` `drop` `slide-left` `slide-right` | fade in, optionally moving up/down/sideways | spring-snappy (fade: spring) |
+| `fly-left` `fly-right` `fly-up` | travel in from off-screen, no fade | spring-snappy |
+| `pop` | scale from 0 with overshoot | spring-bouncy |
+| `zoom` | shrink in from 1.8× | spring |
+| `stamp` | slam down from 2.6× (pair with `.stamp`) | spring-snappy |
+| `spin` `flip` `blur` | rotate in / flip vertically / unblur | spring-bouncy (blur: spring) |
+| `wipe` `wipe-up` `wipe-down` `iris` | reveal with a clip mask | spring |
 | `type` | typewriter: reveals the element's text (keeps inner markup) | linear |
 | `count` | counts a number: `data-from="0" data-to="30" data-prefix="−" data-suffix="%" data-decimals="0"` | out |
 | `draw` | draws SVG strokes inside the element (paths, lines, circles) | inOut |
@@ -44,9 +46,27 @@
 | `data-at="@the#2"` | second occurrence of "the" in the scene |
 | `data-at="end-0.5"` / `"60%"` | relative to the scene's end / length |
 | `data-dur="0.6"` | animation length (defaults ~0.5s; `type` scales with text length) |
-| `data-ease="out|in|inOut|back|elastic|snap|linear"` | easing |
+| `data-ease="spring|spring-snappy|spring-bouncy|spring:k,c,m"` | motion feel (see Motion). `type`, `count`, `draw`, `mark` and `fade` may also use `linear|out|in|inOut` |
 
 Word matching ignores case and punctuation ("bland?" matches `@bland`). An unknown word is reported by `npm run check` with the list of words actually spoken.
+
+## Motion: springs only
+
+All motion uses closed-form spring physics, and `npm run check` enforces it:
+
+| ease | feel |
+|---|---|
+| `spring` | critically damped: arrives fast, no overshoot. Fades, zooms, wipes, scene transitions |
+| `spring-snappy` | ~7% overshoot, settles quickly. Rises, slides, fly-ins, stamps |
+| `spring-bouncy` | ~25% overshoot, visible bounce. Pops, spins, playful hits |
+| `spring:k,c,m` | your own stiffness, damping, mass (e.g. `spring:300,15,1`) |
+
+`data-dur` is how long the spring takes to settle (within 0.1%), so a longer duration is a slower spring with the same feel. Exits (`data-out`) default to `spring`; `data-out-ease` must also be a spring.
+
+The check fails on:
+- a non-spring `data-ease` on a moving entrance (`rise`, `pop`, `fly-*` …)
+- any CSS `transition`, CSS `animation` or `@keyframes` in your styles or inline styles (they look generic and don't render frame by frame)
+- all-caps centred text on a strong colour gradient (the generic AI-video look). Solid colours, textures like `bg-grid`/`bg-dots`, and the subtle `bg-paper` vignette are fine.
 
 ## Exits, loops, stagger
 
@@ -77,11 +97,13 @@ When data attributes aren't enough (charts, canvas, physics, anything computed),
 ```js
 Reel.on('numbers', ({ $, t, dur, p, word, prog, lerp, ease, speaking }) => {
   // t = seconds into scene, p = t/dur, word('drop') = when "drop" starts (scene seconds)
-  const k = prog(word('drop'), 1.4, 'out');            // 0→1 over 1.4s starting at "drop"
+  const k = prog(word('drop'), 1.4);                   // 0→1 spring over 1.4s starting at "drop" (default 'spring')
   $('#salt').style.width = lerp(100, 70, k) + '%';
 });
 Reel.every(({ T }) => { /* runs on every frame, T = reel time */ });
 ```
+
+`spring(t, stiffness, damping, mass)` is in the hook context (and `Reel.spring`) for anything computed: it returns the spring's position at `t` seconds. Use it, or `prog(…, 'spring-snappy')`, for every moving value.
 
 `<canvas data-fit>` is sized to its CSS box; draw into it from a hook. No `Math.random()` without a seed (use `Reel.noise(x)`), no `Date.now()`, no `setTimeout`.
 

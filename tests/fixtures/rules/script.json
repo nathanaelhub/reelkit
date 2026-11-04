@@ -1,0 +1,11 @@
+{
+  "title": "Design rule fixture (should fail the check)",
+  "theme": "paper",
+  "fps": 30,
+  "voice": { "provider": "none" },
+  "captions": false,
+  "scenes": [
+    { "id": "slop", "say": "This changes everything forever." },
+    { "id": "control", "say": "Follow for more today." }
+  ]
+}

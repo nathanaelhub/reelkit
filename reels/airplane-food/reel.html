@@ -34,7 +34,7 @@
       <span style="display:inline-block" data-anim="rise" data-at="0">Why does <em>airplane</em> food</span><br>
       <span style="display:inline-block" data-anim="rise" data-at="@taste">taste so <em>bland?</em></span>
     </h1>
-    <div class="abs tray" data-anim="drop" data-at="0.15" data-dur="0.6" data-ease="back" data-loop="float" data-amp="0.6">
+    <div class="abs tray" data-anim="drop" data-at="0.15" data-dur="0.6" data-ease="spring-bouncy" data-loop="float" data-amp="0.6">
       <div>🍗</div><div>🥗</div><div>🍞</div>
     </div>
     <div class="abs" style="left:250px;top:700px;transform:rotate(-9deg)">
@@ -157,13 +157,13 @@
 <script>
   // Custom per-frame logic: bars that shrink in sync with the voice.
   Reel.on('dry', ({ $, prog, word, lerp }) => {
-    $('#humid').style.width = lerp(60, 15, prog(word('drier'), 1.6, 'out')) + '%';
+    $('#humid').style.width = lerp(60, 15, prog(word('drier'), 1.6, 'spring')) + '%';
   });
   Reel.on('numbers', ({ $, prog, word, lerp }) => {
-    const k = prog(word('drop'), 1.4, 'out');
+    const k = prog(word('drop'), 1.4, 'spring');
     const v = Math.round(lerp(100, 70, k));
     $('#salt').style.width = v + '%'; $('#saltv').textContent = v;
-    const k2 = prog(word('drop') + 0.2, 1.4, 'out');
+    const k2 = prog(word('drop') + 0.2, 1.4, 'spring');
     const v2 = Math.round(lerp(100, 75, k2));
     $('#sweet').style.width = v2 + '%'; $('#sweetv').textContent = v2;
   });

@@ -31,6 +31,46 @@
     elastic: t => (t === 0 ? 0 : t === 1 ? 1 : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * (2 * Math.PI / 3)) + 1),
     snap: t => 1 - Math.pow(1 - t, 5),
   };
+
+  // ---------- spring physics (closed form, so every frame is exact) ----------
+  // Position of a mass on a spring released from 0 toward 1 with no initial velocity,
+  // at time t seconds. stiffness k, damping c, mass m. Overshoots when underdamped.
+  function spring(t, k = 170, c = 26, m = 1) {
+    if (t <= 0) return 0;
+    const w0 = Math.sqrt(k / m), z = c / (2 * Math.sqrt(k * m));
+    if (z < 1) {
+      const wd = w0 * Math.sqrt(1 - z * z);
+      return 1 - Math.exp(-z * w0 * t) * (Math.cos(wd * t) + (z * w0 / wd) * Math.sin(wd * t));
+    }
+    if (z === 1) return 1 - Math.exp(-w0 * t) * (1 + w0 * t);
+    const s = Math.sqrt(z * z - 1), r1 = -w0 * (z - s), r2 = -w0 * (z + s);
+    return 1 + (r2 * Math.exp(r1 * t) - r1 * Math.exp(r2 * t)) / (r1 - r2);
+  }
+  // Time after which the spring stays within 0.1% of its target. Scanned once per
+  // parameter set (deterministic), so an ease can map p in [0,1] onto the whole motion.
+  const settleCache = {};
+  function settleTime(k, c, m) {
+    const key = k + ',' + c + ',' + m;
+    if (settleCache[key]) return settleCache[key];
+    let last = 0;
+    for (let t = 0; t <= 20; t += 1 / 480) if (Math.abs(1 - spring(t, k, c, m)) > 0.001) last = t;
+    return (settleCache[key] = Math.max(1 / 480, last));
+  }
+  const springEase = (k, c, m = 1) => { const T = settleTime(k, c, m); return p => (p >= 1 ? 1 : spring(p * T, k, c, m)); };
+  const SPRINGS = {
+    spring: [170, 26, 1],         // critically damped: arrives fast, no overshoot
+    'spring-snappy': [380, 25, 1], // small overshoot (~7%), settles quickly
+    'spring-bouncy': [200, 12, 1], // visible bounce (~25% overshoot)
+  };
+  for (const [name, [k, c, m]] of Object.entries(SPRINGS)) EASE[name] = springEase(k, c, m);
+  const isSpring = name => !!name && (name in SPRINGS || /^spring:/.test(name));
+  // "spring:k,c[,m]" builds a custom spring; anything else looks up EASE.
+  function getEase(name) {
+    if (!name) return null;
+    const m = String(name).match(/^spring:\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?$/);
+    if (m) return springEase(+m[1], +m[2], m[3] ? +m[3] : 1);
+    return EASE[name] || null;
+  }
   // deterministic noise for wiggle/shake
   const hash = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
   const noise = t => { const i = Math.floor(t), f = t - i, u = f * f * (3 - 2 * f); return lerp(hash(i), hash(i + 1), u) * 2 - 1; };
@@ -58,7 +98,14 @@
     // these drive content instead of transform; handled specially below
     type: p => ({}), count: p => ({}), draw: p => ({}), mark: p => ({}), none: p => ({}),
   };
-  const DEFAULT_EASE = { pop: 'back', spin: 'back', stamp: 'snap', flip: 'back', zoom: 'out', type: 'linear', count: 'out', draw: 'inOut', mark: 'inOut' };
+  // Everything that moves runs on a spring. Content kinds keep plain curves: a counter must
+  // never overshoot its number, and typing/drawing read best at a steady rate.
+  const DEFAULT_EASE = { pop: 'spring-bouncy', spin: 'spring-bouncy', flip: 'spring-bouncy', stamp: 'spring-snappy', zoom: 'spring',
+    rise: 'spring-snappy', drop: 'spring-snappy', 'slide-left': 'spring-snappy', 'slide-right': 'spring-snappy',
+    'fly-left': 'spring-snappy', 'fly-right': 'spring-snappy', 'fly-up': 'spring-snappy',
+    fade: 'spring', blur: 'spring', wipe: 'spring', 'wipe-up': 'spring', 'wipe-down': 'spring', iris: 'spring',
+    type: 'linear', count: 'out', draw: 'inOut', mark: 'inOut' };
+  const CONTENT_KINDS = new Set(['type', 'count', 'draw', 'mark', 'none', 'fade']); // may use any ease
   const DEFAULT_DUR = { pop: 0.45, stamp: 0.3, type: null, count: 1.2, draw: 0.9, mark: 0.5, wipe: 0.5, 'fly-left': 0.55, 'fly-right': 0.55, 'fly-up': 0.6 };
 
   // ---------- loop presets: lt = seconds since entrance finished ----------
@@ -129,11 +176,16 @@
     const a = {
       el, kind: PRESETS[kind] ? kind : 'fade',
       at: resolveTime(el.dataset.at, sc, el) + (el.__staggerOffset || 0),
-      ease: EASE[el.dataset.ease] || EASE[DEFAULT_EASE[kind] || 'out'],
+      ease: getEase(el.dataset.ease) || EASE[DEFAULT_EASE[kind] || 'spring'],
       out: el.dataset.out || null,
       loop: el.dataset.loop || null,
       amp: el.dataset.amp != null ? parseFloat(el.dataset.amp) : 1,
     };
+    if (el.dataset.ease && !getEase(el.dataset.ease)) R.issues.push({ level: 'error', scene: sc.id, el: describe(el), msg: `unknown data-ease "${el.dataset.ease}". Use spring, spring-snappy, spring-bouncy or spring:k,c,m` });
+    else if (el.dataset.ease && !CONTENT_KINDS.has(kind) && !isSpring(el.dataset.ease))
+      R.issues.push({ level: 'error', scene: sc.id, el: describe(el), msg: `data-ease="${el.dataset.ease}" on a moving "${kind}" entrance. Motion must use a spring: spring, spring-snappy, spring-bouncy or spring:k,c,m` });
+    if (el.dataset.outEase && !isSpring(el.dataset.outEase))
+      R.issues.push({ level: 'error', scene: sc.id, el: describe(el), msg: `data-out-ease="${el.dataset.outEase}": exits must use a spring too` });
     if (el.dataset.loop && !(el.dataset.loop in LOOPS)) R.issues.push({ level: 'error', scene: sc.id, el: describe(el), msg: `unknown data-loop "${el.dataset.loop}". Use one of: ${Object.keys(LOOPS).join(', ')}` });
     if (a.kind === 'type') {
       a.nodes = prepareTextNodes(el);
@@ -151,7 +203,7 @@
     if (a.out) {
       a.outAt = resolveTime(el.dataset.outAt || 'end-0.35', sc, el);
       a.outDur = el.dataset.outDur ? parseFloat(el.dataset.outDur) : 0.3;
-      a.outEase = EASE.in;
+      a.outEase = getEase(el.dataset.outEase) || EASE.spring;
     }
     return a;
   }
@@ -298,7 +350,7 @@
   }
 
   function sceneTransition(sc, t) {
-    const el = sc.el; const lt = t - sc.start; const p = clamp(lt / sc.tdur); const e = EASE.out(p);
+    const el = sc.el; const lt = t - sc.start; const p = clamp(lt / sc.tdur); const e = EASE.spring(p); // critically damped: a scene never overshoots its frame
     let tf = '', op = '', clip = '';
     if (sc.index > 0 && lt < sc.tdur) {
       switch (sc.transition) {
@@ -340,8 +392,8 @@
       t: lt, T, dur: sc.dur, p: clamp(lt / sc.dur), words: sc.words,
       word: (w, nth = 1) => resolveTime('@' + w + (nth > 1 ? '#' + nth : ''), sc, null),
       speaking: () => !!sc.words.find(w => T >= w.start && T < w.end),
-      ease: EASE, clamp, lerp, noise,
-      prog: (from, dur, easeName = 'out') => EASE[easeName](clamp((lt - from) / dur)),
+      ease: EASE, spring, clamp, lerp, noise,
+      prog: (from, dur, easeName = 'spring') => (getEase(easeName) || EASE.spring)(clamp((lt - from) / dur)),
     };
   }
 
@@ -363,13 +415,79 @@
       spans[i].classList.toggle('on', t >= w.start && t < (nx ? nx.start : ph.until));
       spans[i].classList.toggle('future', t < w.start - 0.02);
     });
-    const k = EASE.back(clamp((t - ph.start) / 0.16));
+    const k = EASE['spring-snappy'](clamp((t - ph.start) / 0.2));
     cap.style.scale = String(lerp(0.82, 1, k));
+  }
+
+  // ---------- design rules (enforced by lint) ----------
+  // 1. No CSS motion. Render mode forces `transition/animation: none` on every element, so the
+  //    computed style can't show them; read the declared styles instead. kit.css's own
+  //    `none !important` guard is the only exception.
+  function cssMotionIssues() {
+    const issues = [];
+    const bad = st => {
+      const found = [];
+      const tp = st.getPropertyValue('transition-property'), td = st.getPropertyValue('transition-duration');
+      if ((td && !/^(0s,?\s*)+$/.test(td) && tp !== 'none') || /\btransition\s*:/.test(st.cssText) && !/transition:\s*none/.test(st.cssText)) found.push('transition');
+      const an = st.getPropertyValue('animation-name');
+      if ((an && an !== 'none') || /\banimation\s*:/.test(st.cssText) && !/animation:\s*none/.test(st.cssText)) found.push('animation');
+      return found;
+    };
+    const walk = (rules, where) => {
+      for (const r of rules) {
+        if (r.type === CSSRule.KEYFRAMES_RULE) issues.push({ level: 'error', scene: '*', el: `@keyframes ${r.name}`, msg: `CSS keyframe animation in ${where}. All motion must come from data-anim or Reel.on (it renders frame by frame).` });
+        else if (r.style) bad(r.style).forEach(k => issues.push({ level: 'error', scene: '*', el: r.selectorText, msg: `CSS ${k} in ${where}. Basic CSS ${k}s read as generic and don't render frame by frame; use data-anim with a spring.` }));
+        if (r.cssRules) walk(r.cssRules, where);
+      }
+    };
+    for (const sh of document.styleSheets) {
+      const where = sh.href ? sh.href.replace(/^.*\/(?=[^/]+$)/, '') : 'an inline <style>';
+      if (where === 'kit.css') continue; // engine stylesheet: holds the render-mode `none !important` guard
+      let rules; try { rules = sh.cssRules; } catch (e) { continue; }
+      walk(rules, where);
+    }
+    document.querySelectorAll('#stage [style]').forEach(el => {
+      const css = el.getAttribute('style');
+      ['transition', 'animation'].forEach(k => { if (new RegExp(`(^|;)\\s*${k}(-[a-z]+)?\\s*:`).test(css) && !new RegExp(`${k}\\s*:\\s*none`).test(css))
+        issues.push({ level: 'error', scene: el.closest('.scene')?.dataset.scene || '*', el: describe(el), msg: `inline CSS ${k}. Use data-anim with a spring.` }); });
+    });
+    return issues;
+  }
+
+  // 2. No all-caps centred text on a strong gradient (the generic "AI video" look).
+  //    Strong = one full-size gradient layer whose opaque colour stops differ a lot. Subtle
+  //    vignettes (one opaque stop over transparent) and small pattern tiles (bg-grid, bg-dots) pass.
+  function splitLayers(s) { const out = []; let d = 0, cur = ''; for (const ch of s) { if (ch === '(') d++; if (ch === ')') d--; if (ch === ',' && d === 0) { out.push(cur.trim()); cur = ''; } else cur += ch; } if (cur.trim()) out.push(cur.trim()); return out; }
+  function strongGradient(el) {
+    const cs = getComputedStyle(el); if (!cs.backgroundImage || cs.backgroundImage === 'none') return null;
+    const layers = splitLayers(cs.backgroundImage), sizes = cs.backgroundSize.split(',').map(s => s.trim());
+    for (let i = 0; i < layers.length; i++) {
+      if (!/gradient\(/.test(layers[i])) continue;
+      const size = sizes[i % sizes.length] || 'auto';
+      if (!/^(auto|cover|contain|100% 100%|100%|auto auto)$/.test(size)) continue; // repeating tile = texture, not a gradient fill
+      const cols = [...layers[i].matchAll(/rgba?\(([^)]+)\)/g)].map(m => m[1].split(/[\s,/]+/).filter(Boolean).map(Number))
+        .filter(c => (c[3] == null ? 1 : c[3]) >= 0.3);
+      for (let a = 0; a < cols.length; a++) for (let b = a + 1; b < cols.length; b++) {
+        const d = Math.hypot(cols[a][0] - cols[b][0], cols[a][1] - cols[b][1], cols[a][2] - cols[b][2]);
+        if (d >= 80) return layers[i].slice(0, 70);
+      }
+    }
+    return null;
+  }
+  function capsOnGradient(el, cs, x, x2) {
+    const own = [...el.childNodes].filter(c => c.nodeType === 3).map(c => c.nodeValue).join(' ').trim();
+    const letters = own.replace(/[^A-Za-z]/g, '');
+    if (letters.length < 3) return null;
+    const caps = cs.textTransform === 'uppercase' || letters === letters.toUpperCase();
+    const centred = cs.textAlign === 'center' || Math.abs((x + x2) / 2 - 540) < 24;
+    if (!caps || !centred) return null;
+    for (let n = el; n && n.id !== 'stage'; n = n.parentElement) { const g = strongGradient(n); if (g) return g; }
+    return strongGradient(document.getElementById('stage'));
   }
 
   // ---------- lint: called by scripts/check.mjs ----------
   function lint() {
-    const out = [...R.issues];
+    const out = [...R.issues, ...cssMotionIssues()];
     const stage = document.getElementById('stage').getBoundingClientRect();
     const SAFE = { l: 48, r: 1080 - 48, t: 120, b: 1920 - 200 };
     const capOn = R.captions;
@@ -398,6 +516,8 @@
           if (y < SAFE.t - 1) out.push({ level: y < -2 ? 'error' : 'warn', scene: sc.id, el: describe(el), msg: `text in the top ${SAFE.t}px, where the app UI covers it (y ${Math.round(y)})` });
           if (y2 > SAFE.b + 1) out.push({ level: y2 > 1922 ? 'error' : 'warn', scene: sc.id, el: describe(el), msg: `text in the bottom ${1920 - SAFE.b}px, where the app UI covers it (bottom ${Math.round(y2)})` });
           if (el.scrollWidth > el.clientWidth + 4 && cs.overflow !== 'visible') out.push({ level: 'error', scene: sc.id, el: describe(el), msg: 'text overflows its box' });
+          const g = !el.closest('#captions') && capsOnGradient(el, cs, x, x2);
+          if (g) out.push({ level: 'error', scene: sc.id, el: describe(el), msg: `all-caps centred text on a colour gradient (${g}…). It's the generic AI-video look: use a solid or textured background, sentence case, or an off-centre layout.` });
           if (capRect && !el.closest('#captions')) {
             const ix = Math.min(x2, capRect.right - stage.left) - Math.max(x, capRect.left - stage.left);
             const iy = Math.min(y2, capRect.bottom - stage.top) - Math.max(y, capRect.top - stage.top);
@@ -456,7 +576,7 @@
     init: opts => { const p = init(opts); window.__reel.ready = p.then(() => true); p.catch(err => { console.error(err); document.body.insertAdjacentHTML('beforeend', `<pre style="position:fixed;top:0;left:0;right:0;background:#b00;color:#fff;padding:20px;font:16px monospace;z-index:9999;white-space:pre-wrap">${err.message}</pre>`); window.__reel.error = err.message; }); return p; },
     on: (sceneId, fn) => { (R.hooks[sceneId] = R.hooks[sceneId] || []).push(fn); },
     every: fn => R.everyFrame.push(fn),
-    ease: EASE, clamp, lerp, noise,
+    ease: EASE, spring, clamp, lerp, noise,
   };
   window.__reel = {
     ready: null, error: null,
