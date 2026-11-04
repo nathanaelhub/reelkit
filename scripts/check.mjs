@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { parseArgs, reelDir, openReel, OUT, ROOT, readJSON } from './lib.mjs';
+import { tasteDir } from './ref.mjs';
 
 const args = parseArgs();
 const dir = reelDir(args._[0]);
@@ -40,6 +41,22 @@ for (const sc of sceneList) {
   }
   motion.push({ id: sc.id, dur, longest, at: longestAt - sc.start });
   if (longest >= 2.5) issues.push({ level: 'warn', scene: sc.id, msg: `frozen for ${longest.toFixed(1)}s (from ${(longestAt - sc.start).toFixed(1)}s). Add a word-synced beat or data-loop.` });
+}
+
+// taste: compare pacing with the reference videos (script.json "taste", or --taste <name|path>)
+const tasteName = args.taste || script.taste;
+let taste = null;
+if (tasteName) {
+  const td = tasteDir(tasteName), tj = path.join(td, 'taste.json');
+  if (!fs.existsSync(tj)) issues.push({ level: 'warn', scene: '*', msg: `taste "${tasteName}" has no measured references. Run: npm run ref -- ${tasteName} <links or files>` });
+  else {
+    const T = readJSON(tj);
+    const perScene = tl.duration / sceneList.length;
+    const pace = T.pace ?? T.avgShot;
+    if (pace && perScene > pace * 2)
+      issues.push({ level: 'warn', scene: '*', msg: `slower than the "${tasteName}" references: a new scene every ${perScene.toFixed(1)}s, they show something new every ${pace}s. Split scenes, or make sure each scene has word-synced beats that change the picture.` });
+    taste = { name: tasteName, md: path.join(td, 'taste.md'), sheets: (T.sheets || []).map(s => path.join(td, s)), T, perScene };
+  }
 }
 
 // contact sheet: frames at evenly spaced points, captions on
@@ -81,6 +98,7 @@ for (const i of issues) console.log(`  ${i.level === 'error' ? '✗' : '⚠'} [$
 if (!issues.length) console.log('  ✓ no layout or motion problems found');
 console.log(`\n  motion: ${motion.map(m => `${m.id} ${m.longest < 1 ? 'ok' : 'still ' + m.longest.toFixed(1) + 's'}`).join(' · ')}`);
 console.log(`\n  contact sheets (look at these):\n${sheets.map(s => '    ' + path.relative(ROOT, s)).join('\n')}`);
+if (taste) console.log(`\n  taste "${taste.name}": references show something new every ${taste.T.pace ?? taste.T.avgShot}s (still ${Math.round((taste.T.stillShare ?? 0) * 100)}% of the time); this reel changes scene every ${taste.perScene.toFixed(1)}s.\n  Read ${path.relative(ROOT, taste.md) || taste.md} and compare the sheets above with:\n${taste.sheets.map(s => '    ' + (path.relative(ROOT, s).startsWith('..') ? s : path.relative(ROOT, s))).join('\n')}`);
 console.log(`\n  ${errs.length} errors, ${warns.length} warnings\n`);
 fs.writeFileSync(path.join(OUT, `${name}.check.json`), JSON.stringify({ issues, motion, sheets: sheets.map(s => path.relative(ROOT, s)) }, null, 2));
 process.exit(errs.length ? 2 : 0);

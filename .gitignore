@@ -3,3 +3,5 @@ out/
 .env
 .DS_Store
 reels/*/.voice-cache/
+taste/*
+!taste/README.md

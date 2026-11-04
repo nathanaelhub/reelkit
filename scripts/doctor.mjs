@@ -54,6 +54,9 @@ if (voices.length) ok('Voice', voices.join(', ') + `  → default: ${voices[0]}`
 else bad('Voice', 'no voice provider found; reels will be silent drafts', 'add ELEVENLABS_API_KEY=... or OPENAI_API_KEY=... to .env, or install piper-tts and set PIPER_MODEL');
 if (!process.env.ELEVENLABS_API_KEY) meh('ElevenLabs key', 'optional; best voice + exact word timing. Get one at elevenlabs.io → put ELEVENLABS_API_KEY=... in .env');
 
+// yt-dlp (optional: downloads reference videos for npm run ref)
+which('yt-dlp') ? ok('yt-dlp (references)', 'installed') : meh('yt-dlp (references)', 'optional; needed to download reference links: brew install yt-dlp (or pip install yt-dlp)');
+
 // .env
 if (!fs.existsSync(path.join(ROOT, '.env'))) {
   if (fix && fs.existsSync(path.join(ROOT, '.env.example'))) { fs.copyFileSync(path.join(ROOT, '.env.example'), path.join(ROOT, '.env')); ok('.env', 'created from .env.example, add your keys there'); }
