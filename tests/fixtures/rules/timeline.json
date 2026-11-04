@@ -1,0 +1,10 @@
+{
+  "title": "Design rule fixture (should fail the check)", "fps": 30, "width": 1080, "height": 1920, "theme": "paper", "captions": false,
+  "voice": "none", "audio": null, "music": null, "musicVolume": 0.12, "duration": 6,
+  "scenes": [
+    { "id": "slop", "start": 0, "end": 3, "say": "This changes everything forever.", "words": [
+      { "w": "This", "start": 0.1, "end": 0.4 }, { "w": "changes", "start": 0.4, "end": 0.9 }, { "w": "everything", "start": 0.9, "end": 1.6 }, { "w": "forever.", "start": 1.6, "end": 2.3 } ] },
+    { "id": "control", "start": 3, "end": 6, "say": "Follow for more today.", "words": [
+      { "w": "Follow", "start": 3.1, "end": 3.5 }, { "w": "for", "start": 3.5, "end": 3.7 }, { "w": "more", "start": 3.7, "end": 4.0 }, { "w": "today.", "start": 4.0, "end": 4.6 } ] }
+  ]
+}

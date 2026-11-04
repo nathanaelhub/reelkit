@@ -13,6 +13,8 @@ The default look is "editorial explainer": warm off-white paper, black type, one
 - One accent colour. Red means "this is the point": the stamp, the key bar, the accent word.
 - Big. Hero numbers 200–300px. Emoji as objects 150–260px. Anything under 30px is decoration.
 - Contrast between scenes: alternate background (paper / grid / halftone / accent), alternate composition (centered object / left-right pair / chart / phone mockup).
+- Motion is spring physics, never CSS transitions or plain easing curves (enforced by `npm run check`). Snappy for UI elements, bouncy for playful hits, critically damped for big moves.
+- No all-caps centred text on a colour gradient: it's the most generic look there is (also enforced).
 - Motion with purpose: entrance on the scene start, a **hit** on the key word (stamp, pop, counter, strike), and something gently alive the rest of the time (float, sway, a drawing line).
 - Every 3–4 scenes use a stronger transition (flash, iris, zoom) to reset attention. Cuts otherwise.
 - The outro is a full accent-colour slide with one big word.
