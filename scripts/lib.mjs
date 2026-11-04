@@ -123,7 +123,12 @@ export async function openReel(dir, { scale = 1 } = {}) {
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-  page.on('requestfailed', r => errors.push(`failed to load ${r.url().replace(/^http:\/\/127\.0\.0\.1:\d+\//, '')}`));
+  page.on('requestfailed', r => {
+    // Chromium cancels its first request for a <video> and re-requests it in byte ranges; that cancel is normal.
+    // A missing clip is a 404 response instead, reported by kit.js through the video's error event.
+    if (r.resourceType() === 'media' && r.failure()?.errorText === 'net::ERR_ABORTED') return;
+    errors.push(`failed to load ${r.url().replace(/^http:\/\/127\.0\.0\.1:\d+\//, '')}`);
+  });
   await page.goto(reelURL(server, dir, '?render=1'), { waitUntil: 'load' });
   const ok = await page.waitForFunction(() => window.__reel && (window.__reel.error || window.__reel.ready), null, { timeout: 30000 }).then(() => page.evaluate(async () => { if (window.__reel.error) return window.__reel.error; await window.__reel.ready; return window.__reel.error || true; })).catch(e => e.message);
   if (ok !== true) { await browser.close(); server.srv.close(); die(`reel.html failed to start: ${ok}\n${errors.join('\n')}`); }
