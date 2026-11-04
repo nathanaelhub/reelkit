@@ -125,7 +125,7 @@
   // ---------- state ----------
   const R = {
     timeline: null, scenes: [], globals: [], words: [], phrases: [], hooks: {}, everyFrame: [],
-    issues: [], duration: 0, fps: 30, width: 1080, height: 1920, captions: true, t: 0,
+    issues: [], duration: 0, fps: 30, width: 1080, height: 1920, captions: true, t: 0, clips: [], pending: null, playing: false,
   };
 
   const norm = s => String(s).toLowerCase().replace(/[’']/g, "'").replace(/[^a-z0-9'%$.-]/g, '').replace(/^[.'-]+|[.'-]+$/g, '');
@@ -267,6 +267,7 @@
       el.style.zIndex = 10 + i;
       expandStagger(el);
       sc.anims = [...el.querySelectorAll('[data-anim],[data-loop]')].map(a => prepAnim(a, sc));
+      addClips(el, sc);
       el.querySelectorAll('canvas[data-fit]').forEach(c => { const r = c.getBoundingClientRect(); c.width = c.offsetWidth; c.height = c.offsetHeight; });
       R.scenes.push(sc);
     });
@@ -280,6 +281,7 @@
       c.style.zIndex = c.style.zIndex || 40;
     });
     R.globalScene = g;
+    [...stage.children].filter(c => !c.classList.contains('scene')).forEach(c => addClips(c, g));
 
     // captions
     let cap = document.getElementById('captions');
@@ -288,10 +290,49 @@
 
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
     await Promise.all([...document.images].map(img => img.complete ? 0 : new Promise(r => { img.onload = img.onerror = r; })));
+    await Promise.all(R.clips.map(c => c.v.readyState >= 2 ? 0 : new Promise(res => {
+      c.v.addEventListener('loadeddata', res, { once: true });
+      c.v.addEventListener('error', () => { R.issues.push({ level: 'error', scene: c.sc.id, el: describe(c.v), msg: `video failed to load: ${c.v.getAttribute('src')}` }); res(); }, { once: true });
+    })));
 
     seek(0);
     if (!RENDER) mountPreview(stage);
     return R;
+  }
+
+  // ---------- video clips ----------
+  // <video data-clip src="…" data-from="12.5" data-at="@word" data-rate="1">: at scene time t the clip
+  // shows source time from + (t - at) * rate. Renders seek exactly and wait (window.__reel.settle).
+  function addClips(root, sc) {
+    root.querySelectorAll('video[data-clip]').forEach(v => {
+      v.muted = true; v.playsInline = true; v.preload = 'auto'; v.loop = false; v.autoplay = false;
+      R.clips.push({ v, sc, at: resolveTime(v.dataset.at, sc, v), from: parseFloat(v.dataset.from || '0'), rate: parseFloat(v.dataset.rate || '1') });
+    });
+  }
+  function seekVideo(v, target) {
+    return new Promise(res => {
+      const done = () => requestAnimationFrame(() => res());
+      v.addEventListener('seeked', done, { once: true });
+      v.currentTime = target;
+    });
+  }
+  function syncClips(t) {
+    const waits = [];
+    R.clips.forEach(c => {
+      const visible = c.sc.el === document.getElementById('stage') || c.sc.el.classList.contains('on');
+      if (!visible) { if (!c.v.paused) c.v.pause(); return; }
+      const lt = t - c.sc.start, dur = isFinite(c.v.duration) ? c.v.duration : 0;
+      // +4 ms: container timestamps are rounded (often to 1 ms), so aim just inside the wanted frame
+      const target = Math.max(0, Math.min(Math.max(0, dur - 0.04), c.from + Math.max(0, lt - c.at) * c.rate + 0.004));
+      if (RENDER) { if (Math.abs(c.v.currentTime - target) > 0.0005) waits.push(seekVideo(c.v, target)); return; }
+      // live preview: play along, resync only when it drifts
+      const live = R.playing && lt >= c.at && target < dur - 0.05;
+      c.v.playbackRate = c.rate;
+      if (live && c.v.paused) c.v.play().catch(() => {});
+      if (!live && !c.v.paused) c.v.pause();
+      if (Math.abs(c.v.currentTime - target) > (live ? 0.3 : 0.04)) c.v.currentTime = target;
+    });
+    R.pending = waits.length ? Promise.all(waits) : null;
   }
 
   // ---------- per-frame ----------
@@ -384,6 +425,7 @@
     R.globals.forEach(a => applyAnim(a, t, R.globalScene));
     R.everyFrame.forEach(fn => fn(ctxFor(R.globalScene, t, t)));
     renderCaptions(t);
+    syncClips(t);
   }
 
   function ctxFor(sc, lt, T) {
@@ -492,8 +534,9 @@
     const SAFE = { l: 48, r: 1080 - 48, t: 120, b: 1920 - 200 };
     const capOn = R.captions;
     R.scenes.forEach(sc => {
-      if (!sc.anims.length) out.push({ level: 'warn', scene: sc.id, msg: 'nothing animates in this scene, it will look frozen' });
-      const last = Math.max(0, ...sc.anims.map(a => a.at + (a.loop ? sc.dur : a.dur)));
+      const hasClip = R.clips.some(c => c.sc === sc);
+      if (!sc.anims.length && !hasClip) out.push({ level: 'warn', scene: sc.id, msg: 'nothing animates in this scene, it will look frozen' });
+      const last = hasClip ? sc.dur : Math.max(0, ...sc.anims.map(a => a.at + (a.loop ? sc.dur : a.dur)));
       if (sc.dur > 4 && last < sc.dur * 0.45) out.push({ level: 'warn', scene: sc.id, msg: `dead air: all motion finishes by ${last.toFixed(1)}s of a ${sc.dur.toFixed(1)}s scene. Add a beat synced to a later word, or a loop.` });
       const late = sc.anims.filter(a => a.at > sc.dur);
       late.forEach(a => out.push({ level: 'error', scene: sc.id, el: describe(a.el), msg: `starts at ${a.at.toFixed(2)}s but the scene is only ${sc.dur.toFixed(2)}s long` }));
@@ -558,8 +601,8 @@
     const btn = ui.querySelector('#rp'), rs = ui.querySelector('#rs'), rt = ui.querySelector('#rt'), rn = ui.querySelector('#rn');
     const show = t => { seek(t); rs.value = t; rt.textContent = t.toFixed(2); const sc = R.scenes.find(s => t >= s.start && t < s.end); rn.textContent = sc ? sc.id : ''; };
     const loop = () => { if (!playing) return; const t = now(); if (t >= R.duration) { pause(); show(R.duration); return; } show(t); requestAnimationFrame(loop); };
-    const play = () => { playing = true; btn.textContent = '❚❚ pause'; if (audio) { audio.currentTime = +rs.value; audio.play(); } else { w0 = +rs.value; t0 = performance.now(); } loop(); };
-    const pause = () => { playing = false; btn.textContent = '▶ play'; if (audio) audio.pause(); };
+    const play = () => { playing = true; R.playing = true; btn.textContent = '❚❚ pause'; if (audio) { audio.currentTime = +rs.value; audio.play(); } else { w0 = +rs.value; t0 = performance.now(); } loop(); };
+    const pause = () => { playing = false; R.playing = false; btn.textContent = '▶ play'; if (audio) audio.pause(); };
     btn.onclick = () => (playing ? pause() : play());
     rs.oninput = () => { pause(); show(+rs.value); };
     ui.querySelector('#rc').onclick = () => { R.captions = !R.captions; show(+rs.value); };
@@ -581,6 +624,7 @@
   window.__reel = {
     ready: null, error: null,
     seek, lint,
+    settle: () => R.pending || Promise.resolve(),
     get duration() { return R.duration; }, get fps() { return R.fps; },
     get scenes() { return R.scenes.map(s => ({ id: s.id, start: s.start, end: s.end })); },
     setCaptions: on => { R.captions = on; },

@@ -97,6 +97,7 @@ npm run doctor [-- --fix]          # check / install everything
 npm run new -- my-reel "Title"     # scaffold reels/my-reel/
 npm run voice -- my-reel           # voiceover + timeline.json
 npm run ref -- my-brand <links>    # add reference videos to a taste, measure them
+npm run clip -- my-reel src.mp4 3 7 # trim footage into a reel for <video data-clip>
 npm run check -- my-reel           # lint + design rules + motion + taste check, contact sheets in out/
 npm run preview -- my-reel         # watch in your browser with audio (space, ←/→)
 npm run render -- my-reel          # out/my-reel.mp4   (--draft for fast half-res, --from/--to for a section)

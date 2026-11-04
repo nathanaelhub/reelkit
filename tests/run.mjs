@@ -19,6 +19,28 @@ const expectRun = (r, { exit, expect = [], forbid = [] }) => {
 };
 
 const cases = [
+  ['clips: every rendered frame shows its exact source frame', () => {
+    const fx = path.resolve('tests/fixtures/clip'), vid = path.join(fx, 'assets', 'ramp.webm');
+    fs.mkdirSync(path.dirname(vid), { recursive: true });
+    // 4 s at 30 fps; frame N has brightness (N * 8) mod 256, so one frame of lag is visible
+    if (!fs.existsSync(vid)) {
+      const g = spawnSync(ffmpegPath(), ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=c=black:s=320x568:r=30:d=4,format=gray,geq=lum=mod(N*8\\,256)',
+        '-c:v', 'libvpx-vp9', '-lossless', '1', '-g', '10', vid], { encoding: 'utf8' });
+      if (g.status !== 0) return { ok: false, detail: 'could not make ramp.webm: ' + g.stderr };
+    }
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'reelkit-test-')), out = path.join(tmp, 'f.mp4');
+    const from = 0.5, n = 8; // data-from=1: scene time t shows source time 1 + t
+    const r = spawnSync(process.execPath, ['scripts/render.mjs', fx, '--draft', '--fps', '30', '--from', String(from), '--to', String(from + n / 30), '--out', out], { encoding: 'utf8' });
+    if (r.status !== 0) return { ok: false, detail: r.stdout + r.stderr };
+    const raw = spawnSync(ffmpegPath(), ['-loglevel', 'error', '-i', out, '-vf', 'crop=4:4:iw/2:ih/2,scale=1:1,format=gray', '-f', 'rawvideo', '-'], { encoding: 'buffer' }).stdout;
+    fs.rmSync(tmp, { recursive: true, force: true });
+    const problems = [];
+    for (let i = 0; i < n; i++) {
+      const want = (Math.round((1 + from + i / 30) * 30) * 8) % 256, got = raw[i];
+      if (got == null || Math.abs(got - want) > 3) problems.push(`frame ${i}: brightness ${got}, source frame wants ${want}`);
+    }
+    return { ok: !problems.length, detail: problems.join('\n  ') };
+  }],
   ['render: a 1 s draft is standard yuv420p, limited range, bt709', () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'reelkit-test-')), out = path.join(tmp, 'clip.mp4');
     const r = spawnSync(process.execPath, ['scripts/render.mjs', 'airplane-food', '--draft', '--from', '0', '--to', '1', '--out', out], { encoding: 'utf8' });
