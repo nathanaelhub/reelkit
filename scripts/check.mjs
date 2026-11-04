@@ -60,7 +60,7 @@ if (tasteName) {
 }
 
 // contact sheet: frames at evenly spaced points, captions on
-await page.evaluate(() => window.__reel.setCaptions(true));
+await page.evaluate(on => window.__reel.setCaptions(on), tl.captions !== false); // match what the render will show
 const shots = [];
 for (const sc of sceneList) {
   const dur = sc.end - sc.start;
