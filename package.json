@@ -10,9 +10,12 @@
     "voice": "node scripts/voice.mjs",
     "check": "node scripts/check.mjs",
     "render": "node scripts/render.mjs",
-    "preview": "node scripts/preview.mjs"
+    "preview": "node scripts/preview.mjs",
+    "test": "node tests/run.mjs"
   },
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "@fontsource/anton": "^5.0.0",
     "@fontsource/inter": "^5.0.0",
