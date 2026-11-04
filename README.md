@@ -71,6 +71,10 @@ Reels look generic without a reference. Give reelkit 3 to 5 videos whose look yo
 - All motion runs on closed-form spring physics (`spring`, `spring-snappy`, `spring-bouncy`, or `spring:k,c,m`).
 - `npm run check` fails on CSS transitions or animations and on all-caps centred text over a colour gradient: the two most generic looks in AI video.
 
+## Formats and loudness
+
+`"format"` in script.json picks 9:16 (default), 16:9 or 1:1; the check and render follow it. Every render ends with a two-pass loudness pass to `"loudness"` (default -14 LUFS, true peak -1.5 dB), so voice, music and silences come out at one consistent level.
+
 ## How it works
 
 ```

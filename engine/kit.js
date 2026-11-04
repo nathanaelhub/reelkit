@@ -247,8 +247,11 @@
       ? opts.timeline
       : await fetch(opts.timeline || 'timeline.json', { cache: 'no-store' }).then(r => { if (!r.ok) throw new Error('timeline.json missing — run: npm run voice -- <reel>'); return r.json(); });
     R.timeline = tl; R.fps = tl.fps || 30; R.duration = tl.duration;
+    R.width = tl.width || 1080; R.height = tl.height || 1920;
     const stage = document.getElementById('stage');
     if (!stage) throw new Error('No #stage element');
+    stage.style.width = R.width + 'px'; stage.style.height = R.height + 'px';
+    if (R.width > R.height) stage.style.setProperty('--caption-y', (R.height - 230) + 'px'); // landscape: captions near the bottom
     if (tl.theme) stage.classList.add('theme-' + tl.theme);
 
     // words with global times
@@ -396,8 +399,8 @@
     if (sc.index > 0 && lt < sc.tdur) {
       switch (sc.transition) {
         case 'fade': op = String(e); break;
-        case 'slide-up': tf = `translateY(${(1 - e) * 1920}px)`; break;
-        case 'slide-left': tf = `translateX(${(1 - e) * 1080}px)`; break;
+        case 'slide-up': tf = `translateY(${(1 - e) * R.height}px)`; break;
+        case 'slide-left': tf = `translateX(${(1 - e) * R.width}px)`; break;
         case 'zoom': tf = `scale(${lerp(1.35, 1, e)})`; op = String(clamp(p * 2.5)); break;
         case 'iris': clip = `circle(${e * 120}% at 50% 50%)`; break;
         case 'flash': el.style.setProperty('--flash', String(1 - p)); break;
@@ -521,7 +524,7 @@
     const letters = own.replace(/[^A-Za-z]/g, '');
     if (letters.length < 3) return null;
     const caps = cs.textTransform === 'uppercase' || letters === letters.toUpperCase();
-    const centred = cs.textAlign === 'center' || Math.abs((x + x2) / 2 - 540) < 24;
+    const centred = cs.textAlign === 'center' || Math.abs((x + x2) / 2 - R.width / 2) < 24;
     if (!caps || !centred) return null;
     for (let n = el; n && n.id !== 'stage'; n = n.parentElement) { const g = strongGradient(n); if (g) return g; }
     return strongGradient(document.getElementById('stage'));
@@ -531,7 +534,9 @@
   function lint() {
     const out = [...R.issues, ...cssMotionIssues()];
     const stage = document.getElementById('stage').getBoundingClientRect();
-    const SAFE = { l: 48, r: 1080 - 48, t: 120, b: 1920 - 200 };
+    const W = R.width, Hh = R.height, tall = Hh > W;
+    // vertical: app UI covers the top and bottom; landscape and square: a plain margin
+    const SAFE = tall ? { l: 48, r: W - 48, t: 120, b: Hh - 200 } : { l: 48, r: W - 48, t: 40, b: Hh - 40 };
     const capOn = R.captions;
     R.scenes.forEach(sc => {
       const hasClip = R.clips.some(c => c.sc === sc);
@@ -555,9 +560,9 @@
         const x = r.left - stage.left, y = r.top - stage.top, x2 = x + r.width, y2 = y + r.height;
         const hasText = [...el.childNodes].some(c => c.nodeType === 3 && c.nodeValue.trim());
         if (hasText) {
-          if (x < SAFE.l - 1 || x2 > SAFE.r + 1) out.push({ level: x < -2 || x2 > 1082 ? 'error' : 'warn', scene: sc.id, el: describe(el), msg: `text ${x < -2 || x2 > 1082 ? 'is cut off at' : 'too close to'} the side edge (x ${Math.round(x)}–${Math.round(x2)})` });
-          if (y < SAFE.t - 1) out.push({ level: y < -2 ? 'error' : 'warn', scene: sc.id, el: describe(el), msg: `text in the top ${SAFE.t}px, where the app UI covers it (y ${Math.round(y)})` });
-          if (y2 > SAFE.b + 1) out.push({ level: y2 > 1922 ? 'error' : 'warn', scene: sc.id, el: describe(el), msg: `text in the bottom ${1920 - SAFE.b}px, where the app UI covers it (bottom ${Math.round(y2)})` });
+          if (x < SAFE.l - 1 || x2 > SAFE.r + 1) out.push({ level: x < -2 || x2 > W + 2 ? 'error' : 'warn', scene: sc.id, el: describe(el), msg: `text ${x < -2 || x2 > W + 2 ? 'is cut off at' : 'too close to'} the side edge (x ${Math.round(x)}–${Math.round(x2)})` });
+          if (y < SAFE.t - 1) out.push({ level: y < -2 ? 'error' : 'warn', scene: sc.id, el: describe(el), msg: `text in the top ${SAFE.t}px${tall ? ', where the app UI covers it' : ''} (y ${Math.round(y)})` });
+          if (y2 > SAFE.b + 1) out.push({ level: y2 > Hh + 2 ? 'error' : 'warn', scene: sc.id, el: describe(el), msg: `text in the bottom ${Hh - SAFE.b}px${tall ? ', where the app UI covers it' : ''} (bottom ${Math.round(y2)})` });
           if (el.scrollWidth > el.clientWidth + 4 && cs.overflow !== 'visible') out.push({ level: 'error', scene: sc.id, el: describe(el), msg: 'text overflows its box' });
           const g = !el.closest('#captions') && capsOnGradient(el, cs, x, x2);
           if (g) out.push({ level: 'error', scene: sc.id, el: describe(el), msg: `all-caps centred text on a colour gradient (${g}…). It's the generic AI-video look: use a solid or textured background, sentence case, or an off-centre layout.` });
@@ -568,8 +573,8 @@
           }
         }
         if (hasText && !el.closest('.stamp,[data-overlap]')) { const fs = parseFloat(cs.fontSize) || 40; const inset = Math.min(r.height * 0.3, fs * 0.22); textBoxes.push({ el, x, y: y + inset, x2, y2: y2 - inset }); } // approx. glyph ink, not the font's full line box
-        if (x2 < -10 || x > 1090 || y2 < -10 || y > 1930) return; // fully off-stage is a deliberate choice
-        if ((x < -40 || x2 > 1120 || y < -40 || y2 > 1960) && r.width < 1400 && hasText) out.push({ level: 'warn', scene: sc.id, el: describe(el), msg: 'partly off-stage' });
+        if (x2 < -10 || x > W + 10 || y2 < -10 || y > Hh + 10) return; // fully off-stage is a deliberate choice
+        if ((x < -40 || x2 > W + 40 || y < -40 || y2 > Hh + 40) && r.width < Math.max(W, Hh) * .75 && hasText) out.push({ level: 'warn', scene: sc.id, el: describe(el), msg: 'partly off-stage' });
       });
       // text colliding with other text (stamps and [data-overlap] are allowed to sit on top)
       for (let i = 0; i < textBoxes.length; i++) for (let j = i + 1; j < textBoxes.length; j++) {
@@ -587,9 +592,9 @@
   // ---------- live preview ----------
   function mountPreview(stage) {
     const fit = () => {
-      const s = Math.min(innerWidth / 1080, (innerHeight - 56) / 1920);
+      const s = Math.min(innerWidth / R.width, (innerHeight - 56) / R.height);
       stage.style.transform = `scale(${s})`;
-      stage.style.marginLeft = `${(innerWidth - 1080 * s) / 2}px`;
+      stage.style.marginLeft = `${(innerWidth - R.width * s) / 2}px`;
     };
     fit(); addEventListener('resize', fit);
     const ui = document.createElement('div'); ui.id = 'reel-ui';

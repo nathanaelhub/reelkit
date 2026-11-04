@@ -1,4 +1,4 @@
-/* reelkit — base styles for 1080x1920 vertical reels.
+/* reelkit — base styles. The stage is 1080x1920 by default; kit.js resizes it for 16:9 and 1:1.
    Everything here is static. Motion comes from kit.js (data-anim), never CSS animations. */
 
 @import url('../node_modules/@fontsource/inter/400.css');

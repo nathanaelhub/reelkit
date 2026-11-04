@@ -128,13 +128,22 @@ function speechBounds(wav, dur) {
 
 // ---------- pronunciation: say a word one way, caption it another ----------
 // script.json "pronounce": { "Saba": "Sayba", "sabanrealty.com": "Saban Realty dot com" }
-const PRON = Object.fromEntries(Object.entries(script.pronounce || {}).map(([k, v]) => [k.toLowerCase(), v]));
+// A value can be a respelling ("Sayba") or a phoneme: { "cmu": "S EY1 B AH0" } / { "ipa": "ˈseɪbə" }. Phoneme tags only work
+// on ElevenLabs' English models (eleven_turbo_v2, eleven_flash_v2); other providers say the written word.
+const PRON = Object.fromEntries(Object.entries(script.pronounce || {}).map(([k, v]) => {
+  if (typeof v === 'string') return [k.toLowerCase(), v];
+  if (provider !== 'elevenlabs') return [k.toLowerCase(), v.say || k];
+  const tag = v.cmu ? `<phoneme alphabet="cmu-arpabet" ph="${v.cmu}">${k}</phoneme>` : `<phoneme alphabet="ipa" ph="${v.ipa}">${k}</phoneme>`;
+  return [k.toLowerCase(), tag];
+}));
+const TAG = /<phoneme\b[^>]*>.*?<\/phoneme>/g;
 function toSpoken(text) {
   const groups = [], out = [];
   for (const tok of text.split(/\s+/).filter(Boolean)) {
     const m = tok.match(/^([^\p{L}\p{N}]*)(.*?)([,.!?;:"')\]]*)$/u);
     const rep = PRON[m[2].toLowerCase()];
-    const words = rep ? rep.split(/\s+/).filter(Boolean) : [m[2]];
+    // a phoneme tag comes back from the voice as one word, so count it as one
+    const words = rep ? rep.replace(TAG, t => t.replace(/\s+/g, '\u0000')).split(/\s+/).filter(Boolean).map(w => w.replace(/\u0000/g, ' ')) : [m[2]];
     words[0] = m[1] + words[0]; words[words.length - 1] += m[3];
     out.push(...words); groups.push({ display: tok, n: words.length });
   }
@@ -193,7 +202,9 @@ const audio = provider === 'none' ? null : 'voice.mp3';
 if (audio) run(ff, ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', list, '-af', 'loudnorm=I=-15:TP=-1.5:LRA=11', '-ar', '44100', '-ac', '1', '-b:a', '160k', path.join(dir, audio)]);
 else if (fs.existsSync(path.join(dir, 'voice.mp3'))) fs.rmSync(path.join(dir, 'voice.mp3'));
 
-const timeline = { title: script.title || path.basename(dir), fps: script.fps || 30, width: 1080, height: 1920, theme: script.theme || 'paper', captions: script.captions !== false,
+const FORMATS = { '9:16': [1080, 1920], '16:9': [1920, 1080], '1:1': [1080, 1080] };
+const [W, H] = FORMATS[script.format || '9:16'] || die(`unknown format "${script.format}". Use 9:16, 16:9 or 1:1`);
+const timeline = { title: script.title || path.basename(dir), fps: script.fps || 30, width: W, height: H, loudness: script.loudness ?? -14, theme: script.theme || 'paper', captions: script.captions !== false,
   voice: provider, audio, music: script.music || null, musicVolume: script.musicVolume ?? 0.12, duration: +t.toFixed(3), scenes: tlScenes };
 writeJSON(path.join(dir, 'timeline.json'), timeline);
 console.log(`✓ timeline.json: ${tlScenes.length} scenes, ${t.toFixed(1)}s${audio ? ', voice.mp3' : ''}\n`);
