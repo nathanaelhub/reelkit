@@ -13,7 +13,8 @@
     "preview": "node scripts/preview.mjs",
     "test": "node tests/run.mjs",
     "ref": "node scripts/ref.mjs",
-    "clip": "node scripts/clip.mjs"
+    "clip": "node scripts/clip.mjs",
+    "score": "node scripts/score.mjs"
   },
   "engines": {
     "node": ">=18"
@@ -27,6 +28,7 @@
     "ffmpeg-static": "^5.2.0",
     "ffprobe-static": "^3.1.0",
     "playwright": "^1.47.0",
-    "sherpa-onnx-node": "^2.0.1"
+    "sherpa-onnx-node": "^2.0.1",
+    "tone": "^15.1.22"
   }
 }

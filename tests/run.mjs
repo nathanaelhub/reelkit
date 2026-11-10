@@ -74,6 +74,39 @@ const cases = [
     return { ok: !problems.length, detail: problems.join('\n  ') + '\n' + v.out };
   }],
 
+  ['score: score.js renders to the reel\'s exact length, audibly, and the same every time (to rounding)', () => {
+    const fx = path.resolve('tests/fixtures/score'), wav = path.join(fx, 'score.wav');
+    if (!fs.existsSync(path.join(fx, 'timeline.json'))) { const v = node('scripts/voice.mjs', [fx]); if (v.status !== 0) return { ok: false, detail: v.out }; }
+    const pcm = () => { const b = fs.readFileSync(wav); return new Int16Array(b.buffer, b.byteOffset + 44, (b.length - 44) >> 1); };
+    const r1 = node('scripts/score.mjs', [fx]); const p1 = pcm();
+    const r2 = node('scripts/score.mjs', [fx]); const p2 = pcm();
+    if (r1.status !== 0 || r2.status !== 0) return { ok: false, detail: r1.out + r2.out };
+    const tl = JSON.parse(fs.readFileSync(path.join(fx, 'timeline.json'), 'utf8')), problems = [];
+    const d = +spawnSync(ffprobePath(), ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', wav], { encoding: 'utf8' }).stdout;
+    if (Math.abs(d - tl.duration) > 0.02) problems.push(`score ${d}s, reel ${tl.duration}s`);
+    // Chromium's audio thread can round a handful of samples differently (±1 of 32768); anything more is a real difference
+    let worst = p1.length === p2.length ? 0 : Infinity; for (let i = 0; i < p1.length && worst < 3; i++) worst = Math.max(worst, Math.abs(p1[i] - p2[i]));
+    if (worst > 2) problems.push(`two renders differ (largest sample difference ${worst})`);
+    const peak = +(r1.out.match(/peak (-?[\d.]+) dBFS/) || [])[1];
+    if (!(peak > -20 && peak < 0)) problems.push(`peak ${peak} dBFS`);
+    return { ok: !problems.length, detail: problems.join('\n  ') + '\n' + r1.out };
+  }],
+
+  ['mix: the score ducks under the voice and comes back in the pauses', () => {
+    if (!sherpaInstalled() || !kokoroInstalled()) return { ok: true, skip: 'Kokoro model not downloaded (npm run doctor -- --fix)' };
+    const fx = path.resolve('tests/fixtures/duck'), tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'reelkit-test-'));
+    const v = node('scripts/voice.mjs', [fx]); if (v.status !== 0) return { ok: false, detail: v.out };
+    const out = path.join(tmp, 'd.mp4');
+    const r = spawnSync(process.execPath, ['scripts/render.mjs', fx, '--draft', '--out', out], { encoding: 'utf8' });
+    if (r.status !== 0) { fs.rmSync(tmp, { recursive: true, force: true }); return { ok: false, detail: r.stdout + r.stderr }; }
+    const tl = JSON.parse(fs.readFileSync(path.join(fx, 'timeline.json'), 'utf8'));
+    const level = (t0, t1) => { const e = spawnSync(ffmpegPath(), ['-hide_banner', '-ss', String(t0), '-t', String(t1 - t0), '-i', out, '-af', 'bandpass=f=6000:w=60,volumedetect', '-f', 'null', '-'], { encoding: 'utf8' }).stderr; return +(e.match(/mean_volume: (-?[\d.]+) dB/) || [])[1]; };
+    const w = tl.scenes[0].words, speaking = level(w[1].start, w[w.length - 2].end);
+    const gap = level(tl.scenes[0].words.at(-1).end + 0.7, tl.scenes[1].start - 0.1);
+    fs.rmSync(tmp, { recursive: true, force: true });
+    return { ok: gap - speaking >= 3, detail: `tone at ${speaking} dB while speaking, ${gap} dB in the pause (want ≥ 3 dB louder in the pause)` };
+  }],
+
   ['16:9: voices at 1920x1080, keeps phoneme words written, passes the check, renders wide at the target loudness', () => {
     const fx = path.resolve('tests/fixtures/wide'), problems = [];
     // a quiet tone as music, so the final loudness pass has real work to do (about -30 LUFS in, -14 out)

@@ -1,0 +1,9 @@
+{
+  "title": "Duck fixture",
+  "voice": { "provider": "kokoro" },
+  "captions": false,
+  "scenes": [
+    { "id": "a", "say": "This sentence is spoken over a steady tone.", "pause": 2 },
+    { "id": "b", "say": "And so is this one, after a pause.", "pause": 2 }
+  ]
+}
