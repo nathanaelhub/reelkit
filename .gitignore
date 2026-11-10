@@ -29,3 +29,4 @@ tests/fixtures/depth/.voice-cache/
 tests/fixtures/depth-demo/
 tests/fixtures/gl/timeline.json
 tests/fixtures/gl/.voice-cache/
+reels/*/assets/*.depth.png

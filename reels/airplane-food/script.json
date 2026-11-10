@@ -3,21 +3,65 @@
   "theme": "paper",
   "fps": 30,
   "voice": {
-    "provider": "auto",
+    "provider": "kokoro",
     "speed": 1.05,
-    "elevenlabs": { "voiceId": "JBFqnCBsd6RMkjVDRZzb" },
-    "openai": { "voice": "ash" }
+    "elevenlabs": {
+      "voiceId": "JBFqnCBsd6RMkjVDRZzb"
+    },
+    "openai": {
+      "voice": "ash"
+    },
+    "kokoro": {
+      "voice": "am_michael"
+    }
   },
   "captions": true,
   "scenes": [
-    { "id": "hook", "say": "Why does airplane food taste so bland?", "visual": "Meal tray drops in, BLAND stamp slams on it on the word bland" },
-    { "id": "twist", "say": "It's not the chef. It's your tongue.", "visual": "Chef hat gets crossed out, tongue pops in with a red circle" },
-    { "id": "cabin", "say": "Planes keep the cabin pressure like you're on a mountain, about eight thousand feet up.", "visual": "Altitude gauge counts up to 8,000 ft, mountain silhouette draws in" },
-    { "id": "dry", "say": "And the air is drier than most deserts, so your nose dries out. And smell is most of flavor.", "visual": "Humidity meter drains, cactus vs plane, nose icon, 'smell = flavor' card" },
-    { "id": "numbers", "say": "Studies found salty and sweet taste drop by up to thirty percent up there.", "min": 4.2, "visual": "Big -30% counter, two bars shrinking: salt, sweet" },
-    { "id": "noise", "say": "Then the engine roar dulls your taste buds even more.", "visual": "Sound waves shaking, decibel chip" },
-    { "id": "umami", "say": "But one taste survives. Umami. That's why people suddenly order tomato juice on planes.", "visual": "Bars for salt/sweet stay low, umami bar stays tall; tomato juice slides in" },
-    { "id": "fix", "say": "So airlines quietly add extra salt and spice, just to make it taste normal.", "visual": "Phone mockup of the tray, EXTRA SALT stamp" },
-    { "id": "outro", "say": "Follow for more things you never noticed.", "visual": "Big FOLLOW, step badge, bobbing plane" }
+    {
+      "id": "hook",
+      "say": "Why does airplane food taste so bland?",
+      "visual": "Meal tray drops in, BLAND stamp slams on it on the word bland"
+    },
+    {
+      "id": "twist",
+      "say": "It's not the chef. It's your tongue.",
+      "visual": "Chef hat gets crossed out, tongue pops in with a red circle"
+    },
+    {
+      "id": "cabin",
+      "say": "Planes keep the cabin pressure like you're on a mountain, about eight thousand feet up.",
+      "visual": "Altitude gauge counts up to 8,000 ft, mountain silhouette draws in"
+    },
+    {
+      "id": "dry",
+      "say": "And the air is drier than most deserts, so your nose dries out. And smell is most of flavor.",
+      "visual": "Humidity meter drains, cactus vs plane, nose icon, 'smell = flavor' card"
+    },
+    {
+      "id": "numbers",
+      "say": "Studies found salty and sweet taste drop by up to thirty percent up there.",
+      "min": 4.2,
+      "visual": "Big -30% counter, two bars shrinking: salt, sweet"
+    },
+    {
+      "id": "noise",
+      "say": "Then the engine roar dulls your taste buds even more.",
+      "visual": "Sound waves shaking, decibel chip"
+    },
+    {
+      "id": "umami",
+      "say": "But one taste survives. Umami. That's why people suddenly order tomato juice on planes.",
+      "visual": "Bars for salt/sweet stay low, umami bar stays tall; tomato juice slides in"
+    },
+    {
+      "id": "fix",
+      "say": "So airlines quietly add extra salt and spice, just to make it taste normal.",
+      "visual": "Phone mockup of the tray, EXTRA SALT stamp"
+    },
+    {
+      "id": "outro",
+      "say": "Follow for more things you never noticed.",
+      "visual": "Big FOLLOW, step badge, bobbing plane"
+    }
   ]
 }

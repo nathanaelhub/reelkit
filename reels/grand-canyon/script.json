@@ -1,0 +1,15 @@
+{
+  "title": "The canyon is younger than its rocks",
+  "theme": "ink",
+  "voice": { "provider": "kokoro", "kokoro": { "voice": "bm_george" } },
+  "speed": 1.0,
+  "scenes": [
+    { "id": "hook", "say": "This canyon is a mile deep. But the river that carved it is young.", "visual": "Sunrise over the rim, camera pushing in. 'A mile deep' lands on @deep; 'young' stamps on @young." },
+    { "id": "river", "say": "The Colorado started cutting here only five to six million years ago.", "visual": "Rapids in the inner gorge, push in. Big '5–6' pops on @five, 'million years' below." },
+    { "id": "layers", "say": "Every layer it sliced through is a page of much older history.", "visual": "Layered buttes, slow orbit. Headline accent on @page." },
+    { "id": "sea", "say": "These corals grew in a tropical sea, 340 million years ago.", "visual": "Fossil corals, gentle float. Counter to 340 on @340. Source kicker: Redwall Limestone." },
+    { "id": "bottom", "say": "And at the very bottom, the rock is 1.8 billion years old.", "visual": "Wide view down into the canyon, pan. Counter 1.8 on @1.8, 'billion years'." },
+    { "id": "clouds", "say": "Some mornings, the whole thing fills with cloud.", "visual": "Cloud inversion, camera rises. Accent on @cloud." },
+    { "id": "outro", "say": "Two hundred seventy-seven miles of Earth's diary, open to anyone.", "visual": "End card: '277 miles of Earth's diary'. Photo credit chip.", "pause": 1.6 }
+  ]
+}
