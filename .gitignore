@@ -23,3 +23,7 @@ tests/fixtures/duck/score.wav
 tests/fixtures/duck/voice.mp3
 tests/fixtures/duck/.voice-cache/
 reels/*/score.wav
+tests/fixtures/depth/assets/
+tests/fixtures/depth/timeline.json
+tests/fixtures/depth/.voice-cache/
+tests/fixtures/depth-demo/

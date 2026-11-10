@@ -107,6 +107,39 @@ const cases = [
     return { ok: gap - speaking >= 3, detail: `tone at ${speaking} dB while speaking, ${gap} dB in the pause (want ≥ 3 dB louder in the pause)` };
   }],
 
+  ['depth: a camera move shifts near pixels and leaves far ones still', () => {
+    const fx = path.resolve('tests/fixtures/depth'), as = path.join(fx, 'assets'); fs.mkdirSync(as, { recursive: true });
+    const mk = (args, out) => spawnSync(ffmpegPath(), ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', args, '-frames:v', '1', path.join(as, out)], { encoding: 'utf8' });
+    mk('color=white:s=1080x1920,drawgrid=w=90:h=1920:t=30:c=black', 'stripes.png');
+    mk('color=black:s=1080x1920,drawbox=x=0:y=0:w=540:h=1920:color=white:t=fill', 'stripes-map.png');
+    const v = node('scripts/voice.mjs', [fx]); if (v.status !== 0) return { ok: false, detail: v.out };
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'reelkit-test-')), out = path.join(tmp, 'd.mp4');
+    const r = spawnSync(process.execPath, ['scripts/render.mjs', fx, '--draft', '--out', out], { encoding: 'utf8' });
+    if (r.status !== 0) return { ok: false, detail: r.stdout + r.stderr };
+    const dur = JSON.parse(fs.readFileSync(path.join(fx, 'timeline.json'), 'utf8')).duration;
+    const row = t => spawnSync(ffmpegPath(), ['-loglevel', 'error', '-ss', String(t), '-i', out, '-frames:v', '1', '-vf', 'crop=iw:1:0:ih/2,format=gray', '-f', 'rawvideo', '-'], { encoding: 'buffer' }).stdout;
+    const a = row(0.05), b = row(dur - 0.1), w = a.length;
+    fs.rmSync(tmp, { recursive: true, force: true });
+    const diff = (x0, x1) => { let d = 0; for (let x = x0; x < x1; x++) d += Math.abs(a[x] - b[x]); return d / (x1 - x0); };
+    const near = diff(Math.round(w * 0.08), Math.round(w * 0.42)), far = diff(Math.round(w * 0.6), Math.round(w * 0.92));
+    return { ok: near > 15 && far < 3, detail: `mean pixel change: near half ${near.toFixed(1)}, far half ${far.toFixed(1)} (want near > 15, far < 3; the stripes are a third black, so ~30 is a full shift)` };
+  }],
+
+  ['depth: npm run depth makes a map the size of the photo', () => {
+    const fx = path.resolve('tests/fixtures/depth'), as = path.join(fx, 'assets'), photo = path.join(as, 'scene.png'), map = path.join(as, 'scene.depth.png');
+    fs.mkdirSync(as, { recursive: true });
+    // a floor that gets nearer towards the bottom, with a box standing on it
+    spawnSync(ffmpegPath(), ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'gradients=s=640x480:c0=0x87ceeb:c1=0x2e8b57:x0=0:y0=0:x1=0:y1=480,drawbox=x=260:y=220:w=120:h=160:color=0x8b4513:t=fill', '-frames:v', '1', photo]);
+    fs.rmSync(map, { force: true });
+    const html = path.join(fx, 'reel.html'), orig = fs.readFileSync(html, 'utf8');
+    fs.writeFileSync(html, orig + '\n<!-- <canvas data-depth="assets/scene.png"> -->');
+    const r = node('scripts/depth.mjs', [fx]);
+    fs.writeFileSync(html, orig);
+    if (r.status !== 0 || !fs.existsSync(map)) return { ok: false, detail: r.out };
+    const size = spawnSync(ffprobePath(), ['-v', 'error', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', map], { encoding: 'utf8' }).stdout.trim();
+    return { ok: size === '640,480', detail: `map ${size}, want 640,480\n${r.out}` };
+  }],
+
   ['16:9: voices at 1920x1080, keeps phoneme words written, passes the check, renders wide at the target loudness', () => {
     const fx = path.resolve('tests/fixtures/wide'), problems = [];
     // a quiet tone as music, so the final loudness pass has real work to do (about -30 LUFS in, -14 out)

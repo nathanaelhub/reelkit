@@ -125,3 +125,22 @@ Real footage plays inside a scene, frame-accurate in renders:
 ## Images
 
 Put files in `reels/<slug>/assets/` and reference `assets/name.png`. Transparent PNGs/SVGs look best as cut-outs with `filter: drop-shadow(...)`. A host character (`assets/host.png`) placed in the global layer with `data-loop="talk"` gives the "creator explaining" look.
+
+## Depth photos: a still photo with a 3D camera move
+
+```html
+<canvas class="abs" data-depth="assets/harbour.jpg" data-move="push" data-amount="0.05" style="left:0;top:0;width:1080px;height:1920px"></canvas>
+```
+
+`check`, `render` and `preview` make `assets/harbour.depth.png` the first time (Depth Anything V2 Small, local), and the shader moves near things more than far ones, so a photo feels filmed instead of slid.
+
+| attribute | meaning |
+|---|---|
+| `data-move` | `push` (dolly in), `pull`, `pan-left`, `pan-right`, `rise`, `fall`, `orbit`, `float` (gentle loop), `vertigo` (zoom in while the background stretches) |
+| `data-amount` | strength, default `0.05`. 0.03 is subtle, 0.08 is bold; above 0.1 edges start to tear |
+| `data-at`, `data-dur` | when the move runs; default the whole scene |
+| `data-ease` | default `inOut`; a long camera move should glide, so springs are not required here |
+| `data-focus` | the depth that stays still, 0 = far … 1 = near (default 0) |
+| `data-depth-map` | your own map instead of the generated one (white = near) |
+
+Best on photos with a clear foreground and background (a person, a doorway, a street, a landscape with a near tree). Flat things (documents, screenshots, logos) gain nothing. Text and stickers go on top as normal elements.
