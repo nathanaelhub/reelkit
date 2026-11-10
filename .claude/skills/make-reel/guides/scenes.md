@@ -77,6 +77,7 @@ The check fails on:
 ## Scene options
 
 - `data-transition="cut|fade|slide-up|slide-left|zoom|iris|flash"` + `data-transition-dur="0.3"`: how this scene enters. Mix them, but cut is the reel default; use the others at section changes.
+- `data-transition="gl:<Name>"`: any of the 214 [gl-transitions](https://github.com/gl-transitions/gl-transitions) shaders, drawn by render (preview and contact sheets show a fade in its place). Default length 0.7 s; parameters with `data-transition-params='{"direction":[1,0]}'`. Pick one that fits the reel's look and use it at most at 2–3 big turns: `gl:InkBleed`, `gl:PaperTear`, `gl:BrushWipe`, `gl:SketchDissolve` (paper, hand-made); `gl:FilmBurn`, `gl:FilmDissolve`, `gl:LightStreaks`, `gl:Overexposure` (cinematic); `gl:WhipPan`, `gl:WhipSpin`, `gl:CrossZoom`, `gl:Directional` (energy); `gl:GlitchBands`, `gl:VhsTracking`, `gl:TvTurnOff`, `gl:Pixelize` (tech, retro); `gl:PageCurl`-style `gl:InvertedPageCurl`, `gl:BookFlip`, `gl:Cube` (objects). The full list is in `node_modules/gl-transitions/README.md`; check fails on a misspelt name and suggests close ones.
 - `data-captions="on|top|off"`: move captions to the top for scenes with a lot of content in the lower half; off for the outro.
 - Backgrounds: `bg-paper` `bg-grid` `bg-dots` `bg-halftone` `bg-accent` `bg-cork`, or your own CSS.
 

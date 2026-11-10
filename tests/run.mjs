@@ -140,6 +140,29 @@ const cases = [
     return { ok: size === '640,480', detail: `map ${size}, want 640,480\n${r.out}` };
   }],
 
+  ['gl transitions: render blends the two scenes mid-way, and check rejects unknown names with a suggestion', () => {
+    const fx = path.resolve('tests/fixtures/gl');
+    const v = node('scripts/voice.mjs', [fx]); if (v.status !== 0) return { ok: false, detail: v.out };
+    const tl = JSON.parse(fs.readFileSync(path.join(fx, 'timeline.json'), 'utf8')), b = tl.scenes[1].start;
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'reelkit-test-')), out = path.join(tmp, 'g.mp4');
+    const r = spawnSync(process.execPath, ['scripts/render.mjs', fx, '--draft', '--from', String(b - 0.3), '--to', String(b + 1.3), '--out', out], { encoding: 'utf8' });
+    if (r.status !== 0) return { ok: false, detail: r.stdout + r.stderr };
+    // share of red (scene B's background) pixels in the frame, sampled small
+    const red = t => { const px = spawnSync(ffmpegPath(), ['-loglevel', 'error', '-ss', String(t), '-i', out, '-frames:v', '1', '-vf', 'scale=54:96,format=rgb24', '-f', 'rawvideo', '-'], { encoding: 'buffer' }).stdout;
+      let n = 0; for (let i = 0; i < px.length; i += 3) if (px[i] > 150 && px[i + 1] < 90 && px[i + 2] < 90) n++; return n / (px.length / 3); };
+    const before = red(0.1), mid = red(0.3 + 0.62), after = red(1.5);
+    fs.rmSync(tmp, { recursive: true, force: true });
+    const problems = [];
+    if (!(before < 0.02 && after > 0.85)) problems.push(`red share before ${before.toFixed(2)}, after ${after.toFixed(2)}`);
+    if (!(mid > 0.1 && mid < 0.9)) problems.push(`mid-transition red share ${mid.toFixed(2)}: should be a blend of both scenes`);
+    const html = path.join(fx, 'reel.html'), orig = fs.readFileSync(html, 'utf8');
+    fs.writeFileSync(html, orig.replace('gl:InkBleed', 'gl:InkBled'));
+    const c = node('scripts/check.mjs', [fx]);
+    fs.writeFileSync(html, orig);
+    if (c.status === 0 || !c.out.includes('unknown transition "gl:InkBled"') || !c.out.includes('gl:InkBleed')) problems.push('check should fail on gl:InkBled and suggest gl:InkBleed:\n' + c.out);
+    return { ok: !problems.length, detail: problems.join('\n  ') };
+  }],
+
   ['16:9: voices at 1920x1080, keeps phoneme words written, passes the check, renders wide at the target loudness', () => {
     const fx = path.resolve('tests/fixtures/wide'), problems = [];
     // a quiet tone as music, so the final loudness pass has real work to do (about -30 LUFS in, -14 out)

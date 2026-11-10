@@ -10,6 +10,7 @@ import crypto from 'node:crypto';
 import { parseArgs, reelDir, openReel, OUT, ROOT, readJSON } from './lib.mjs';
 import { tasteDir } from './ref.mjs';
 import { ensureDepthMaps } from './depth.mjs';
+import { glTransitions, suggest } from './transitions.mjs';
 
 const args = parseArgs();
 const dir = reelDir(args._[0]);
@@ -24,6 +25,10 @@ const stale = (script.scenes || []).some(s => { const t = tl.scenes.find(x => x.
 await ensureDepthMaps(dir);
 const { page, close, errors } = await openReel(dir, { scale: 1 });
 const issues = await page.evaluate(() => window.__reel.lint());
+// gl: transitions are drawn by render; check the names here (preview and the contact sheets show a fade)
+for (const m of fs.readFileSync(path.join(dir, 'reel.html'), 'utf8').matchAll(/data-transition="gl:([^"]+)"/g))
+  if (!glTransitions().some(t => t.name.toLowerCase() === m[1].toLowerCase()))
+    issues.push({ level: 'error', scene: '*', msg: `unknown transition "gl:${m[1]}"${suggest(m[1]).length ? `. Close: ${suggest(m[1]).map(x => 'gl:' + x).join(', ')}` : ''}. All 214: node_modules/gl-transitions/README.md` });
 if (stale) issues.unshift({ level: 'error', scene: '*', msg: 'script.json changed since the last voice run. Run npm run voice first.' });
 errors.forEach(e => issues.unshift({ level: 'error', scene: '*', msg: 'page error: ' + e }));
 

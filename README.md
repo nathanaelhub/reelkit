@@ -82,6 +82,16 @@ Put a photo in `assets/` and give it a camera move:
 
 reelkit estimates how far away every pixel is with [Depth Anything V2](https://github.com/DepthAnything/Depth-Anything-V2) (Small, Apache-2.0, runs locally) and a WebGL shader moves near things more than far ones: push, pull, pan, rise, orbit, float or vertigo. A still photo feels filmed instead of slid.
 
+## 214 shader transitions
+
+Any scene can enter through one of the [gl-transitions](https://github.com/gl-transitions/gl-transitions) shaders (MIT/BSD): ink bleeding through paper, film burns, whip pans, page curls, glitches.
+
+```html
+<section class="scene" data-scene="reveal" data-transition="gl:InkBleed">
+```
+
+Render captures the outgoing and incoming scenes separately, blends them on the GPU, then lays the captions back on top so they never smear.
+
 ## Music and sound, written in code
 
 Each reel has a `score.js` next to its `reel.html`: a backing track and sound effects written with [Tone.js](https://tonejs.github.io), timed to the same word timestamps the animation uses. No music licence, no stock library.
