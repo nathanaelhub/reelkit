@@ -3,618 +3,619 @@
   "fps": 30,
   "width": 1080,
   "height": 1920,
+  "loudness": -14,
   "theme": "paper",
   "captions": true,
-  "voice": "none",
-  "audio": null,
+  "voice": "kokoro",
+  "audio": "voice.mp3",
   "music": null,
   "musicVolume": 0.12,
-  "duration": 45.751,
+  "duration": 37.059,
   "scenes": [
     {
       "id": "hook",
       "start": 0,
-      "end": 3.113,
+      "end": 2.606,
       "say": "Why does airplane food taste so bland?",
       "words": [
         {
           "w": "Why",
-          "start": 0.05,
-          "end": 0.335
+          "start": 0.2,
+          "end": 0.34
         },
         {
           "w": "does",
-          "start": 0.335,
-          "end": 0.675
+          "start": 0.34,
+          "end": 0.7
         },
         {
           "w": "airplane",
-          "start": 0.675,
-          "end": 1.234
+          "start": 0.7,
+          "end": 1.1
         },
         {
           "w": "food",
-          "start": 1.234,
-          "end": 1.574
+          "start": 1.1,
+          "end": 1.38
         },
         {
           "w": "taste",
-          "start": 1.574,
-          "end": 1.968
+          "start": 1.38,
+          "end": 1.7
         },
         {
           "w": "so",
-          "start": 1.968,
-          "end": 2.199
+          "start": 1.7,
+          "end": 2.1
         },
         {
           "w": "bland?",
-          "start": 2.199,
-          "end": 2.593
+          "start": 2.1,
+          "end": 2.32
         }
       ]
     },
     {
       "id": "twist",
-      "start": 3.113,
-      "end": 6.346,
+      "start": 2.606,
+      "end": 5.03,
       "say": "It's not the chef. It's your tongue.",
       "words": [
         {
           "w": "It's",
-          "start": 3.163,
-          "end": 3.466
+          "start": 2.766,
+          "end": 3.026
         },
         {
           "w": "not",
-          "start": 3.466,
-          "end": 3.77
+          "start": 3.026,
+          "end": 3.246
         },
         {
           "w": "the",
-          "start": 3.77,
-          "end": 4.073
+          "start": 3.246,
+          "end": 3.546
         },
         {
           "w": "chef.",
-          "start": 4.073,
-          "end": 4.435
+          "start": 3.546,
+          "end": 3.866
         },
         {
           "w": "It's",
-          "start": 4.668,
-          "end": 4.972
+          "start": 3.946,
+          "end": 4.186
         },
         {
           "w": "your",
-          "start": 4.972,
-          "end": 5.334
+          "start": 4.186,
+          "end": 4.526
         },
         {
           "w": "tongue.",
-          "start": 5.334,
-          "end": 5.812
+          "start": 4.526,
+          "end": 4.606
         }
       ]
     },
     {
       "id": "cabin",
-      "start": 6.346,
-      "end": 12.542,
+      "start": 5.03,
+      "end": 9.826,
       "say": "Planes keep the cabin pressure like you're on a mountain, about eight thousand feet up.",
       "words": [
         {
           "w": "Planes",
-          "start": 6.396,
-          "end": 6.834
+          "start": 5.08,
+          "end": 5.67
         },
         {
           "w": "keep",
-          "start": 6.834,
-          "end": 7.165
+          "start": 5.67,
+          "end": 5.91
         },
         {
           "w": "the",
-          "start": 7.165,
-          "end": 7.442
+          "start": 5.91,
+          "end": 6.17
         },
         {
           "w": "cabin",
-          "start": 7.442,
-          "end": 7.827
+          "start": 6.17,
+          "end": 6.61
         },
         {
           "w": "pressure",
-          "start": 7.827,
-          "end": 8.371
+          "start": 6.61,
+          "end": 6.91
         },
         {
           "w": "like",
-          "start": 8.371,
-          "end": 8.702
+          "start": 6.91,
+          "end": 7.11
         },
         {
           "w": "you're",
-          "start": 8.702,
-          "end": 9.087
+          "start": 7.11,
+          "end": 7.29
         },
         {
           "w": "on",
-          "start": 9.087,
-          "end": 9.311
+          "start": 7.29,
+          "end": 7.39
         },
         {
           "w": "a",
-          "start": 9.311,
-          "end": 9.482
+          "start": 7.39,
+          "end": 7.71
         },
         {
           "w": "mountain,",
-          "start": 9.482,
-          "end": 10.026
+          "start": 7.71,
+          "end": 8.05
         },
         {
           "w": "about",
-          "start": 10.16,
-          "end": 10.544
+          "start": 8.23,
+          "end": 8.61
         },
         {
           "w": "eight",
-          "start": 10.544,
-          "end": 10.928
+          "start": 8.61,
+          "end": 8.9
         },
         {
           "w": "thousand",
-          "start": 10.928,
-          "end": 11.473
+          "start": 8.9,
+          "end": 9.19
         },
         {
           "w": "feet",
-          "start": 11.473,
-          "end": 11.804
+          "start": 9.19,
+          "end": 9.43
         },
         {
           "w": "up.",
-          "start": 11.804,
-          "end": 12.028
+          "start": 9.49,
+          "end": 9.93
         }
       ]
     },
     {
       "id": "dry",
-      "start": 12.542,
-      "end": 20.339,
+      "start": 9.826,
+      "end": 15.746,
       "say": "And the air is drier than most deserts, so your nose dries out. And smell is most of flavor.",
       "words": [
         {
           "w": "And",
-          "start": 12.592,
-          "end": 12.906
+          "start": 9.966,
+          "end": 10.106
         },
         {
           "w": "the",
-          "start": 12.906,
-          "end": 13.22
+          "start": 10.106,
+          "end": 10.386
         },
         {
           "w": "air",
-          "start": 13.22,
-          "end": 13.534
+          "start": 10.386,
+          "end": 10.586
         },
         {
           "w": "is",
-          "start": 13.534,
-          "end": 13.788
+          "start": 10.586,
+          "end": 10.866
         },
         {
           "w": "drier",
-          "start": 13.788,
-          "end": 14.223
+          "start": 10.866,
+          "end": 11.186
         },
         {
           "w": "than",
-          "start": 14.223,
-          "end": 14.597
+          "start": 11.186,
+          "end": 11.446
         },
         {
           "w": "most",
-          "start": 14.597,
-          "end": 14.972
+          "start": 11.446,
+          "end": 11.766
         },
         {
           "w": "deserts,",
-          "start": 14.972,
-          "end": 15.527
+          "start": 11.766,
+          "end": 12.226
         },
         {
           "w": "so",
-          "start": 15.678,
-          "end": 15.932
+          "start": 12.366,
+          "end": 12.526
         },
         {
           "w": "your",
-          "start": 15.932,
-          "end": 16.306
+          "start": 12.526,
+          "end": 12.826
         },
         {
           "w": "nose",
-          "start": 16.306,
-          "end": 16.681
+          "start": 12.826,
+          "end": 13.186
         },
         {
           "w": "dries",
-          "start": 16.681,
-          "end": 17.116
+          "start": 13.186,
+          "end": 13.566
         },
         {
           "w": "out.",
-          "start": 17.116,
-          "end": 17.43
+          "start": 13.566,
+          "end": 13.826
         },
         {
           "w": "And",
-          "start": 17.671,
-          "end": 17.986
+          "start": 13.826,
+          "end": 14.106
         },
         {
           "w": "smell",
-          "start": 17.986,
-          "end": 18.42
+          "start": 14.106,
+          "end": 14.446
         },
         {
           "w": "is",
-          "start": 18.42,
-          "end": 18.674
+          "start": 14.446,
+          "end": 14.706
         },
         {
           "w": "most",
-          "start": 18.674,
-          "end": 19.049
+          "start": 14.706,
+          "end": 14.906
         },
         {
           "w": "of",
-          "start": 19.049,
-          "end": 19.302
+          "start": 14.906,
+          "end": 15.306
         },
         {
           "w": "flavor.",
-          "start": 19.302,
-          "end": 19.797
+          "start": 15.306,
+          "end": 15.426
         }
       ]
     },
     {
       "id": "numbers",
-      "start": 20.339,
-      "end": 26.044,
+      "start": 15.746,
+      "end": 20.156,
       "say": "Studies found salty and sweet taste drop by up to thirty percent up there.",
       "words": [
         {
           "w": "Studies",
-          "start": 20.389,
-          "end": 20.909
+          "start": 16.106,
+          "end": 16.426
         },
         {
           "w": "found",
-          "start": 20.909,
-          "end": 21.315
+          "start": 16.426,
+          "end": 16.826
         },
         {
           "w": "salty",
-          "start": 21.315,
-          "end": 21.722
+          "start": 16.826,
+          "end": 17.086
         },
         {
           "w": "and",
-          "start": 21.722,
-          "end": 22.016
+          "start": 17.086,
+          "end": 17.326
         },
         {
           "w": "sweet",
-          "start": 22.016,
-          "end": 22.423
+          "start": 17.326,
+          "end": 17.686
         },
         {
           "w": "taste",
-          "start": 22.423,
-          "end": 22.829
+          "start": 17.686,
+          "end": 18.106
         },
         {
           "w": "drop",
-          "start": 22.829,
-          "end": 23.18
+          "start": 18.106,
+          "end": 18.406
         },
         {
           "w": "by",
-          "start": 23.18,
-          "end": 23.417
+          "start": 18.406,
+          "end": 18.526
         },
         {
           "w": "up",
-          "start": 23.417,
-          "end": 23.654
+          "start": 18.526,
+          "end": 18.706
         },
         {
           "w": "to",
-          "start": 23.654,
-          "end": 23.891
+          "start": 18.706,
+          "end": 19.006
         },
         {
           "w": "thirty",
-          "start": 23.891,
-          "end": 24.355
+          "start": 19.006,
+          "end": 19.186
         },
         {
           "w": "percent",
-          "start": 24.355,
-          "end": 24.874
+          "start": 19.186,
+          "end": 19.366
         },
         {
           "w": "up",
-          "start": 24.874,
-          "end": 25.112
+          "start": 19.506,
+          "end": 19.746
         },
         {
           "w": "there.",
-          "start": 25.112,
-          "end": 25.518
+          "start": 19.746,
+          "end": 19.786
         }
       ]
     },
     {
       "id": "noise",
-      "start": 26.044,
-      "end": 30.268,
+      "start": 20.156,
+      "end": 23.395,
       "say": "Then the engine roar dulls your taste buds even more.",
       "words": [
         {
           "w": "Then",
-          "start": 26.094,
-          "end": 26.442
+          "start": 20.316,
+          "end": 20.436
         },
         {
           "w": "the",
-          "start": 26.442,
-          "end": 26.734
+          "start": 20.436,
+          "end": 20.756
         },
         {
           "w": "engine",
-          "start": 26.734,
-          "end": 27.194
+          "start": 20.756,
+          "end": 21.116
         },
         {
           "w": "roar",
-          "start": 27.194,
-          "end": 27.542
+          "start": 21.116,
+          "end": 21.456
         },
         {
           "w": "dulls",
-          "start": 27.542,
-          "end": 27.947
+          "start": 21.456,
+          "end": 21.636
         },
         {
           "w": "your",
-          "start": 27.947,
-          "end": 28.295
+          "start": 21.636,
+          "end": 21.876
         },
         {
           "w": "taste",
-          "start": 28.295,
-          "end": 28.699
+          "start": 21.876,
+          "end": 22.236
         },
         {
           "w": "buds",
-          "start": 28.699,
-          "end": 29.047
+          "start": 22.236,
+          "end": 22.656
         },
         {
           "w": "even",
-          "start": 29.047,
-          "end": 29.395
+          "start": 22.656,
+          "end": 22.996
         },
         {
           "w": "more.",
-          "start": 29.395,
-          "end": 29.743
+          "start": 22.996,
+          "end": 23.156
         }
       ]
     },
     {
       "id": "umami",
-      "start": 30.268,
-      "end": 36.213,
+      "start": 23.395,
+      "end": 29.048,
       "say": "But one taste survives. Umami. That's why people suddenly order tomato juice on planes.",
       "words": [
         {
           "w": "But",
-          "start": 30.318,
-          "end": 30.576
+          "start": 23.535,
+          "end": 23.755
         },
         {
           "w": "one",
-          "start": 30.576,
-          "end": 30.834
+          "start": 23.755,
+          "end": 24.015
         },
         {
           "w": "taste",
-          "start": 30.834,
-          "end": 31.191
+          "start": 24.015,
+          "end": 24.515
         },
         {
           "w": "survives.",
-          "start": 31.191,
-          "end": 31.697
+          "start": 24.515,
+          "end": 25.055
         },
         {
           "w": "Umami.",
-          "start": 31.895,
-          "end": 32.253
+          "start": 25.175,
+          "end": 25.555
         },
         {
           "w": "That's",
-          "start": 32.451,
-          "end": 32.808
+          "start": 25.695,
+          "end": 25.915
         },
         {
           "w": "why",
-          "start": 32.808,
-          "end": 33.066
+          "start": 25.915,
+          "end": 26.215
         },
         {
           "w": "people",
-          "start": 33.066,
-          "end": 33.473
+          "start": 26.215,
+          "end": 26.615
         },
         {
           "w": "suddenly",
-          "start": 33.473,
-          "end": 33.979
+          "start": 26.615,
+          "end": 26.955
         },
         {
           "w": "order",
-          "start": 33.979,
-          "end": 34.336
+          "start": 26.955,
+          "end": 27.275
         },
         {
           "w": "tomato",
-          "start": 34.336,
-          "end": 34.743
+          "start": 27.275,
+          "end": 27.755
         },
         {
           "w": "juice",
-          "start": 34.743,
-          "end": 35.1
+          "start": 27.755,
+          "end": 28.075
         },
         {
           "w": "on",
-          "start": 35.1,
-          "end": 35.308
+          "start": 28.075,
+          "end": 28.435
         },
         {
           "w": "planes.",
-          "start": 35.308,
-          "end": 35.715
+          "start": 28.435,
+          "end": 28.835
         }
       ]
     },
     {
       "id": "fix",
-      "start": 36.213,
-      "end": 42.038,
+      "start": 29.048,
+      "end": 33.893,
       "say": "So airlines quietly add extra salt and spice, just to make it taste normal.",
       "words": [
         {
           "w": "So",
-          "start": 36.263,
-          "end": 36.499
+          "start": 29.228,
+          "end": 29.548
         },
         {
           "w": "airlines",
-          "start": 36.499,
-          "end": 37.073
+          "start": 29.548,
+          "end": 30.068
         },
         {
           "w": "quietly",
-          "start": 37.073,
-          "end": 37.591
+          "start": 30.068,
+          "end": 30.488
         },
         {
           "w": "add",
-          "start": 37.591,
-          "end": 37.884
+          "start": 30.488,
+          "end": 30.888
         },
         {
           "w": "extra",
-          "start": 37.884,
-          "end": 38.289
+          "start": 30.888,
+          "end": 31.188
         },
         {
           "w": "salt",
-          "start": 38.289,
-          "end": 38.638
+          "start": 31.188,
+          "end": 31.408
         },
         {
           "w": "and",
-          "start": 38.638,
-          "end": 38.93
+          "start": 31.408,
+          "end": 31.688
         },
         {
           "w": "spice,",
-          "start": 38.93,
-          "end": 39.335
+          "start": 31.688,
+          "end": 32.128
         },
         {
           "w": "just",
-          "start": 39.476,
-          "end": 39.825
+          "start": 32.228,
+          "end": 32.448
         },
         {
           "w": "to",
-          "start": 39.825,
-          "end": 40.061
+          "start": 32.448,
+          "end": 32.568
         },
         {
           "w": "make",
-          "start": 40.061,
-          "end": 40.41
+          "start": 32.568,
+          "end": 32.708
         },
         {
           "w": "it",
-          "start": 40.41,
-          "end": 40.647
+          "start": 32.708,
+          "end": 32.968
         },
         {
           "w": "taste",
-          "start": 40.647,
-          "end": 41.052
+          "start": 32.968,
+          "end": 33.428
         },
         {
           "w": "normal.",
-          "start": 41.052,
-          "end": 41.513
+          "start": 33.428,
+          "end": 33.548
         }
       ]
     },
     {
       "id": "outro",
-      "start": 42.038,
-      "end": 45.751,
+      "start": 33.893,
+      "end": 37.059,
       "say": "Follow for more things you never noticed.",
       "words": [
         {
           "w": "Follow",
-          "start": 42.088,
-          "end": 42.512
+          "start": 34.193,
+          "end": 34.393
         },
         {
           "w": "for",
-          "start": 42.512,
-          "end": 42.781
+          "start": 34.393,
+          "end": 34.553
         },
         {
           "w": "more",
-          "start": 42.781,
-          "end": 43.102
+          "start": 34.553,
+          "end": 34.853
         },
         {
           "w": "things",
-          "start": 43.102,
-          "end": 43.526
+          "start": 34.853,
+          "end": 35.313
         },
         {
           "w": "you",
-          "start": 43.526,
-          "end": 43.795
+          "start": 35.313,
+          "end": 35.573
         },
         {
           "w": "never",
-          "start": 43.795,
-          "end": 44.168
+          "start": 35.573,
+          "end": 36.013
         },
         {
           "w": "noticed.",
-          "start": 44.168,
-          "end": 44.644
+          "start": 36.013,
+          "end": 36.213
         }
       ]
     }

@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>The canyon is younger than its rocks</title>
+<link rel="stylesheet" href="../../engine/kit.css">
+<style>
+  /* full-bleed photo with a soft shade at the top so the headline reads on bright sky */
+  .photo { left: 0; top: 0; width: 1080px; height: 1920px; }
+  .shade { left: 0; top: 0; width: 1080px; height: 760px; background: linear-gradient(180deg, rgba(0,0,0,.62), rgba(0,0,0,0)); }
+  .shade.low { top: auto; bottom: 0; height: 900px; background: linear-gradient(0deg, rgba(0,0,0,.55), rgba(0,0,0,0)); }
+  .lit { color: #fff; text-shadow: 0 4px 28px rgba(0,0,0,.55); }
+  .lit.kicker { color: rgba(255,255,255,.78); }
+  .big { font-family: var(--font-display); font-size: 260px; line-height: .86; color: #fff; text-shadow: 0 8px 40px rgba(0,0,0,.5); }
+  .big small { font-size: .32em; letter-spacing: .02em; }
+  .label { font-weight: 700; font-size: 50px; color: #fff; text-shadow: 0 4px 24px rgba(0,0,0,.6); }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- 1 · HOOK: a mile deep, but young -->
+  <section class="scene" data-scene="hook">
+    <canvas class="abs photo" data-depth="assets/sunrise.jpg" data-move="push" data-amount="0.05"></canvas>
+    <div class="abs shade"></div>
+    <div class="pad kicker lit" style="top:170px" data-anim="fade">// grand canyon, arizona</div>
+    <h1 class="pad headline lit" style="top:230px" data-anim="rise" data-at="0.15">A mile <em>deep</em>.</h1>
+    <div class="abs stamp" style="left:560px;top:420px" data-anim="stamp" data-at="@young">young</div>
+  </section>
+
+  <!-- 2 · RIVER: five to six million years -->
+  <section class="scene" data-scene="river" data-transition="gl:WhipPan" data-transition-dur="0.45">
+    <canvas class="abs photo" data-depth="assets/river.jpg" data-move="push" data-amount="0.06"></canvas>
+    <div class="abs shade"></div>
+    <div class="pad kicker lit" style="top:170px" data-anim="fade">// the colorado river</div>
+    <div class="abs big" style="left:72px;top:300px" data-anim="pop" data-at="@five">5–6</div>
+    <div class="abs label" style="left:80px;top:540px" data-anim="rise" data-at="@million">million years of cutting</div>
+  </section>
+
+  <!-- 3 · LAYERS: every layer is a page -->
+  <section class="scene" data-scene="layers" data-transition="gl:CrossZoom" data-transition-dur="0.6">
+    <canvas class="abs photo" data-depth="assets/temple.jpg" data-move="orbit" data-amount="0.05"></canvas>
+    <div class="abs shade"></div>
+    <h1 class="pad headline lit" style="top:230px" data-anim="rise" data-at="@layer">Every layer is a <em>page</em>.</h1>
+    <div class="abs chip red" style="left:72px;top:440px" data-anim="pop" data-at="@older">of much older history</div>
+  </section>
+
+  <!-- 4 · SEA: corals, 340 million years -->
+  <section class="scene" data-scene="sea" data-transition="gl:FilmBurn" data-transition-dur="0.8">
+    <canvas class="abs photo" data-depth="assets/coral.jpg" data-move="float" data-amount="0.035"></canvas>
+    <div class="abs shade low"></div>
+    <div class="pad kicker" style="top:170px;color:#3b3b3b" data-anim="fade">// fossil coral, redwall limestone</div>
+    <div class="abs chip" style="left:72px;top:240px" data-anim="pop" data-at="@tropical">a tropical sea</div>
+    <div class="abs big" style="left:72px;top:880px" data-anim="count" data-from="0" data-to="340" data-at="@340"><span>0</span></div>
+    <div class="abs label" style="left:80px;top:1110px" data-anim="rise" data-at="@million">million years ago</div>
+  </section>
+
+  <!-- 5 · BOTTOM: 1.8 billion years -->
+  <section class="scene" data-scene="bottom" data-transition="fade" data-transition-dur="0.4">
+    <canvas class="abs photo" data-depth="assets/hermits.jpg" data-move="pan-right" data-amount="0.06"></canvas>
+    <div class="abs shade"></div>
+    <div class="pad kicker lit" style="top:170px" data-anim="fade">// at the very bottom</div>
+    <div class="abs big" style="left:72px;top:300px" data-anim="count" data-from="0" data-to="1.8" data-decimals="1" data-at="@1.8">0</div>
+    <div class="abs label" style="left:80px;top:540px" data-anim="rise" data-at="@billion">billion years old</div>
+  </section>
+
+  <!-- 6 · CLOUDS -->
+  <section class="scene" data-scene="clouds" data-transition="gl:Dreamy" data-transition-dur="0.9">
+    <canvas class="abs photo" data-depth="assets/clouds.jpg" data-move="rise" data-amount="0.05"></canvas>
+    <div class="abs shade"></div>
+    <h1 class="pad headline lit" style="top:230px" data-anim="rise" data-at="@mornings">Some mornings, it fills with <em>cloud</em>.</h1>
+  </section>
+
+  <!-- 7 · OUTRO -->
+  <section class="scene bg-paper" data-scene="outro" data-transition="gl:InkBleed" data-transition-dur="0.9">
+    <div class="abs huge accent" style="left:72px;top:420px" data-anim="count" data-from="0" data-to="277" data-at="@Two">0</div>
+    <h1 class="pad headline" style="top:700px" data-anim="rise" data-at="@miles">miles of Earth's <em>diary</em>,<br>open to anyone.</h1>
+    <div class="abs note" style="left:72px;top:1060px" data-anim="fade" data-at="@anyone">Photos: U.S. National Park Service, public domain</div>
+    <div class="abs note" style="left:72px;top:1105px" data-anim="fade" data-at="@anyone">Voice, music and motion: made in code with reelkit</div>
+  </section>
+
+</div>
+<script src="../../engine/kit.js"></script>
+<script>Reel.init();</script>
+</body>
+</html>

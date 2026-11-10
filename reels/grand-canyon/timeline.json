@@ -1,0 +1,467 @@
+{
+  "title": "The canyon is younger than its rocks",
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "loudness": -14,
+  "theme": "ink",
+  "captions": true,
+  "voice": "kokoro",
+  "audio": "voice.mp3",
+  "music": null,
+  "musicVolume": 0.12,
+  "duration": 33.363,
+  "scenes": [
+    {
+      "id": "hook",
+      "start": 0,
+      "end": 4.694,
+      "say": "This canyon is a mile deep. But the river that carved it is young.",
+      "words": [
+        {
+          "w": "This",
+          "start": 0.22,
+          "end": 0.58
+        },
+        {
+          "w": "canyon",
+          "start": 0.58,
+          "end": 1
+        },
+        {
+          "w": "is",
+          "start": 1,
+          "end": 1.2
+        },
+        {
+          "w": "a",
+          "start": 1.2,
+          "end": 1.5
+        },
+        {
+          "w": "mile",
+          "start": 1.5,
+          "end": 1.88
+        },
+        {
+          "w": "deep.",
+          "start": 1.88,
+          "end": 2.22
+        },
+        {
+          "w": "But",
+          "start": 2.32,
+          "end": 2.46
+        },
+        {
+          "w": "the",
+          "start": 2.46,
+          "end": 2.7
+        },
+        {
+          "w": "river",
+          "start": 2.7,
+          "end": 2.98
+        },
+        {
+          "w": "that",
+          "start": 2.98,
+          "end": 3.34
+        },
+        {
+          "w": "carved",
+          "start": 3.34,
+          "end": 3.6
+        },
+        {
+          "w": "it",
+          "start": 3.6,
+          "end": 3.86
+        },
+        {
+          "w": "is",
+          "start": 3.86,
+          "end": 4.14
+        },
+        {
+          "w": "young.",
+          "start": 4.14,
+          "end": 4.4
+        }
+      ]
+    },
+    {
+      "id": "river",
+      "start": 4.694,
+      "end": 9.371,
+      "say": "The Colorado started cutting here only five to six million years ago.",
+      "words": [
+        {
+          "w": "The",
+          "start": 4.834,
+          "end": 5.154
+        },
+        {
+          "w": "Colorado",
+          "start": 5.154,
+          "end": 5.754
+        },
+        {
+          "w": "started",
+          "start": 5.754,
+          "end": 6.154
+        },
+        {
+          "w": "cutting",
+          "start": 6.154,
+          "end": 6.574
+        },
+        {
+          "w": "here",
+          "start": 6.574,
+          "end": 6.894
+        },
+        {
+          "w": "only",
+          "start": 6.894,
+          "end": 7.294
+        },
+        {
+          "w": "five",
+          "start": 7.294,
+          "end": 7.514
+        },
+        {
+          "w": "to",
+          "start": 7.514,
+          "end": 7.894
+        },
+        {
+          "w": "six",
+          "start": 7.894,
+          "end": 8.154
+        },
+        {
+          "w": "million",
+          "start": 8.154,
+          "end": 8.514
+        },
+        {
+          "w": "years",
+          "start": 8.514,
+          "end": 8.894
+        },
+        {
+          "w": "ago.",
+          "start": 8.894,
+          "end": 9.094
+        }
+      ]
+    },
+    {
+      "id": "layers",
+      "start": 9.371,
+      "end": 13.365,
+      "say": "Every layer it sliced through is a page of much older history.",
+      "words": [
+        {
+          "w": "Every",
+          "start": 9.631,
+          "end": 9.931
+        },
+        {
+          "w": "layer",
+          "start": 9.931,
+          "end": 10.131
+        },
+        {
+          "w": "it",
+          "start": 10.131,
+          "end": 10.251
+        },
+        {
+          "w": "sliced",
+          "start": 10.251,
+          "end": 10.691
+        },
+        {
+          "w": "through",
+          "start": 10.691,
+          "end": 10.951
+        },
+        {
+          "w": "is",
+          "start": 10.951,
+          "end": 11.071
+        },
+        {
+          "w": "a",
+          "start": 11.071,
+          "end": 11.531
+        },
+        {
+          "w": "page",
+          "start": 11.531,
+          "end": 11.791
+        },
+        {
+          "w": "of",
+          "start": 11.791,
+          "end": 12.051
+        },
+        {
+          "w": "much",
+          "start": 12.051,
+          "end": 12.391
+        },
+        {
+          "w": "older",
+          "start": 12.391,
+          "end": 12.911
+        },
+        {
+          "w": "history.",
+          "start": 12.911,
+          "end": 13.051
+        }
+      ]
+    },
+    {
+      "id": "sea",
+      "start": 13.365,
+      "end": 19.008,
+      "say": "These corals grew in a tropical sea, 340 million years ago.",
+      "words": [
+        {
+          "w": "These",
+          "start": 13.665,
+          "end": 13.905
+        },
+        {
+          "w": "corals",
+          "start": 13.905,
+          "end": 14.385
+        },
+        {
+          "w": "grew",
+          "start": 14.385,
+          "end": 14.705
+        },
+        {
+          "w": "in",
+          "start": 14.705,
+          "end": 14.845
+        },
+        {
+          "w": "a",
+          "start": 14.845,
+          "end": 15.165
+        },
+        {
+          "w": "tropical",
+          "start": 15.165,
+          "end": 15.605
+        },
+        {
+          "w": "sea,",
+          "start": 15.605,
+          "end": 16.005
+        },
+        {
+          "w": "340",
+          "start": 16.165,
+          "end": 17.465
+        },
+        {
+          "w": "million",
+          "start": 17.465,
+          "end": 17.885
+        },
+        {
+          "w": "years",
+          "start": 17.885,
+          "end": 18.465
+        },
+        {
+          "w": "ago.",
+          "start": 18.465,
+          "end": 18.805
+        }
+      ]
+    },
+    {
+      "id": "bottom",
+      "start": 19.008,
+      "end": 23.928,
+      "say": "And at the very bottom, the rock is 1.8 billion years old.",
+      "words": [
+        {
+          "w": "And",
+          "start": 19.208,
+          "end": 19.308
+        },
+        {
+          "w": "at",
+          "start": 19.308,
+          "end": 19.428
+        },
+        {
+          "w": "the",
+          "start": 19.428,
+          "end": 19.748
+        },
+        {
+          "w": "very",
+          "start": 19.748,
+          "end": 20.328
+        },
+        {
+          "w": "bottom,",
+          "start": 20.328,
+          "end": 20.728
+        },
+        {
+          "w": "the",
+          "start": 20.808,
+          "end": 20.988
+        },
+        {
+          "w": "rock",
+          "start": 20.988,
+          "end": 21.308
+        },
+        {
+          "w": "is",
+          "start": 21.308,
+          "end": 21.688
+        },
+        {
+          "w": "1.8",
+          "start": 21.688,
+          "end": 22.588
+        },
+        {
+          "w": "billion",
+          "start": 22.588,
+          "end": 23.008
+        },
+        {
+          "w": "years",
+          "start": 23.008,
+          "end": 23.548
+        },
+        {
+          "w": "old.",
+          "start": 23.548,
+          "end": 23.648
+        }
+      ]
+    },
+    {
+      "id": "clouds",
+      "start": 23.928,
+      "end": 26.962,
+      "say": "Some mornings, the whole thing fills with cloud.",
+      "words": [
+        {
+          "w": "Some",
+          "start": 24.148,
+          "end": 24.528
+        },
+        {
+          "w": "mornings,",
+          "start": 24.528,
+          "end": 24.908
+        },
+        {
+          "w": "the",
+          "start": 24.908,
+          "end": 25.088
+        },
+        {
+          "w": "whole",
+          "start": 25.088,
+          "end": 25.368
+        },
+        {
+          "w": "thing",
+          "start": 25.368,
+          "end": 25.728
+        },
+        {
+          "w": "fills",
+          "start": 25.728,
+          "end": 26.048
+        },
+        {
+          "w": "with",
+          "start": 26.048,
+          "end": 26.408
+        },
+        {
+          "w": "cloud.",
+          "start": 26.408,
+          "end": 26.728
+        }
+      ]
+    },
+    {
+      "id": "outro",
+      "start": 26.962,
+      "end": 33.363,
+      "say": "Two hundred seventy-seven miles of Earth's diary, open to anyone.",
+      "words": [
+        {
+          "w": "Two",
+          "start": 27.522,
+          "end": 27.772
+        },
+        {
+          "w": "hundred",
+          "start": 27.772,
+          "end": 28.022
+        },
+        {
+          "w": "seventy-seven",
+          "start": 28.022,
+          "end": 28.522
+        },
+        {
+          "w": "miles",
+          "start": 28.522,
+          "end": 28.902
+        },
+        {
+          "w": "of",
+          "start": 28.902,
+          "end": 29.262
+        },
+        {
+          "w": "Earth's",
+          "start": 29.262,
+          "end": 29.722
+        },
+        {
+          "w": "diary,",
+          "start": 29.722,
+          "end": 30.082
+        },
+        {
+          "w": "open",
+          "start": 30.362,
+          "end": 30.722
+        },
+        {
+          "w": "to",
+          "start": 30.722,
+          "end": 31.362
+        },
+        {
+          "w": "anyone.",
+          "start": 31.362,
+          "end": 31.762
+        }
+      ]
+    }
+  ]
+}
