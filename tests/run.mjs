@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ffmpegPath, ffprobePath } from '../scripts/lib.mjs';
-import { numberToWords, prepareForKokoro, alignTokens, cmuToKokoro, kokoroInstalled, sherpaInstalled } from '../scripts/speech.mjs';
+import { numberToWords, prepareForKokoro, alignTokens, cmuToKokoro, kokoroInstalled, sherpaInstalled, inflect } from '../scripts/speech.mjs';
 
 const node = (script, args) => {
   const r = spawnSync(process.execPath, [script, ...args], { encoding: 'utf8' });
@@ -28,7 +28,7 @@ const cases = [
     return { ok: !bad.length, detail: bad.join('\n  ') };
   }],
 
-  ['speech: Kokoro front end splits compounds, keeps possessives, spells acronyms, reports unknown words', () => {
+  ['speech: Kokoro front end splits compounds, keeps possessives, spells acronyms, builds inflections, reports unknown words', () => {
     const lex = new Set(['visit', 'reel', 'kit', 'budget', 'the', 'hyper', 'frames', 'in', 'cost', 'n', 'a', 's', 'with', 'and']);
     const r = prepareForKokoro("Visit reelkit's budget with NASA & Hyperframes in 1776, Zylqorb!", w => lex.has(w));
     const problems = [];
@@ -38,6 +38,14 @@ const cases = [
     if (!r.text.includes(' and ')) problems.push(`ampersand: ${r.text}`);
     if (JSON.stringify(r.unknown) !== '["Zylqorb"]') problems.push(`unknown ${JSON.stringify(r.unknown)}, want ["Zylqorb"]`);
     if (cmuToKokoro('S EY1 B AH0') !== 'sˈAbə') problems.push(`cmu → ${cmuToKokoro('S EY1 B AH0')}`);
+    // plurals, past tenses and -ing forms missing from the lexicon are built from their base word
+    const P = new Map([['coral', 'k ˈ ɔ ɹ ə l'], ['page', 'p ˈ A ʤ'], ['map', 'm ˈ æ p'], ['carve', 'k ˈ ɑ ɹ v'], ['cut', 'k ˈ ʌ t'], ['jump', 'ʤ ˈ ʌ m p']]);
+    const want = { corals: 'k ˈ ɔ ɹ ə l z', pages: 'p ˈ A ʤ ɪ z', mapped: 'm ˈ æ p t', carved: 'k ˈ ɑ ɹ v d', cutting: 'k ˈ ʌ t ɪ ŋ', jumps: 'ʤ ˈ ʌ m p s' };
+    for (const [w, p] of Object.entries(want)) if (inflect(w, x => P.get(x)) !== p) problems.push(`${w} → ${inflect(w, x => P.get(x))} (want ${p})`);
+    const r2 = prepareForKokoro('Corals carved pages', w => P.has(w), w => P.get(w));
+    const r3 = prepareForKokoro("map's", w => P.has(w), w => P.get(w));
+    if (JSON.stringify(r3.derived) !== JSON.stringify([["map's", 'm ˈ æ p s']])) problems.push(`possessive: ${JSON.stringify(r3.derived)}`);
+    if (r2.unknown.length || r2.derived.length !== 3) problems.push(`inflected sentence: unknown ${r2.unknown}, derived ${JSON.stringify(r2.derived)}`);
     return { ok: !problems.length, detail: problems.join('\n  ') };
   }],
 
