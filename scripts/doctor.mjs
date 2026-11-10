@@ -20,7 +20,7 @@ const major = +process.versions.node.split('.')[0];
 major >= 18 ? ok('Node.js', 'v' + process.versions.node) : bad('Node.js', `v${process.versions.node} is too old`, 'install Node 20+ from nodejs.org');
 
 // npm deps
-const need = ['playwright', 'ffmpeg-static', '@fontsource/inter', '@fontsource/anton', '@fontsource/instrument-serif'];
+const need = ['playwright', 'ffmpeg-static', 'sherpa-onnx-node', '@huggingface/transformers', '@fontsource/inter', '@fontsource/anton', '@fontsource/instrument-serif'];
 let missing = need.filter(d => !fs.existsSync(path.join(ROOT, 'node_modules', d)));
 if (missing.length && fix) { console.log('▸ npm install'); sh('npm', ['install', '--no-audit', '--no-fund']); missing = need.filter(d => !fs.existsSync(path.join(ROOT, 'node_modules', d))); }
 missing.length ? bad('npm packages', 'missing ' + missing.join(', '), 'npm install') : ok('npm packages', need.length + ' installed');
@@ -45,14 +45,25 @@ if (ff && fp) {
 } else bad('ffmpeg (render)', `${ff ? '' : 'ffmpeg '}${fp ? '' : 'ffprobe '}not found`, process.platform === 'darwin' ? 'brew install ffmpeg   (or npm install for the bundled one)' : 'install ffmpeg, or npm install for the bundled one');
 
 // voice
+const speech = await import('./speech.mjs');
+if (!speech.kokoroInstalled() && fix && speech.sherpaInstalled()) {
+  try { await speech.installKokoro(); } catch (e) { console.log(`  Kokoro download failed: ${e.message}`); }
+}
 const voices = [];
 if (process.env.ELEVENLABS_API_KEY) voices.push('elevenlabs');
 if (process.env.OPENAI_API_KEY) voices.push('openai');
-if (process.platform === 'darwin' && which('say')) voices.push('say (macOS)');
+if (speech.sherpaInstalled() && speech.kokoroInstalled()) voices.push('kokoro');
 if (process.env.PIPER_MODEL && which('piper')) voices.push('piper');
+if (process.platform === 'darwin' && which('say')) voices.push('say (macOS)');
 if (voices.length) ok('Voice', voices.join(', ') + `  → default: ${voices[0]}`);
-else bad('Voice', 'no voice provider found; reels will be silent drafts', 'add ELEVENLABS_API_KEY=... or OPENAI_API_KEY=... to .env, or install piper-tts and set PIPER_MODEL');
-if (!process.env.ELEVENLABS_API_KEY) meh('ElevenLabs key', 'optional; best voice + exact word timing. Get one at elevenlabs.io → put ELEVENLABS_API_KEY=... in .env');
+else bad('Voice', 'no voice provider found; reels will be silent drafts', 'npm run doctor -- --fix downloads the free Kokoro voice, or add ELEVENLABS_API_KEY / OPENAI_API_KEY to .env');
+if (speech.kokoroInstalled()) ok('Kokoro (free voice)', 'local, Apache-2.0, safe for published reels');
+else meh('Kokoro (free voice)', 'not downloaded; npm run doctor -- --fix gets it (~130 MB)');
+if (voices[0] === 'say (macOS)') meh('Voice licence', "Apple licenses the macOS voices for personal, non-commercial use: don't publish or sell reels voiced with say");
+if (voices.includes('piper')) meh('Voice licence', "many Piper voices (all Lessac-based ones) are non-commercial: check your voice's MODEL_CARD before publishing");
+let whisper = false; try { await import('@huggingface/transformers'); whisper = true; } catch {}
+whisper ? ok('Word timing (Whisper)', 'local; aligns captions for every voice (model downloads on first use)') : meh('Word timing (Whisper)', 'not installed: npm install; timings will be estimated');
+if (!process.env.ELEVENLABS_API_KEY) meh('ElevenLabs key', 'optional; most expressive voice. Get one at elevenlabs.io → put ELEVENLABS_API_KEY=... in .env');
 
 // yt-dlp (optional: downloads reference videos for npm run ref)
 which('yt-dlp') ? ok('yt-dlp (references)', 'installed') : meh('yt-dlp (references)', 'optional; needed to download reference links: brew install yt-dlp (or pip install yt-dlp)');
@@ -64,7 +75,7 @@ if (!fs.existsSync(path.join(ROOT, '.env'))) {
 }
 
 console.log('\nreelkit setup check\n');
-for (const [s, n, d] of rows) console.log(`  ${s} ${n.padEnd(20)} ${d}`);
+for (const [s, n, d] of rows) console.log(`  ${s} ${n.padEnd(22)} ${d}`);
 const failed = rows.filter(r => r[0] === '✗' && r[1] !== 'Voice');
 console.log(failed.length ? `\n  ${failed.length} thing(s) to fix${fix ? '' : '. Run: npm run doctor -- --fix'}\n` : '\n  ready to make reels\n');
 process.exit(failed.length ? 1 : 0);

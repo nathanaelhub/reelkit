@@ -32,15 +32,16 @@ reelkit is a [Claude Code](https://claude.com/claude-code) skill plus a small re
    > check my setup
 
    Claude runs `npm run doctor -- --fix`, which installs the npm packages, a headless Chromium (for animating) and a bundled ffmpeg (for rendering) if you don't have one.
-5. **Voice (optional but recommended).** Copy `.env.example` to `.env` and add one key:
+5. **Voice.** Nothing to do: `doctor -- --fix` downloads **Kokoro**, a free voice that runs on your machine (open weights, Apache-2.0, fine for reels you publish or sell). Every voice except ElevenLabs gets its word timing from **Whisper**, also local, so captions and word-synced animation land on the exact word. A key is an optional upgrade: copy `.env.example` to `.env` and add one.
 
-   | Voice | Cost | Quality | Word timing |
-   |---|---|---|---|
-   | `ELEVENLABS_API_KEY` | free tier, then paid | best | exact |
-   | `OPENAI_API_KEY` | pay per use, cheap | good | estimated |
-   | macOS `say` | free, built in | robotic | estimated |
-   | [Piper](https://github.com/rhasspy/piper) (`PIPER_MODEL`) | free, offline | decent | estimated |
-   | none | free | silent draft | estimated |
+   | Voice | Cost | Quality | Word timing | Publish / sell? |
+   |---|---|---|---|---|
+   | Kokoro (default, local) | free | natural | Whisper-aligned | yes |
+   | `ELEVENLABS_API_KEY` | free tier, then paid | most expressive | from the API | yes (see their terms) |
+   | `OPENAI_API_KEY` | pay per use | good | Whisper-aligned | yes (see their terms) |
+   | [Piper](https://github.com/OHF-Voice/piper1-gpl) (`PIPER_MODEL`) | free, offline | decent | Whisper-aligned | only voices whose licence allows it; Lessac-based voices don't |
+   | macOS `say` | free, built in | robotic | Whisper-aligned | no: Apple licenses it for personal, non-commercial use |
+   | none | free | silent draft | estimated | n/a |
 
    reelkit picks the best one available automatically.
 
