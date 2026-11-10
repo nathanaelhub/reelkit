@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ffmpegPath, ffprobePath } from '../scripts/lib.mjs';
+import { numberToWords, prepareForKokoro, alignTokens, cmuToKokoro, kokoroInstalled, sherpaInstalled } from '../scripts/speech.mjs';
 
 const node = (script, args) => {
   const r = spawnSync(process.execPath, [script, ...args], { encoding: 'utf8' });
@@ -19,6 +20,60 @@ const expectRun = (r, { exit, expect = [], forbid = [] }) => {
 };
 
 const cases = [
+  ['speech: numbers, money, years, ratios and ordinals become words', () => {
+    const want = { '1776': 'seventeen seventy-six', '2026': 'twenty twenty-six', '2005': 'two thousand five', '1900': 'nineteen hundred',
+      '$1,200': 'one thousand two hundred dollars', '30%': 'thirty percent', '3.5': 'three point five', '4th': 'fourth', '21st': 'twenty-first',
+      '9:16': 'nine by sixteen', '30,000': 'thirty thousand', '1990s': 'nineteen nineties', '10k': 'ten thousand', 'abc': null };
+    const bad = Object.entries(want).filter(([k, v]) => numberToWords(k) !== v).map(([k, v]) => `${k} → ${numberToWords(k)} (want ${v})`);
+    return { ok: !bad.length, detail: bad.join('\n  ') };
+  }],
+
+  ['speech: Kokoro front end splits compounds, keeps possessives, spells acronyms, reports unknown words', () => {
+    const lex = new Set(['visit', 'reel', 'kit', 'budget', 'the', 'hyper', 'frames', 'in', 'cost', 'n', 'a', 's', 'with', 'and']);
+    const r = prepareForKokoro("Visit reelkit's budget with NASA & Hyperframes in 1776, Zylqorb!", w => lex.has(w));
+    const problems = [];
+    if (!r.text.includes("reel kit's budget")) problems.push(`possessive compound: ${r.text}`);
+    if (!r.text.includes('N A S A')) problems.push(`acronym: ${r.text}`);
+    if (!r.text.includes('hyper frames') || !r.text.includes('seventeen seventy-six,')) problems.push(`compound/number: ${r.text}`);
+    if (!r.text.includes(' and ')) problems.push(`ampersand: ${r.text}`);
+    if (JSON.stringify(r.unknown) !== '["Zylqorb"]') problems.push(`unknown ${JSON.stringify(r.unknown)}, want ["Zylqorb"]`);
+    if (cmuToKokoro('S EY1 B AH0') !== 'sˈAbə') problems.push(`cmu → ${cmuToKokoro('S EY1 B AH0')}`);
+    return { ok: !problems.length, detail: problems.join('\n  ') };
+  }],
+
+  ['align: script words take Whisper\'s times, through number spelling, merges and missed words', () => {
+    const heard = [['Why', 0.2, 0.4], ['does', 0.4, 0.7], ['airplane', 0.7, 1.1], ['food', 1.1, 1.5], ['At', 4.8, 5.2], ['30,000', 5.2, 5.9], ['feet,', 5.9, 6.3], ['ur', 6.4, 6.6], ['taste', 6.6, 7.0]]
+      .map(([w, start, end]) => ({ w, start, end }));
+    const toks = 'Why does airplane food — At thirty thousand feet, your taste'.split(' ');
+    const { times, matched } = alignTokens(toks, heard, 0, 7.2);
+    const at = w => times[toks.indexOf(w)];
+    const problems = [];
+    if (at('airplane').start !== 0.7 || at('food').end !== 1.5) problems.push(`airplane/food ${JSON.stringify([at('airplane'), at('food')])}`);
+    if (at('thirty').start !== 5.2 || Math.abs(at('thousand').end - 5.9) > 1e-6) problems.push(`thirty thousand ${JSON.stringify([at('thirty'), at('thousand')])}`);
+    if (!(at('your').start >= 6.3 && at('your').end <= 6.6 + 1e-6)) problems.push(`unmatched "your" should sit between feet and taste: ${JSON.stringify(at('your'))}`);
+    if (!times.every((t, i) => t.end > t.start && (i === 0 || t.start >= times[i - 1].start))) problems.push('times not ordered');
+    if (!(matched > 0.7)) problems.push(`matched ${matched}`);
+    return { ok: !problems.length, detail: problems.join('\n  ') };
+  }],
+
+  ['kokoro: voices a reel locally with numbers and a phoneme, timed by Whisper', () => {
+    if (!sherpaInstalled() || !kokoroInstalled()) return { ok: true, skip: 'Kokoro model not downloaded (npm run doctor -- --fix)' };
+    const fx = path.resolve('tests/fixtures/kokoro');
+    fs.rmSync(path.join(fx, '.voice-cache'), { recursive: true, force: true });
+    const v = node('scripts/voice.mjs', [fx]);
+    if (v.status !== 0) return { ok: false, detail: v.out };
+    const tl = JSON.parse(fs.readFileSync(path.join(fx, 'timeline.json'), 'utf8'));
+    const words = tl.scenes.flatMap(s => s.words), problems = [];
+    if (tl.voice !== 'kokoro') problems.push(`voice ${tl.voice}`);
+    if ((v.out.match(/aligned timing/g) || []).length !== 2) problems.push('both scenes should be aligned by Whisper');
+    if (words.map(w => w.w).join(' ') !== 'In 1776, reelkit cost $1,200. Welcome to Saba.') problems.push(`captions "${words.map(w => w.w).join(' ')}"`);
+    if (!words.every((w, i) => w.end > w.start && (i === 0 || w.start >= words[i - 1].start))) problems.push('word times not ordered');
+    // "1776" is spoken as four words, so it must take far longer than a short word
+    const yr = words[1], inW = words[0];
+    if (!(yr.end - yr.start > 2 * (inW.end - inW.start))) problems.push(`1776 spans ${(yr.end - yr.start).toFixed(2)}s, "In" ${(inW.end - inW.start).toFixed(2)}s`);
+    return { ok: !problems.length, detail: problems.join('\n  ') + '\n' + v.out };
+  }],
+
   ['16:9: voices at 1920x1080, keeps phoneme words written, passes the check, renders wide at the target loudness', () => {
     const fx = path.resolve('tests/fixtures/wide'), problems = [];
     // a quiet tone as music, so the final loudness pass has real work to do (about -30 LUFS in, -14 out)
@@ -144,8 +199,8 @@ const cases = [
 
 let failed = 0;
 for (const [name, fn] of cases) {
-  const { ok, detail } = fn();
-  console.log(`${ok ? '✓' : '✗'} ${name}`);
+  const { ok, detail, skip } = fn();
+  console.log(`${skip ? '–' : ok ? '✓' : '✗'} ${name}${skip ? ` (skipped: ${skip})` : ''}`);
   if (!ok) { failed++; console.log(detail.split('\n').map(l => '    ' + l).join('\n')); }
 }
 console.log(failed ? `\n${failed} failed` : '\nall passed');

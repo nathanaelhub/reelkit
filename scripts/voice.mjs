@@ -1,20 +1,24 @@
 #!/usr/bin/env node
 // Voice the script: one clip per scene, word timestamps, stitched voiceover, timeline.json.
-//   npm run voice -- <reel> [--provider elevenlabs|openai|say|piper|none]
+//   npm run voice -- <reel> [--provider elevenlabs|openai|kokoro|piper|say|none] [--no-align]
 //
 // Providers (auto picks the first that works):
-//   elevenlabs  ELEVENLABS_API_KEY        best quality, exact word timings
-//   openai      OPENAI_API_KEY            good quality, estimated word timings
-//   say         macOS built-in, free      robotic but free and offline
-//   piper       PIPER_MODEL=/path.onnx    free, open-source, offline (pip install piper-tts)
-//   none        silent, timing estimated  for layout drafts
+//   elevenlabs  ELEVENLABS_API_KEY        best quality, word timings from the API
+//   openai      OPENAI_API_KEY            good quality, paid
+//   kokoro      free, local, open weights  natural voice, no key (npm run doctor -- --fix downloads it)
+//   piper       PIPER_MODEL=/path.onnx    free, offline; check the voice's licence before publishing
+//   say         macOS built-in            Apple licenses these voices for personal, non-commercial use only
+//   none        silent                    for layout drafts
 //
+// Every provider except ElevenLabs and none gets its word timings from Whisper (local), matched back to the
+// script's words; if that can't run, timings are estimated from word lengths.
 // Clips are cached by text+voice, so editing one scene only re-voices that scene.
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { parseArgs, reelDir, readJSON, writeJSON, ffmpegPath, mediaDuration, run, die, which, ROOT } from './lib.mjs';
+import { kokoro as kokoroSay, kokoroInstalled, sherpaInstalled, KOKORO_DEFAULT, cmuToKokoro, ipaToKokoro, writeExtraLexicon, alignClip } from './speech.mjs';
 
 const args = parseArgs();
 const dir = reelDir(args._[0]);
@@ -27,8 +31,9 @@ export function pickProvider(want) {
   if (want && want !== 'auto') return want;
   if (process.env.ELEVENLABS_API_KEY) return 'elevenlabs';
   if (process.env.OPENAI_API_KEY) return 'openai';
-  if (process.platform === 'darwin' && which('say')) return 'say';
+  if (sherpaInstalled() && kokoroInstalled()) return 'kokoro';
   if (process.env.PIPER_MODEL && which('piper')) return 'piper';
+  if (process.platform === 'darwin' && which('say')) return 'say';
   return 'none';
 }
 const provider = pickProvider(args.provider || vcfg.provider);
@@ -81,6 +86,15 @@ async function say(text, wav) {
   return { words: null };
 }
 
+async function kokoro(text, wav) {
+  const c = vcfg.kokoro || {};
+  const raw = wav.replace(/\.wav$/, '.raw.wav');
+  try { kokoroSay(text, raw, { voice: c.voice || KOKORO_DEFAULT, speed: vcfg.speed ?? 1, extraLexicon: lexiconFile }); }
+  catch (e) { die(e.message); }
+  run(ff, ['-y', '-loglevel', 'error', '-i', raw, '-ar', '44100', '-ac', '1', wav]); fs.rmSync(raw);
+  return { words: null };
+}
+
 async function piper(text, wav) {
   const model = (vcfg.piper && vcfg.piper.model) || process.env.PIPER_MODEL; if (!model) die('Set PIPER_MODEL to a .onnx voice file');
   const raw = wav.replace(/\.wav$/, '.raw.wav');
@@ -97,7 +111,7 @@ async function none(text, wav) {
   return { words: estimateWords(text, 0.05, d - 0.1) };
 }
 
-const PROVIDERS = { elevenlabs, openai, say, piper, none };
+const PROVIDERS = { elevenlabs, openai, kokoro, piper, say, none };
 if (!PROVIDERS[provider]) die(`Unknown voice provider "${provider}". Use: ${Object.keys(PROVIDERS).join(', ')}`);
 
 // ---------- timing helpers ----------
@@ -128,14 +142,22 @@ function speechBounds(wav, dur) {
 
 // ---------- pronunciation: say a word one way, caption it another ----------
 // script.json "pronounce": { "Saba": "Sayba", "sabanrealty.com": "Saban Realty dot com" }
-// A value can be a respelling ("Sayba") or a phoneme: { "cmu": "S EY1 B AH0" } / { "ipa": "ˈseɪbə" }. Phoneme tags only work
-// on ElevenLabs' English models (eleven_turbo_v2, eleven_flash_v2); other providers say the written word.
+// A value can be a respelling ("Sayba") or a phoneme: { "cmu": "S EY1 B AH0" } / { "ipa": "ˈseɪbə" }. Phonemes work on
+// ElevenLabs' English models (eleven_turbo_v2, eleven_flash_v2) and on Kokoro (written into a per-reel lexicon);
+// other providers use the "say" respelling if there is one, else the written word.
+const lexiconEntries = [];
 const PRON = Object.fromEntries(Object.entries(script.pronounce || {}).map(([k, v]) => {
   if (typeof v === 'string') return [k.toLowerCase(), v];
+  if (provider === 'kokoro' && /^[\p{L}']+$/u.test(k)) {
+    try { lexiconEntries.push([k, v.cmu ? cmuToKokoro(v.cmu) : ipaToKokoro(v.ipa)]); } catch (e) { die(`pronounce "${k}": ${e.message}`); }
+    return [k.toLowerCase(), k];
+  }
   if (provider !== 'elevenlabs') return [k.toLowerCase(), v.say || k];
   const tag = v.cmu ? `<phoneme alphabet="cmu-arpabet" ph="${v.cmu}">${k}</phoneme>` : `<phoneme alphabet="ipa" ph="${v.ipa}">${k}</phoneme>`;
   return [k.toLowerCase(), tag];
 }));
+const lexiconFile = lexiconEntries.length ? path.join(cacheDir, 'lexicon.txt') : null;
+if (lexiconFile) writeExtraLexicon(lexiconFile, lexiconEntries);
 const TAG = /<phoneme\b[^>]*>.*?<\/phoneme>/g;
 function toSpoken(text) {
   const groups = [], out = [];
@@ -164,21 +186,32 @@ const ids = new Set();
 for (const s of scenes) { if (!s.id || !s.say) die(`every scene needs "id" and "say" (problem: ${JSON.stringify(s).slice(0, 80)})`); if (ids.has(s.id)) die(`duplicate scene id "${s.id}"`); ids.add(s.id); }
 
 console.log(`\n▸ voicing ${scenes.length} scenes with ${provider}${provider === 'none' ? ' (silent draft, timing estimated)' : ''}`);
+const wantAlign = !args['no-align'] && vcfg.align !== false && !['elevenlabs', 'none'].includes(provider);
 const clips = [];
 for (const s of scenes) {
   const text = s.say.trim();
   const { spoken, groups } = toSpoken(text);
-  const h = crypto.createHash('sha1').update(JSON.stringify([provider, vcfg[provider] || {}, vcfg.speed ?? 1, spoken, text])).digest('hex').slice(0, 12);
+  const h = crypto.createHash('sha1').update(JSON.stringify([provider, vcfg[provider] || {}, vcfg.speed ?? 1, spoken, text, provider === 'kokoro' ? lexiconEntries : 0])).digest('hex').slice(0, 12);
   const wav = path.join(cacheDir, `${s.id}-${h}.wav`), meta = wav.replace(/\.wav$/, '.json');
-  let words;
-  if (fs.existsSync(wav) && fs.existsSync(meta)) { words = readJSON(meta).words; process.stdout.write(`  · ${s.id} (cached)\n`); }
+  let words, timing;
+  const cached = fs.existsSync(wav) && fs.existsSync(meta) ? readJSON(meta) : null;
+  // re-time a cached clip (no re-voicing) when it was only estimated and alignment can now run
+  if (cached && !(wantAlign && (cached.timing ?? 'estimated') === 'estimated')) { words = cached.words; process.stdout.write(`  · ${s.id} (cached)\n`); }
   else {
     process.stdout.write(`  · ${s.id} …`);
-    const r = await PROVIDERS[provider](spoken, wav);
+    const r = cached ? { words: null } : await PROVIDERS[provider](spoken, wav);
     const d = mediaDuration(wav);
-    words = toWritten(r.words || estimateWords(spoken, ...speechBounds(wav, d)), groups);
-    writeJSON(meta, { text, words });
-    process.stdout.write(` ${d.toFixed(2)}s\n`);
+    let spokenWords = r.words; timing = r.words ? 'voice' : 'estimated';
+    if (!spokenWords && wantAlign) {
+      try {
+        const a = await alignClip(wav, spoken, ff);
+        if (a.matched >= 0.6) { spokenWords = a.words; timing = 'aligned'; }
+        else process.stdout.write(` (Whisper matched only ${Math.round(a.matched * 100)}% of the words; timing estimated)`);
+      } catch (e) { process.stdout.write(` (alignment failed: ${e.message.split('\n')[0]}; timing estimated)`); }
+    }
+    words = toWritten(spokenWords || estimateWords(spoken, ...speechBounds(wav, d)), groups);
+    writeJSON(meta, { text, words, timing });
+    process.stdout.write(` ${d.toFixed(2)}s, ${timing} timing\n`);
   }
   clips.push({ s, wav, words, dur: mediaDuration(wav) });
 }

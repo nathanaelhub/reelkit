@@ -12,7 +12,8 @@ Everything runs from the repo root with npm scripts. All paths below are relativ
 ## 0 · Setup (first time in a session)
 
 Run `npm run doctor`. If anything shows ✗, run `npm run doctor -- --fix` and re-run doctor.
-- If no voice provider is available, tell the user once: reels will be silent drafts until they add `ELEVENLABS_API_KEY` (best, exact word timing) or `OPENAI_API_KEY` to `.env`, or install Piper. On macOS the built-in `say` voice works for free. Then continue; a silent draft is still useful.
+- The free default voice is Kokoro (local, open weights, fine for published reels); `doctor -- --fix` downloads it. `ELEVENLABS_API_KEY` in `.env` is an optional upgrade for the most expressive voice. If doctor reports no voice at all, reels are silent drafts; say so once and continue.
+- If the only voice is macOS `say` or a Piper voice, tell the user once that Apple licenses `say` for personal, non-commercial use and many Piper voices are non-commercial, so those reels shouldn't be published or sold.
 - Never print or commit the contents of `.env`.
 
 ## 1 · Taste first (when there is one)
@@ -41,6 +42,9 @@ Read `.claude/skills/make-reel/guides/script.md` and write `reels/<slug>/script.
 `npm run voice -- <slug>`
 
 This makes `voice.mp3` and `timeline.json` (scene start/end + every word's timestamp). Read the printed table: it is the timing you animate against. Clips are cached per scene, so later edits only re-voice changed scenes.
+
+- Each scene line says how it was timed: `voice` (ElevenLabs), `aligned` (Whisper heard the clip; exact) or `estimated` (spread by word length; `@word` beats may be off by a few tenths). If a scene says estimated, say so when handing over.
+- Kokoro (`"voice": { "provider": "kokoro", "kokoro": { "voice": "am_michael" } }`) says numbers, money, years and compound words itself, but stops with "Kokoro doesn't know how to say: …" for words outside its dictionary (names, brands). Add each one to `"pronounce"` as a respelling from ordinary words (`"Zylqorb": "zil corb"`) or a phoneme (`{ "cmu": "Z IH1 L K AO0 R B" }` / `{ "ipa": "…" }`), then re-run. English voices: `af_heart af_bella af_nicole af_sarah af_nova am_michael am_adam am_eric am_liam am_onyx am_puck bf_emma bf_isabella bm_george bm_daniel bm_lewis` (a = American, b = British, f/m).
 
 ## 4 · Animate it
 

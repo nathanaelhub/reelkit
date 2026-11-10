@@ -1,0 +1,9 @@
+{
+  "title": "Kokoro fixture",
+  "voice": { "provider": "kokoro", "kokoro": { "voice": "am_michael" } },
+  "pronounce": { "Saba": { "cmu": "S EY1 B AH0" } },
+  "scenes": [
+    { "id": "one", "say": "In 1776, reelkit cost $1,200." },
+    { "id": "two", "say": "Welcome to Saba." }
+  ]
+}

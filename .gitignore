@@ -11,3 +11,7 @@ tests/fixtures/pronounce/.voice-cache/
 tests/fixtures/wide/timeline.json
 tests/fixtures/wide/.voice-cache/
 tests/fixtures/wide/music.wav
+models/
+tests/fixtures/kokoro/timeline.json
+tests/fixtures/kokoro/voice.mp3
+tests/fixtures/kokoro/.voice-cache/
