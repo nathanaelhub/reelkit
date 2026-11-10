@@ -9,6 +9,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { parseArgs, reelDir, openReel, OUT, ROOT, readJSON } from './lib.mjs';
 import { tasteDir } from './ref.mjs';
+import { ensureDepthMaps } from './depth.mjs';
 
 const args = parseArgs();
 const dir = reelDir(args._[0]);
@@ -20,6 +21,7 @@ const tl = readJSON(path.join(dir, 'timeline.json'));
 const script = readJSON(path.join(dir, 'script.json'));
 const stale = (script.scenes || []).some(s => { const t = tl.scenes.find(x => x.id === s.id); return !t || t.say !== s.say; }) || script.scenes.length !== tl.scenes.length;
 
+await ensureDepthMaps(dir);
 const { page, close, errors } = await openReel(dir, { scale: 1 });
 const issues = await page.evaluate(() => window.__reel.lint());
 if (stale) issues.unshift({ level: 'error', scene: '*', msg: 'script.json changed since the last voice run. Run npm run voice first.' });

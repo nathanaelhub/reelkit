@@ -7,6 +7,7 @@ import os from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
 import { parseArgs, reelDir, openReel, ffmpegPath, OUT, ROOT, readJSON, run, die } from './lib.mjs';
 import { renderScore, scoreIsStale } from './score.mjs';
+import { ensureDepthMaps } from './depth.mjs';
 
 const args = parseArgs();
 const dir = reelDir(args._[0]);
@@ -62,6 +63,7 @@ const timer = setInterval(() => {
 
 const W = tl.width || 1080, H = tl.height || 1920;
 console.log(`\n▸ ${name}: ${(to - from).toFixed(2)}s @ ${fps}fps, ${draft ? `${W / 2}x${H / 2} draft` : `${W}x${H}`}, ${workers} worker${workers > 1 ? 's' : ''}`);
+await ensureDepthMaps(dir);
 const per = Math.ceil(total / workers);
 let segs;
 try {

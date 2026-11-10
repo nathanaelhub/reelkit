@@ -14,7 +14,8 @@
     "test": "node tests/run.mjs",
     "ref": "node scripts/ref.mjs",
     "clip": "node scripts/clip.mjs",
-    "score": "node scripts/score.mjs"
+    "score": "node scripts/score.mjs",
+    "depth": "node scripts/depth.mjs"
   },
   "engines": {
     "node": ">=18"

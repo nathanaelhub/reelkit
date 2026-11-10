@@ -125,7 +125,7 @@
   // ---------- state ----------
   const R = {
     timeline: null, scenes: [], globals: [], words: [], phrases: [], hooks: {}, everyFrame: [],
-    issues: [], duration: 0, fps: 30, width: 1080, height: 1920, captions: true, t: 0, clips: [], pending: null, playing: false,
+    issues: [], duration: 0, fps: 30, width: 1080, height: 1920, captions: true, t: 0, clips: [], depths: [], pending: null, playing: false,
   };
 
   const norm = s => String(s).toLowerCase().replace(/[’']/g, "'").replace(/[^a-z0-9'%$.-]/g, '').replace(/^[.'-]+|[.'-]+$/g, '');
@@ -271,6 +271,7 @@
       expandStagger(el);
       sc.anims = [...el.querySelectorAll('[data-anim],[data-loop]')].map(a => prepAnim(a, sc));
       addClips(el, sc);
+      addDepths(el, sc);
       el.querySelectorAll('canvas[data-fit]').forEach(c => { const r = c.getBoundingClientRect(); c.width = c.offsetWidth; c.height = c.offsetHeight; });
       R.scenes.push(sc);
     });
@@ -297,10 +298,90 @@
       c.v.addEventListener('loadeddata', res, { once: true });
       c.v.addEventListener('error', () => { R.issues.push({ level: 'error', scene: c.sc.id, el: describe(c.v), msg: `video failed to load: ${c.v.getAttribute('src')}` }); res(); }, { once: true });
     })));
+    await Promise.all(R.depths.map(d => d.loaded));
 
     seek(0);
     if (!RENDER) mountPreview(stage);
     return R;
+  }
+
+  // ---------- depth photos ----------
+  // <canvas class="abs" data-depth="assets/photo.jpg" data-move="push" style="left:0;top:0;width:1080px;height:1920px">
+  // A still photo with a camera move in 3D: assets/photo.depth.png (npm run depth, made automatically by check/render)
+  // says how far away each pixel is, and the shader shifts near pixels more than far ones.
+  //   data-move   push · pull · pan-left · pan-right · rise · fall · orbit · float · vertigo   (default push)
+  //   data-amount strength, default 0.05 (fraction of the frame)   data-at / data-dur: when the move runs (default: the whole scene)
+  //   data-ease   any kit ease (default inOut)   data-focus  the depth that stays still, 0 = far … 1 = near (default 0)
+  const DEPTH_FS = `precision highp float;
+    varying vec2 v; uniform sampler2D img, dep; uniform vec2 fit; uniform float zoom, dz, focus; uniform vec2 off;
+    vec2 cam(vec2 u, float d) { float k = d - focus; vec2 c = (u - 0.5) / (zoom * (1.0 + dz * k)) + 0.5; return c + off * k; }
+    vec2 toImg(vec2 u) { return (u - 0.5) * fit + 0.5; }
+    void main() {
+      vec2 u = cam(v, texture2D(dep, toImg(v)).r);
+      for (int i = 0; i < 4; i++) u = cam(v, texture2D(dep, toImg(u)).r);   // refine: sample depth where we actually land
+      gl_FragColor = texture2D(img, clamp(toImg(u), 0.001, 0.999));
+    }`;
+  const DEPTH_MOVES = {
+    push:       (p, a) => ({ zoom: 1 + p * a * 1.2, dz: p * a * 3 }),
+    pull:       (p, a) => ({ zoom: 1 + (1 - p) * a * 1.2, dz: (1 - p) * a * 3 }),
+    'pan-left': (p, a) => ({ off: [lerp(a, -a, p), 0] }),
+    'pan-right':(p, a) => ({ off: [lerp(-a, a, p), 0] }),
+    rise:       (p, a) => ({ off: [0, lerp(-a, a, p)] }),
+    fall:       (p, a) => ({ off: [0, lerp(a, -a, p)] }),
+    orbit:      (p, a) => ({ off: [a * Math.cos(Math.PI * (1 - p)), a * 0.35 * Math.sin(Math.PI * p)], zoom: 1 + a * 0.4 }),
+    float:      (p, a) => ({ off: [a * 0.5 * Math.sin(2 * Math.PI * p), a * 0.3 * Math.sin(4 * Math.PI * p)] }),
+    vertigo:    (p, a) => ({ zoom: 1 + p * a * 3, dz: -p * a * 4 }),
+  };
+  function addDepths(root, sc) {
+    root.querySelectorAll('canvas[data-depth]').forEach(c => {
+      const src = c.dataset.depth, map = c.dataset.depthMap || src.replace(/\.[a-z0-9]+$/i, '.depth.png');
+      const move = c.dataset.move || 'push';
+      if (!DEPTH_MOVES[move]) R.issues.push({ level: 'error', scene: sc.id, el: describe(c), msg: `unknown data-move "${move}". Use ${Object.keys(DEPTH_MOVES).join(', ')}` });
+      c.width = Math.round(c.offsetWidth || R.width); c.height = Math.round(c.offsetHeight || R.height);
+      const gl = c.getContext('webgl', { preserveDrawingBuffer: true, premultipliedAlpha: false });
+      const d = { c, sc, gl, src, map, move, amount: parseFloat(c.dataset.amount || '0.05'), focus: parseFloat(c.dataset.focus || '0'),
+        at: resolveTime(c.dataset.at || '0', sc, c), dur: c.dataset.dur ? parseFloat(c.dataset.dur) : null, ease: getEase(c.dataset.ease || 'inOut') };
+      const load = url => new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = url; });
+      d.loaded = Promise.all([load(src), load(map)]).then(([im, dm]) => {
+        if (!gl) { R.issues.push({ level: 'error', scene: sc.id, el: describe(c), msg: 'WebGL is not available for a depth photo' }); return; }
+        if (!im) { R.issues.push({ level: 'error', scene: sc.id, el: describe(c), msg: `photo failed to load: ${src}` }); return; }
+        if (!dm) { R.issues.push({ level: 'error', scene: sc.id, el: describe(c), msg: `no depth map at ${map}. Run: npm run depth -- <reel>` }); return; }
+        const sh = (type, code) => { const o = gl.createShader(type); gl.shaderSource(o, code); gl.compileShader(o); return o; };
+        const pr = gl.createProgram();
+        gl.attachShader(pr, sh(gl.VERTEX_SHADER, 'attribute vec2 p; varying vec2 v; void main(){ v = vec2(p.x, -p.y) * 0.5 + 0.5; gl_Position = vec4(p, 0, 1); }'));
+        gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, DEPTH_FS)); gl.linkProgram(pr); gl.useProgram(pr);
+        gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+        const loc = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+        [im, dm].forEach((img, i) => {
+          gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+          [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER].forEach(f => gl.texParameteri(gl.TEXTURE_2D, f, gl.LINEAR));
+          [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(f => gl.texParameteri(gl.TEXTURE_2D, f, gl.CLAMP_TO_EDGE));
+          gl.uniform1i(gl.getUniformLocation(pr, i ? 'dep' : 'img'), i);
+        });
+        // cover the canvas like object-fit: cover, with a margin so the move never shows the photo's edge
+        const ca = c.width / c.height, ia = im.naturalWidth / im.naturalHeight, m = 1 / (1 + 2.4 * d.amount);
+        gl.uniform2f(gl.getUniformLocation(pr, 'fit'), (ia > ca ? ca / ia : 1) * m, (ia > ca ? 1 : ia / ca) * m);
+        d.u = n => gl.getUniformLocation(pr, n);
+        d.ok = true;
+      });
+      R.depths.push(d);
+    });
+  }
+  function drawDepths(t) {
+    R.depths.forEach(d => {
+      if (!d.ok) return;
+      const visible = d.sc.el === document.getElementById('stage') || d.sc.el.classList.contains('on');
+      if (!visible) return;
+      const lt = t - d.sc.start, dur = d.dur ?? Math.max(0.1, d.sc.dur - d.at);
+      const p = d.ease(clamp((lt - d.at) / dur));
+      const cam = { zoom: 1, dz: 0, off: [0, 0], ...(DEPTH_MOVES[d.move] || DEPTH_MOVES.push)(p, d.amount) };
+      const gl = d.gl;
+      gl.viewport(0, 0, d.c.width, d.c.height);
+      gl.uniform1f(d.u('zoom'), cam.zoom); gl.uniform1f(d.u('dz'), cam.dz); gl.uniform1f(d.u('focus'), d.focus);
+      gl.uniform2f(d.u('off'), cam.off[0], cam.off[1]);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    });
   }
 
   // ---------- video clips ----------
@@ -428,6 +509,7 @@
     R.globals.forEach(a => applyAnim(a, t, R.globalScene));
     R.everyFrame.forEach(fn => fn(ctxFor(R.globalScene, t, t)));
     renderCaptions(t);
+    drawDepths(t);
     syncClips(t);
   }
 
@@ -539,7 +621,7 @@
     const SAFE = tall ? { l: 48, r: W - 48, t: 120, b: Hh - 200 } : { l: 48, r: W - 48, t: 40, b: Hh - 40 };
     const capOn = R.captions;
     R.scenes.forEach(sc => {
-      const hasClip = R.clips.some(c => c.sc === sc);
+      const hasClip = R.clips.some(c => c.sc === sc) || R.depths.some(d => d.sc === sc);
       if (!sc.anims.length && !hasClip) out.push({ level: 'warn', scene: sc.id, msg: 'nothing animates in this scene, it will look frozen' });
       const last = hasClip ? sc.dur : Math.max(0, ...sc.anims.map(a => a.at + (a.loop ? sc.dur : a.dur)));
       if (sc.dur > 4 && last < sc.dur * 0.45) out.push({ level: 'warn', scene: sc.id, msg: `dead air: all motion finishes by ${last.toFixed(1)}s of a ${sc.dur.toFixed(1)}s scene. Add a beat synced to a later word, or a loop.` });

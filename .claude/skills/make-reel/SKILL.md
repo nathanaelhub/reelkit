@@ -63,7 +63,7 @@ Rules that matter most:
 - **Layout:** text inside x 72–1008. Headlines from y≈230. Main visual between y≈450 and 1180. Captions sit at y≈1240–1440; keep content out of that band, or set `data-captions="top"` / `"off"` on the scene. Nothing important below y 1700 (app UI covers it).
 - Positions are absolute (`class="abs"` + inline `left/top`). Never use CSS animations or transitions; all motion comes from data attributes or `Reel.on()` hooks, and all of it runs on springs (`spring`, `spring-snappy`, `spring-bouncy`, `spring:k,c,m`). The check fails otherwise.
 - No all-caps centred text on a colour gradient (the check fails on it).
-- Visuals: emoji, inline SVG, CSS shapes, the kit's cards/phone/window/stamp/chips, and images in `reels/<slug>/assets/`. Don't download images of real people or use logos/characters you don't own.
+- Visuals: emoji, inline SVG, CSS shapes, the kit's cards/phone/window/stamp/chips, and images in `reels/<slug>/assets/`. Photos should move in depth, not slide: use a depth photo (`<canvas data-depth="assets/x.jpg" data-move="push">`, see the end of scenes.md). Don't download images of real people or use logos/characters you don't own.
 
 ## 5 · Check your own work (always, before rendering)
 

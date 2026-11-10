@@ -72,6 +72,16 @@ Reels look generic without a reference. Give reelkit 3 to 5 videos whose look yo
 - All motion runs on closed-form spring physics (`spring`, `spring-snappy`, `spring-bouncy`, or `spring:k,c,m`).
 - `npm run check` fails on CSS transitions or animations and on all-caps centred text over a colour gradient: the two most generic looks in AI video.
 
+## Photos that move in 3D
+
+Put a photo in `assets/` and give it a camera move:
+
+```html
+<canvas class="abs" data-depth="assets/street.jpg" data-move="push" style="left:0;top:0;width:1080px;height:1920px"></canvas>
+```
+
+reelkit estimates how far away every pixel is with [Depth Anything V2](https://github.com/DepthAnything/Depth-Anything-V2) (Small, Apache-2.0, runs locally) and a WebGL shader moves near things more than far ones: push, pull, pan, rise, orbit, float or vertigo. A still photo feels filmed instead of slid.
+
 ## Music and sound, written in code
 
 Each reel has a `score.js` next to its `reel.html`: a backing track and sound effects written with [Tone.js](https://tonejs.github.io), timed to the same word timestamps the animation uses. No music licence, no stock library.
@@ -116,6 +126,7 @@ npm run doctor [-- --fix]          # check / install everything
 npm run new -- my-reel "Title"     # scaffold reels/my-reel/
 npm run voice -- my-reel           # voiceover + timeline.json
 npm run score -- my-reel           # score.js → score.wav (render does this for you)
+npm run depth -- my-reel           # depth maps for data-depth photos (check/render do this for you)
 npm run ref -- my-brand <links>    # add reference videos to a taste, measure them
 npm run clip -- my-reel src.mp4 3 7 # trim footage into a reel for <video data-clip>
 npm run check -- my-reel           # lint + design rules + motion + taste check, contact sheets in out/
