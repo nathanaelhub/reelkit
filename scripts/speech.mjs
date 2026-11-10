@@ -17,6 +17,8 @@ export const KOKORO_VOICES = ('af_alloy af_aoede af_bella af_heart af_jessica af
   'am_adam am_echo am_eric am_fenrir am_liam am_michael am_onyx am_puck am_santa bf_alice bf_emma bf_isabella bf_lily ' +
   'bm_daniel bm_fable bm_george bm_lewis').split(' ');
 export const KOKORO_DEFAULT = 'am_michael';
+// bump when the text front end changes what Kokoro is asked to say, so cached clips are re-voiced
+export const KOKORO_FRONTEND = 2;
 
 export const kokoroInstalled = () => fs.existsSync(path.join(KOKORO_DIR, 'model.int8.onnx'));
 export const sherpaInstalled = () => { try { require.resolve('sherpa-onnx-node'); return true; } catch { return false; } };
@@ -78,11 +80,38 @@ export function numberToWords(tok) {
 const lexCache = new Map();
 function loadLexicon(file) {
   if (!lexCache.has(file)) {
-    const set = new Set();
-    for (const line of fs.readFileSync(file, 'utf8').split('\n')) { const sp = line.indexOf(' '); if (sp > 0) set.add(line.slice(0, sp)); }
-    lexCache.set(file, set);
+    const map = new Map(); // word → phoneme tokens ("k ˈ ɔ ɹ ə l")
+    for (const line of fs.readFileSync(file, 'utf8').split('\n')) { const sp = line.indexOf(' '); if (sp > 0 && !map.has(line.slice(0, sp))) map.set(line.slice(0, sp), line.slice(sp + 1).trim()); }
+    lexCache.set(file, map);
   }
   return lexCache.get(file);
+}
+
+// Inflected forms the lexicon lacks ("corals", "carved", "cutting") built from a known base word plus the
+// ending's sound. Returns phoneme tokens or null.
+const VOICELESS = new Set(['p', 't', 'k', 'f', 'θ']), SIBILANT = new Set(['s', 'z', 'ʃ', 'ʒ', 'ʧ', 'ʤ']);
+const lastSound = p => p.trim().split(/\s+/).filter(x => !/[ˈˌː]/.test(x)).pop();
+// the sound of a plural or possessive ending after these phonemes: z, s or ɪz
+const sEnding = p => (SIBILANT.has(lastSound(p)) ? ' ɪ z' : VOICELESS.has(lastSound(p)) ? ' s' : ' z');
+export function inflect(w, phon) {
+  if (/'s$/.test(w)) { const p = phon(w.slice(0, -2)) || inflect(w.slice(0, -2), phon); return p ? p + sEnding(p) : null; }
+  const last = lastSound;
+  const tries = [];
+  if (/[^s]s$/.test(w)) tries.push([w.slice(0, -1), 's']);
+  if (/(s|x|z|ch|sh)es$/.test(w)) tries.push([w.slice(0, -2), 's']);
+  if (/[^aeiou]ies$/.test(w)) tries.push([w.slice(0, -3) + 'y', 's']);
+  if (/ed$/.test(w)) tries.push([w.slice(0, -2), 'd'], [w.slice(0, -1), 'd']);
+  if (/([^aeiou])\1ed$/.test(w)) tries.push([w.slice(0, -3), 'd']);
+  if (/ing$/.test(w)) tries.push([w.slice(0, -3), 'ing'], [w.slice(0, -3) + 'e', 'ing']);
+  if (/([^aeiou])\1ing$/.test(w)) tries.push([w.slice(0, -4), 'ing']);
+  for (const [base, end] of tries) {
+    const p = phon(base); if (!p) continue;
+    const l = last(p);
+    if (end === 's') return p + (SIBILANT.has(l) ? ' ɪ z' : VOICELESS.has(l) ? ' s' : ' z');
+    if (end === 'd') return p + (l === 't' || l === 'd' ? ' ɪ d' : VOICELESS.has(l) || SIBILANT.has(l) && l !== 'z' && l !== 'ʒ' && l !== 'ʤ' ? ' t' : ' d');
+    if (end === 'ing') return p + ' ɪ ŋ';
+  }
+  return null;
 }
 
 // Split an unknown word into the fewest known words (each at least 2 letters, "a" and "i" excepted).
@@ -96,9 +125,10 @@ function splitCompound(w, has) {
 }
 
 const LETTER = /[\p{L}']/u;
-// Returns { text, unknown[] }: text Kokoro can say in full, and the words it still can't.
-export function prepareForKokoro(text, has) {
-  const unknown = [];
+// Returns { text, unknown[], derived[] }: text Kokoro can say in full, the words it still can't, and lexicon
+// entries built for inflected forms (pass phon = word → phonemes to enable those).
+export function prepareForKokoro(text, has, phon = null) {
+  const unknown = [], derived = [];
   const words = text.replace(/&/g, ' and ').replace(/\+/g, ' plus ').split(/(\s+)/).map(tok => {
     if (/^\s+$/.test(tok) || !tok) return tok;
     const m = tok.match(/^([^\p{L}\p{N}$€£]*)(.*?)([^\p{L}\p{N}%]*)$/u);
@@ -109,19 +139,25 @@ export function prepareForKokoro(text, has) {
     const out = core.split(/[-–/]/).filter(Boolean).map(part => {
       const lw = part.toLowerCase().replace(/’/g, "'");
       if (has(lw)) return part;
-      if (/'s$/.test(lw) && has(lw.slice(0, -2))) return part; // possessive: Kokoro handles "'s" after a known word
+      // possessive of a known word: sherpa skips "earth's", so build its entry
+      if (/'s$/.test(lw) && has(lw.slice(0, -2))) { const p = phon && inflect(lw, phon); if (p) derived.push([lw, p]); return part; }
       if (/^[A-Z]{2,5}$/.test(part) && [...lw].every(c => has(c))) return [...part].join(' '); // acronyms: spell out
       const num2 = numberToWords(part);
       if (num2) return num2;
+      const inf = phon && /^[a-z]+$/.test(lw) ? inflect(lw, phon) : null;
+      if (inf) { derived.push([lw, inf]); return part; }
       const poss = /'s$/.test(lw) ? "'s" : '';
       const split = LETTER.test(lw) ? splitCompound((poss ? lw.slice(0, -2) : lw).replace(/'/g, ''), has) : null;
-      if (split) return split.join(' ') + poss;
+      if (split) {
+        if (poss && phon) { const last = split[split.length - 1], p = inflect(last + "'s", phon); if (p) derived.push([last + "'s", p]); }
+        return split.join(' ') + poss;
+      }
       unknown.push(part);
       return part;
     }).join(' ');
     return pre + out + post;
   }).join('');
-  return { text: words, unknown: [...new Set(unknown)] };
+  return { text: words, unknown: [...new Set(unknown)], derived };
 }
 
 // ---------- phonemes (script.json "pronounce" { "cmu": … } / { "ipa": … }) to Kokoro's symbols ----------
@@ -150,11 +186,16 @@ export function kokoro(text, wav, { voice = KOKORO_DEFAULT, speed = 1, extraLexi
   const sid = KOKORO_VOICES.indexOf(voice);
   if (sid < 0) throw new Error(`unknown Kokoro voice "${voice}". English voices: ${KOKORO_VOICES.join(', ')}`);
   const base = path.join(KOKORO_DIR, voice[0] === 'b' ? 'lexicon-gb-en.txt' : 'lexicon-us-en.txt');
-  const base0 = loadLexicon(base), extra = extraLexicon && fs.existsSync(extraLexicon) ? loadLexicon(extraLexicon) : new Set();
-  const { text: said, unknown } = prepareForKokoro(text, w => base0.has(w) || extra.has(w));
+  const base0 = loadLexicon(base), extra = extraLexicon && fs.existsSync(extraLexicon) ? loadLexicon(extraLexicon) : new Map();
+  const { text: said, unknown, derived } = prepareForKokoro(text, w => base0.has(w) || extra.has(w), w => extra.get(w) || base0.get(w));
   if (unknown.length) throw new Error(`Kokoro doesn't know how to say: ${unknown.join(', ')}. Add a respelling to script.json "pronounce" (e.g. "${unknown[0]}": "…") or a phoneme ({ "ipa": "…" }).`);
-  const lexicon = extra.size ? `${extraLexicon},${base}` : base;
-  const key = lexicon;
+  // inflected forms go in a growing lexicon beside the model; the voice reloads only when a new word appears
+  const auto = path.join(MODELS, `kokoro-derived-${voice[0] === 'b' ? 'gb' : 'us'}.txt`);
+  const autoMap = fs.existsSync(auto) ? loadLexicon(auto) : new Map();
+  const fresh = derived.filter(([w]) => !autoMap.has(w));
+  if (fresh.length) { fresh.forEach(([w, p]) => autoMap.set(w, p)); fs.writeFileSync(auto, [...autoMap].map(([w, p]) => `${w} ${p}`).join('\n') + '\n'); }
+  const lexicon = [extra.size && extraLexicon, autoMap.size && auto, base].filter(Boolean).join(',');
+  const key = lexicon + ':' + autoMap.size;
   if (!tts || ttsKey !== key) {
     const sherpa = require('sherpa-onnx-node');
     tts = new sherpa.OfflineTts({ model: { kokoro: { model: path.join(KOKORO_DIR, 'model.int8.onnx'), voices: path.join(KOKORO_DIR, 'voices.bin'),

@@ -18,7 +18,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { parseArgs, reelDir, readJSON, writeJSON, ffmpegPath, mediaDuration, run, die, which, ROOT } from './lib.mjs';
-import { kokoro as kokoroSay, kokoroInstalled, sherpaInstalled, KOKORO_DEFAULT, cmuToKokoro, ipaToKokoro, writeExtraLexicon, alignClip } from './speech.mjs';
+import { kokoro as kokoroSay, kokoroInstalled, sherpaInstalled, KOKORO_DEFAULT, cmuToKokoro, ipaToKokoro, writeExtraLexicon, alignClip, KOKORO_FRONTEND } from './speech.mjs';
 
 const args = parseArgs();
 const dir = reelDir(args._[0]);
@@ -191,7 +191,7 @@ const clips = [];
 for (const s of scenes) {
   const text = s.say.trim();
   const { spoken, groups } = toSpoken(text);
-  const h = crypto.createHash('sha1').update(JSON.stringify([provider, vcfg[provider] || {}, vcfg.speed ?? 1, spoken, text, provider === 'kokoro' ? lexiconEntries : 0])).digest('hex').slice(0, 12);
+  const h = crypto.createHash('sha1').update(JSON.stringify([provider, vcfg[provider] || {}, vcfg.speed ?? 1, spoken, text, provider === 'kokoro' ? [lexiconEntries, KOKORO_FRONTEND] : 0])).digest('hex').slice(0, 12);
   const wav = path.join(cacheDir, `${s.id}-${h}.wav`), meta = wav.replace(/\.wav$/, '.json');
   let words, timing;
   const cached = fs.existsSync(wav) && fs.existsSync(meta) ? readJSON(meta) : null;
