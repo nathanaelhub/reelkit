@@ -8,6 +8,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { parseArgs, reelDir, openReel, ffmpegPath, OUT, ROOT, readJSON, run, die } from './lib.mjs';
 import { renderScore, scoreIsStale } from './score.mjs';
 import { ensureDepthMaps } from './depth.mjs';
+import { glTransition } from './transitions.mjs';
 
 const args = parseArgs();
 const dir = reelDir(args._[0]);
@@ -30,7 +31,7 @@ const outFile = path.resolve(args.out || path.join(OUT, `${name}${draft ? '.draf
 
 async function renderChunk(k, f0, f1) {
   const seg = path.join(tmp, `seg${k}.mp4`);
-  const { page, close, errors } = await openReel(dir, { scale });
+  const { page, close, errors, server, browser } = await openReel(dir, { scale });
   const enc = spawn(ff, ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'mjpeg', '-i', '-',
     // screenshots are full-range JPEG; convert to limited-range bt709 yuv420p, the standard for social video
     '-vf', 'scale=in_range=pc:out_range=tv:out_color_matrix=bt709,format=yuv420p',
@@ -38,10 +39,28 @@ async function renderChunk(k, f0, f1) {
     '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', '-color_range', 'tv', '-r', String(fps), seg], { stdio: ['pipe', 'inherit', 'inherit'] });
   const done = new Promise((res, rej) => enc.on('close', c => (c === 0 ? res() : rej(new Error('ffmpeg exited ' + c)))));
   const stage = await page.$('#stage');
+  // gl: transitions: capture both scenes and the overlay separately, blend them in a WebGL compositor page
+  const windows = (await page.evaluate(() => window.__reel.glWindows())).map(w => ({ ...w, gl: glTransition(w.name) }));
+  let comp = null;
+  if (windows.length) {
+    comp = await browser.newPage();
+    await comp.goto(server.url('engine/gl-composite.html'));
+    await comp.waitForFunction(() => window.compositorReady);
+  }
+  const png = async () => 'data:image/png;base64,' + (await stage.screenshot({ type: 'png', omitBackground: true })).toString('base64');
   for (let f = f0; f < f1; f++) {
     const t = from + f / fps;
     await page.evaluate(async t => { window.__reel.seek(t); await window.__reel.settle(); }, t);
-    const buf = await stage.screenshot({ type: 'jpeg', quality: draft ? 80 : 94 });
+    const w = windows.find(w => t >= w.start && t < w.start + w.dur);
+    let buf;
+    if (w) {
+      const p = (t - w.start) / w.dur, eased = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+      const shot = async (mode, id) => { await page.evaluate(([m, i]) => window.__reel.layer(m, i), [mode, id]); await page.evaluate(() => window.__reel.settle()); return png(); };
+      const A = await shot('scene', w.from), B = await shot('scene', w.to), O = await shot('overlay');
+      await page.evaluate(() => window.__reel.layer(null));
+      const url = await comp.evaluate(a => window.composite(a), { name: w.gl.name, glsl: w.gl.glsl, types: w.gl.paramsTypes || {}, params: { ...w.gl.defaultParams, ...w.params }, from: A, to: B, overlay: O, progress: eased });
+      buf = Buffer.from(url.split(',')[1], 'base64');
+    } else buf = await stage.screenshot({ type: 'jpeg', quality: draft ? 80 : 94 });
     if (!enc.stdin.write(buf)) await new Promise(r => enc.stdin.once('drain', r));
     progress[k] = f - f0 + 1;
   }

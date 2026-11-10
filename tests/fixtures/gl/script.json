@@ -1,0 +1,2 @@
+{ "title": "gl fixture", "voice": { "provider": "none" },
+  "scenes": [ { "id": "a", "say": "First scene stays on screen for a while.", "min": 2 }, { "id": "b", "say": "Second scene arrives through a shader.", "min": 2 } ] }

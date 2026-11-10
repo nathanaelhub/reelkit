@@ -6,7 +6,8 @@
  *
  * Markup contract (see .claude/skills/make-reel/guides/scenes.md):
  *   <div id="stage">
- *     <section class="scene" data-scene="hook" data-transition="cut|fade|slide-up|slide-left|zoom|flash">
+ *     <section class="scene" data-scene="hook" data-transition="cut|fade|slide-up|slide-left|zoom|flash|gl:<name>">
+ *     gl:<name> is any of the 214 gl-transitions (gl:InkBleed, gl:WhipPan, gl:FilmBurn …); render draws it with WebGL, preview shows a fade
  *       <h1 data-anim="rise" data-at="@airplane" data-dur="0.5">...</h1>
  *     </section>
  *   </div>
@@ -266,7 +267,7 @@
       const el = byId[s.id];
       if (!el) { R.issues.push({ level: 'error', scene: s.id, msg: `timeline has scene "${s.id}" but reel.html has no <section class="scene" data-scene="${s.id}">` }); return; }
       const sc = { id: s.id, el, start: s.start, end: s.end, dur: s.end - s.start, words: R.words.filter(w => w.scene === s.id), index: i,
-        transition: el.dataset.transition || 'cut', tdur: parseFloat(el.dataset.transitionDur || '0.3'), captions: el.dataset.captions || 'on' };
+        transition: el.dataset.transition || 'cut', tdur: parseFloat(el.dataset.transitionDur || (/^gl:/.test(el.dataset.transition || '') ? '0.7' : '0.3')), captions: el.dataset.captions || 'on' };
       el.style.zIndex = 10 + i;
       expandStagger(el);
       sc.anims = [...el.querySelectorAll('[data-anim],[data-loop]')].map(a => prepAnim(a, sc));
@@ -303,6 +304,21 @@
     seek(0);
     if (!RENDER) mountPreview(stage);
     return R;
+  }
+
+  // ---------- render layers (for gl: transitions) ----------
+  // render captures the outgoing scene alone, the incoming scene alone, and the overlay (captions + global layer) on a
+  // transparent page, then blends the two scenes with the transition's shader and lays the overlay on top.
+  function applyLayer() {
+    const stage = document.getElementById('stage'), L = R.layer;
+    stage.dataset.layer = L ? (L.mode === 'overlay' ? 'overlay' : 'solo') : '';
+    document.documentElement.classList.toggle('layer-overlay', !!L && L.mode === 'overlay');
+    R.scenes.forEach(sc => sc.el.classList.toggle('solo', !!L && L.mode === 'scene' && L.id === sc.id));
+  }
+  function glWindows() {
+    return R.scenes.filter(sc => sc.index > 0 && /^gl:/.test(sc.transition)).map(sc => ({
+      from: R.scenes[sc.index - 1].id, to: sc.id, start: sc.start, dur: Math.min(sc.tdur, sc.dur), name: sc.transition.slice(3),
+      params: (() => { try { return JSON.parse(sc.el.dataset.transitionParams || '{}'); } catch { return {}; } })() }));
   }
 
   // ---------- depth photos ----------
@@ -478,7 +494,8 @@
     const el = sc.el; const lt = t - sc.start; const p = clamp(lt / sc.tdur); const e = EASE.spring(p); // critically damped: a scene never overshoots its frame
     let tf = '', op = '', clip = '';
     if (sc.index > 0 && lt < sc.tdur) {
-      switch (sc.transition) {
+      const kind = /^gl:/.test(sc.transition) ? (R.layer ? 'none' : 'fade') : sc.transition; // gl: is composited by render
+      switch (kind) {
         case 'fade': op = String(e); break;
         case 'slide-up': tf = `translateY(${(1 - e) * R.height}px)`; break;
         case 'slide-left': tf = `translateX(${(1 - e) * R.width}px)`; break;
@@ -510,6 +527,7 @@
     R.everyFrame.forEach(fn => fn(ctxFor(R.globalScene, t, t)));
     renderCaptions(t);
     drawDepths(t);
+    applyLayer();
     syncClips(t);
   }
 
@@ -712,6 +730,8 @@
     ready: null, error: null,
     seek, lint,
     settle: () => R.pending || Promise.resolve(),
+    layer: (mode, id) => { R.layer = mode ? { mode, id } : null; seek(R.t); },
+    glWindows: () => glWindows(),
     get duration() { return R.duration; }, get fps() { return R.fps; },
     get scenes() { return R.scenes.map(s => ({ id: s.id, start: s.start, end: s.end })); },
     setCaptions: on => { R.captions = on; },

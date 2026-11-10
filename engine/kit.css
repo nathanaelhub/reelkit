@@ -63,6 +63,10 @@ body.render *, body.render *::before, body.render *::after {
 .scene { position: absolute; inset: 0; background: var(--bg); visibility: hidden; overflow: hidden; }
 .scene.transparent { background: transparent; }
 .scene.on { visibility: visible; }
+/* render layers for gl: transitions (see kit.js applyLayer) */
+#stage[data-layer="solo"] > .scene:not(.solo), #stage[data-layer="solo"] > :not(.scene), #stage[data-layer="overlay"] > .scene { visibility: hidden !important; }
+#stage[data-layer="solo"] > .scene.solo { visibility: visible !important; opacity: 1 !important; transform: none !important; clip-path: none !important; }
+html.layer-overlay, html.layer-overlay body, #stage[data-layer="overlay"] { background: transparent !important; }
 
 /* Free positioning helpers: put things where you want with inline top/left */
 .abs { position: absolute; }

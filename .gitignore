@@ -27,3 +27,5 @@ tests/fixtures/depth/assets/
 tests/fixtures/depth/timeline.json
 tests/fixtures/depth/.voice-cache/
 tests/fixtures/depth-demo/
+tests/fixtures/gl/timeline.json
+tests/fixtures/gl/.voice-cache/
