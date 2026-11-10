@@ -15,3 +15,11 @@ models/
 tests/fixtures/kokoro/timeline.json
 tests/fixtures/kokoro/voice.mp3
 tests/fixtures/kokoro/.voice-cache/
+tests/fixtures/score/timeline.json
+tests/fixtures/score/score.wav
+tests/fixtures/score/.voice-cache/
+tests/fixtures/duck/timeline.json
+tests/fixtures/duck/score.wav
+tests/fixtures/duck/voice.mp3
+tests/fixtures/duck/.voice-cache/
+reels/*/score.wav

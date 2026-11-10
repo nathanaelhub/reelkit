@@ -46,6 +46,13 @@ This makes `voice.mp3` and `timeline.json` (scene start/end + every word's times
 - Each scene line says how it was timed: `voice` (ElevenLabs), `aligned` (Whisper heard the clip; exact) or `estimated` (spread by word length; `@word` beats may be off by a few tenths). If a scene says estimated, say so when handing over.
 - Kokoro (`"voice": { "provider": "kokoro", "kokoro": { "voice": "am_michael" } }`) says numbers, money, years and compound words itself, but stops with "Kokoro doesn't know how to say: …" for words outside its dictionary (names, brands). Add each one to `"pronounce"` as a respelling from ordinary words (`"Zylqorb": "zil corb"`) or a phoneme (`{ "cmu": "Z IH1 L K AO0 R B" }` / `{ "ipa": "…" }`), then re-run. English voices: `af_heart af_bella af_nicole af_sarah af_nova am_michael am_adam am_eric am_liam am_onyx am_puck bf_emma bf_isabella bm_george bm_daniel bm_lewis` (a = American, b = British, f/m).
 
+## 3b · Score it
+
+`reels/<slug>/score.js` is the music and sound design, written in code (`npm run new` scaffolds one; `engine/score-kit.js` documents the kit). Render runs it automatically.
+- `bed({ mood, key, bpm, volume })`: a full backing track. Pick the mood from the topic: `upbeat` for tips and lists, `warm` for stories, `tense` for myths and warnings, `lofi` for calm explainers, `cinematic` for big reveals. Default level sits under the voice; the render also ducks it whenever someone talks.
+- Sound effects land on words, the same way animations do: `sfx.hit('@bland')` under a stamp, `sfx.pop('@word')` for things popping on, `sfx.riser('scene-id')` into a reveal, `sfx.tick({ from: '@start', to: '@stop' })` under typing, `sfx.ding('outro')`, `sfx.scenes('whoosh')` on scene changes. Put a sound under every big visual hit and nowhere else.
+- `npm run score -- <slug>` renders it alone and prints the peak; fix any clipping warning by lowering a `volume`. `"duck": false` in script.json turns ducking off; `"scoreVolume"` scales the whole score. If the user brings their own track, drop it in as `music.mp3` (and delete score.js if it should be the only music).
+
 ## 4 · Animate it
 
 Read `.claude/skills/make-reel/guides/scenes.md` (the full kit reference) and `.claude/skills/make-reel/guides/style.md` (the look). Then write `reels/<slug>/reel.html`: one `<section class="scene" data-scene="<id>">` per script scene, same ids, same order.

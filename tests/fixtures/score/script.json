@@ -1,0 +1,8 @@
+{
+  "title": "Score fixture",
+  "voice": { "provider": "none" },
+  "scenes": [
+    { "id": "one", "say": "A quiet start, then a big hit lands here.", "pause": 1.5 },
+    { "id": "two", "say": "And a whoosh carries us into the second scene.", "pause": 1.5 }
+  ]
+}

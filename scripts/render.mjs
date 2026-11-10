@@ -6,11 +6,14 @@ import path from 'node:path';
 import os from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
 import { parseArgs, reelDir, openReel, ffmpegPath, OUT, ROOT, readJSON, run, die } from './lib.mjs';
+import { renderScore, scoreIsStale } from './score.mjs';
 
 const args = parseArgs();
 const dir = reelDir(args._[0]);
 const name = path.basename(dir);
 const tl = readJSON(path.join(dir, 'timeline.json'));
+// mix settings are read live from script.json, so changing them doesn't need a re-voice
+const mix = fs.existsSync(path.join(dir, 'script.json')) ? readJSON(path.join(dir, 'script.json')) : {};
 const draft = !!args.draft;
 const fps = +(args.fps || (draft ? 15 : tl.fps || 30));
 const scale = draft ? 0.5 : 1;
@@ -73,20 +76,35 @@ fs.writeFileSync(list, segs.map(s => `file '${s.replace(/'/g, "'\\''")}'`).join(
 const audio = tl.audio ? path.join(dir, tl.audio) : null;
 const music = ['music.mp3', 'music.m4a', 'music.wav'].map(f => path.join(dir, f)).find(f => fs.existsSync(f))
   || (tl.music ? path.resolve(dir, tl.music) : null);
+// score.js (music + sound effects in code) renders to score.wav; refresh it when the script or timeline changed
+if (scoreIsStale(dir)) { console.log('  scoring score.js'); await renderScore(dir, { quiet: true }); }
+const score = fs.existsSync(path.join(dir, 'score.js')) && fs.existsSync(path.join(dir, 'score.wav')) ? path.join(dir, 'score.wav') : null;
 const a = ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', list];
-let filter = null; const maps = ['-map', '0:v'];
-let ai = 1;
-if (audio && fs.existsSync(audio)) { a.push('-ss', String(from), '-t', String(to - from), '-i', audio); }
-else ai = 0;
-if (music && fs.existsSync(music)) {
-  a.push('-stream_loop', '-1', '-t', String(to - from), '-i', music);
-  const mv = tl.musicVolume ?? 0.12;
-  filter = ai
-    ? `[2:a]volume=${mv},afade=t=out:st=${Math.max(0, to - from - 1.5)}:d=1.5[m];[1:a][m]amix=inputs=2:duration=first:normalize=0[a]`
-    : `[1:a]volume=${mv},afade=t=out:st=${Math.max(0, to - from - 1.5)}:d=1.5[a]`;
+const maps = ['-map', '0:v'];
+const len = to - from, fadeOut = `afade=t=out:st=${Math.max(0, len - 1.5)}:d=1.5`;
+let n = 1; const inputs = {};
+if (audio && fs.existsSync(audio)) { a.push('-ss', String(from), '-t', String(len), '-i', audio); inputs.voice = n++; }
+if (music && fs.existsSync(music)) { a.push('-stream_loop', '-1', '-t', String(len), '-i', music); inputs.music = n++; }
+if (score) { a.push('-ss', String(from), '-t', String(len), '-i', score); inputs.score = n++; }
+// Background layers (music file, score) are summed, then ducked under the voice with a sidechain compressor:
+// the bed dips while someone is talking and comes back up in the gaps.
+const bg = [];
+if (inputs.music) bg.push(`[${inputs.music}:a]aformat=channel_layouts=stereo,volume=${mix.musicVolume ?? tl.musicVolume ?? 0.12}[mu]`);
+if (inputs.score) bg.push(`[${inputs.score}:a]aformat=channel_layouts=stereo,volume=${mix.scoreVolume ?? 1}[sc]`);
+const bgLabels = [inputs.music && '[mu]', inputs.score && '[sc]'].filter(Boolean);
+let filter = null;
+if (bgLabels.length) {
+  const sum = bgLabels.length > 1 ? `${bgLabels.join('')}amix=inputs=${bgLabels.length}:duration=longest:normalize=0[bg0]` : `${bgLabels[0]}anull[bg0]`;
+  if (inputs.voice) {
+    const voiceChain = mix.duck === false
+      ? [`[${inputs.voice}:a]aformat=channel_layouts=stereo[v]`, `[bg0]anull[bg]`]
+      : [`[${inputs.voice}:a]aformat=channel_layouts=stereo,asplit=2[v][vsc]`, `[bg0][vsc]sidechaincompress=threshold=0.02:ratio=6:attack=15:release=350:makeup=1[bg]`];
+    filter = [...bg, sum, ...voiceChain, `[bg]${fadeOut}[bgf]`, `[v][bgf]amix=inputs=2:duration=first:normalize=0[a]`].join(';');
+  } else filter = [...bg, sum, `[bg0]${fadeOut}[a]`].join(';');
 }
+const ai = !!inputs.voice;
 if (filter) { a.push('-filter_complex', filter); maps.push('-map', '[a]'); }
-else if (ai) maps.push('-map', '1:a');
+else if (ai) maps.push('-map', `${inputs.voice}:a`);
 a.push(...maps, '-c:v', 'copy');
 if (ai || filter) a.push('-c:a', 'aac', '-b:a', '192k');
 a.push('-t', String(to - from), '-movflags', '+faststart', outFile);

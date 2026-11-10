@@ -60,4 +60,11 @@ fs.writeFileSync(path.join(dir, 'reel.html'), `<!doctype html>
 </body>
 </html>
 `);
-console.log(`✓ created reels/${slug}/ (script.json, reel.html, assets/)`);
+fs.writeFileSync(path.join(dir, 'score.js'), `// Music and sound effects, written in code (see engine/score-kit.js). Times can be words: '@word'.
+export default function ({ bed, sfx }) {
+  bed({ mood: 'warm' });          // warm · upbeat · tense · lofi · cinematic; also bpm, key, volume
+  sfx.scenes('whoosh');           // a whoosh into every scene after the first
+  // sfx.hit('@word');            // a thump when a word is said (stamps, numbers)
+}
+`);
+console.log(`✓ created reels/${slug}/ (script.json, reel.html, score.js, assets/)`);

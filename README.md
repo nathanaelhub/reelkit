@@ -72,6 +72,20 @@ Reels look generic without a reference. Give reelkit 3 to 5 videos whose look yo
 - All motion runs on closed-form spring physics (`spring`, `spring-snappy`, `spring-bouncy`, or `spring:k,c,m`).
 - `npm run check` fails on CSS transitions or animations and on all-caps centred text over a colour gradient: the two most generic looks in AI video.
 
+## Music and sound, written in code
+
+Each reel has a `score.js` next to its `reel.html`: a backing track and sound effects written with [Tone.js](https://tonejs.github.io), timed to the same word timestamps the animation uses. No music licence, no stock library.
+
+```js
+export default function ({ bed, sfx }) {
+  bed({ mood: 'upbeat', key: 'E' });   // warm · upbeat · tense · lofi · cinematic
+  sfx.hit('@bland');                   // a thump the instant the narrator says "bland"
+  sfx.scenes('whoosh');                // a whoosh into every scene
+}
+```
+
+It renders offline in headless Chromium to `score.wav`, the same way every time, and the final mix ducks it under the voice. Prefer your own track? Drop it in as `music.mp3`.
+
 ## Formats and loudness
 
 `"format"` in script.json picks 9:16 (default), 16:9 or 1:1; the check and render follow it. Every render ends with a two-pass loudness pass to `"loudness"` (default -14 LUFS, true peak -1.5 dB), so voice, music and silences come out at one consistent level.
@@ -101,6 +115,7 @@ reel.html (scenes + data-anim) ────┤
 npm run doctor [-- --fix]          # check / install everything
 npm run new -- my-reel "Title"     # scaffold reels/my-reel/
 npm run voice -- my-reel           # voiceover + timeline.json
+npm run score -- my-reel           # score.js → score.wav (render does this for you)
 npm run ref -- my-brand <links>    # add reference videos to a taste, measure them
 npm run clip -- my-reel src.mp4 3 7 # trim footage into a reel for <video data-clip>
 npm run check -- my-reel           # lint + design rules + motion + taste check, contact sheets in out/
@@ -114,7 +129,7 @@ npm run render -- my-reel          # out/my-reel.mp4   (--draft for fast half-re
 
 ## Contributing
 
-Ideas that would make this better: more scene recipes and themes, a host-character template with mouth shapes, Whisper-based word alignment for the non-ElevenLabs voices, B-roll image search, music ducking, 1:1 and 16:9 formats. PRs welcome.
+Ideas that would make this better: more scene recipes and themes, a host-character template with mouth shapes, Whisper-based word alignment for the non-ElevenLabs voices, B-roll image search. PRs welcome.
 
 ## License
 
