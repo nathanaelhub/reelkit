@@ -9,8 +9,9 @@ import { ffmpegPath, ffprobePath } from '../scripts/lib.mjs';
 import { numberToWords, prepareForKokoro, alignTokens, cmuToKokoro, kokoroInstalled, sherpaInstalled, inflect } from '../scripts/speech.mjs';
 
 const node = (script, args) => {
-  const r = spawnSync(process.execPath, [script, ...args], { encoding: 'utf8' });
-  return { status: r.status, out: (r.stdout || '') + (r.stderr || '') };
+  // a hung script fails its case (named in the output) instead of stalling the whole run
+  const r = spawnSync(process.execPath, [script, ...args], { encoding: 'utf8', timeout: 8 * 60e3 });
+  return { status: r.status, out: (r.stdout || '') + (r.stderr || '') + (r.error ? `\n[${r.error.code === 'ETIMEDOUT' ? 'timed out after 8 min' : r.error.message}]` : '') };
 };
 // check a script's exit code, required substrings and forbidden patterns
 const expectRun = (r, { exit, expect = [], forbid = [] }) => {
@@ -295,9 +296,12 @@ const cases = [
 ];
 
 let failed = 0;
+const tty = process.stdout.isTTY;
 for (const [name, fn] of cases) {
+  if (!tty) console.log(`… ${name}`); // in CI, a case that hangs is the last one named
+  const t0 = Date.now();
   const { ok, detail, skip } = fn();
-  console.log(`${skip ? '–' : ok ? '✓' : '✗'} ${name}${skip ? ` (skipped: ${skip})` : ''}`);
+  console.log(`${skip ? '–' : ok ? '✓' : '✗'} ${name}${skip ? ` (skipped: ${skip})` : ''}${tty ? '' : ` (${((Date.now() - t0) / 1000).toFixed(1)}s)`}`);
   if (!ok) { failed++; console.log(detail.split('\n').map(l => '    ' + l).join('\n')); }
 }
 console.log(failed ? `\n${failed} failed` : '\nall passed');
