@@ -91,12 +91,16 @@ export function keepRanges(words, { gap = 0.35, pad = 0.08, duration = Infinity,
     else if (last && a < last[1]) last[1] = Math.max(last[1], b);
     else r.push([a, b]);
   }
-  // then take out every silence longer than `gap`, keeping `pad` of it on each side so words aren't clipped
+  // then take out every silence longer than `gap`, keeping `pad` of it on each side so words aren't clipped. A
+  // "silence" that a word starts inside is the detector being wrong (quiet speech), not Whisper, so it stays.
+  const words0 = r;
   for (const [s0, s1] of silences) {
     if (s1 - s0 < gap) continue;
     const a = s0 + pad, b = s1 - pad;
-    r = r.flatMap(([x, y]) => (b <= x || a >= y) ? [[x, y]] : [[x, Math.min(y, a)], [Math.max(x, b), y]].filter(([p, q]) => q - p > 0.05));
+    if (words.some(w => w.start > a && w.start < b)) continue;
+    r = r.flatMap(([x, y]) => (b <= x || a >= y) ? [[x, y]] : [[x, Math.min(y, a)], [Math.max(x, b), y]].filter(([p, q]) => q - p >= 0.1));
   }
+  if (!r.length) r = words0; // never cut a sentence down to nothing
   return r.map(([a, b]) => [+a.toFixed(3), +b.toFixed(3)]);
 }
 

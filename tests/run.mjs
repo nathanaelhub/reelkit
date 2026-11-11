@@ -82,6 +82,9 @@ const cases = [
     // a silence the audio shows inside a word span Whisper stretched over it is cut too
     const r2 = keepRanges([W('first', 1.0, 3.2), W('sentence.', 3.2, 3.8)], { gap: 0.35, pad: 0.08, silences: [[1.6, 2.9]] });
     if (r2.length !== 2 || r2[0][1] !== 1.68 || r2[1][0] !== 2.82) problems.push(`silence inside a stretched word not cut: ${JSON.stringify(r2)}`);
+    // but a "silence" a word starts inside is quiet speech: it stays
+    const r3 = keepRanges([W('first', 1.0, 2.0), W('quiet', 2.0, 2.3), W('word.', 2.3, 2.8)], { gap: 0.35, pad: 0.08, silences: [[1.5, 2.6]] });
+    if (r3.length !== 1 || r3[0][0] !== 0.92 || r3[0][1] !== 2.88) problems.push(`a silence holding the start of a word should be ignored: ${JSON.stringify(r3)}`);
     const cuts = parseCuts('n:0 pts_time:3.136 x\nn:1 pts_time:3.17 x\nn:2 pts_time:14.882', 0.5);
     if (JSON.stringify(cuts) !== '[3.136,14.882]') problems.push(`cuts ${JSON.stringify(cuts)} (a cut 34 ms after another is the same cut)`);
     return { ok: !problems.length, detail: problems.join('\n  ') };
@@ -128,7 +131,8 @@ const cases = [
     // how Whisper punctuates Kokoro's sentences varies, so the scene count may too; the pauses must go either way
     if (sc.length < 1 || sc.length > 3) problems.push(`${sc.length} scenes, wanted 1 to 3: ${sc.map(s => s.say).join(' | ')}`);
     if (!sc.some(s => s.footage.cut.length >= 2)) problems.push(`no pause cut inside any sentence: ${JSON.stringify(sc.map(s => s.footage.cut))}`);
-    const v2 = node('scripts/voice.mjs', [reel]); if (v2.status !== 0) return { ok: false, detail: v2.out };
+    const v2 = node('scripts/voice.mjs', [reel]);
+    if (v2.status !== 0) return { ok: false, detail: v2.out + `\nsilences ${JSON.stringify(meta.silences)}\nwords ${JSON.stringify(meta.words)}\ncuts ${JSON.stringify(sc.map(s => s.footage.cut))}` };
     const probe = file => +spawnSync(ffprobePath(), ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', file], { encoding: 'utf8' }).stdout;
     const tl = JSON.parse(fs.readFileSync(path.join(reel, 'timeline.json'), 'utf8'));
     for (const s of tl.scenes) {
