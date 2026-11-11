@@ -63,6 +63,13 @@ if (voices[0] === 'say (macOS)') meh('Voice licence', "Apple licenses the macOS 
 if (voices.includes('piper')) meh('Voice licence', "many Piper voices (all Lessac-based ones) are non-commercial: check your voice's MODEL_CARD before publishing");
 let whisper = false; try { await import('@huggingface/transformers'); whisper = true; } catch {}
 whisper ? ok('Word timing (Whisper)', 'local; aligns captions for every voice (model downloads on first use)') : meh('Word timing (Whisper)', 'not installed: npm install; timings will be estimated');
+
+// footage: face tracking for reframing interviews (data-reframe="face")
+const faces = await import('./faces.mjs');
+if (!faces.faceModelInstalled() && fix) { try { await faces.installFaceModel(); } catch (e) { console.log(`  face model download failed: ${e.message}`); } }
+let mediapipe = false; try { await import('@mediapipe/tasks-vision'); mediapipe = true; } catch {}
+if (mediapipe && faces.faceModelInstalled()) ok('Face reframing', 'MediaPipe BlazeFace, local, Apache-2.0');
+else meh('Face reframing', mediapipe ? 'face model not downloaded yet (npm run doctor -- --fix, 230 KB; or it downloads on first use)' : 'not installed: npm install');
 if (!process.env.ELEVENLABS_API_KEY) meh('ElevenLabs key', 'optional; most expressive voice. Get one at elevenlabs.io → put ELEVENLABS_API_KEY=... in .env');
 
 // yt-dlp (optional: downloads reference videos for npm run ref)

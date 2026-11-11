@@ -300,6 +300,7 @@
       c.v.addEventListener('error', () => { R.issues.push({ level: 'error', scene: c.sc.id, el: describe(c.v), msg: `video failed to load: ${c.v.getAttribute('src')}` }); res(); }, { once: true });
     })));
     await Promise.all(R.depths.map(d => d.loaded));
+    await Promise.all(R.clips.map(c => c.faces));
 
     seek(0);
     if (!RENDER) mountPreview(stage);
@@ -406,8 +407,36 @@
   function addClips(root, sc) {
     root.querySelectorAll('video[data-clip]').forEach(v => {
       v.muted = true; v.playsInline = true; v.preload = 'auto'; v.loop = false; v.autoplay = false;
-      R.clips.push({ v, sc, at: resolveTime(v.dataset.at, sc, v), from: parseFloat(v.dataset.from || '0'), rate: parseFloat(v.dataset.rate || '1') });
+      const c = { v, sc, at: resolveTime(v.dataset.at, sc, v), from: parseFloat(v.dataset.from || '0'), rate: parseFloat(v.dataset.rate || '1') };
+      // data-reframe="face": crop to keep the speaker's face in frame, from a track npm run faces writes next to the clip
+      if (v.dataset.reframe === 'face') {
+        v.style.objectFit = 'cover';
+        const url = v.dataset.faces || v.getAttribute('src').replace(/\.[a-z0-9]+$/i, '.faces.json');
+        c.faces = fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(j => { c.faces = j; })
+          .catch(() => { c.faces = null; R.issues.push({ level: 'error', scene: sc.id, el: describe(v), msg: `no face track at ${url} (npm run faces -- <reel>)` }); });
+      }
+      R.clips.push(c);
     });
+  }
+  // the face position at clip time t: linear between samples, with no glide across a cut (a repeated time)
+  function faceAt(track, t) {
+    let i = 0, j = track.length - 1;
+    if (!track.length) return null;
+    if (t <= track[0][0]) return track[0];
+    if (t >= track[j][0]) return track[j];
+    while (j - i > 1) { const m = (i + j) >> 1; if (track[m][0] <= t) i = m; else j = m; }
+    const a = track[i], b = track[j], k = b[0] > a[0] ? (t - a[0]) / (b[0] - a[0]) : 1;
+    return [t, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k];
+  }
+  function reframe(c, t) {
+    const v = c.v, f = c.faces && c.faces.track && faceAt(c.faces.track, t);
+    if (!f || !v.videoWidth) return;
+    const bw = v.clientWidth, bh = v.clientHeight, sc = Math.max(bw / v.videoWidth, bh / v.videoHeight);
+    const rw = v.videoWidth * sc, rh = v.videoHeight * sc;
+    // the face centred across, two-fifths down (eyes near the upper third) when the crop is vertical
+    const px = rw > bw + 1 ? Math.min(1, Math.max(0, (rw * f[1] - bw / 2) / (rw - bw))) : 0.5;
+    const py = rh > bh + 1 ? Math.min(1, Math.max(0, (rh * f[2] - bh * 0.4) / (rh - bh))) : 0.5;
+    v.style.objectPosition = `${(px * 100).toFixed(3)}% ${(py * 100).toFixed(3)}%`;
   }
   function seekVideo(v, target) {
     return new Promise(res => {
@@ -424,6 +453,7 @@
       const lt = t - c.sc.start, dur = isFinite(c.v.duration) ? c.v.duration : 0;
       // +4 ms: container timestamps are rounded (often to 1 ms), so aim just inside the wanted frame
       const target = Math.max(0, Math.min(Math.max(0, dur - 0.04), c.from + Math.max(0, lt - c.at) * c.rate + 0.004));
+      if (c.faces) reframe(c, target);
       if (RENDER) { if (Math.abs(c.v.currentTime - target) > 0.0005) waits.push(seekVideo(c.v, target)); return; }
       // live preview: play along, resync only when it drifts
       const live = R.playing && lt >= c.at && target < dur - 0.05;

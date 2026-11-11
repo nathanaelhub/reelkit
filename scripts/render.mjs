@@ -8,6 +8,8 @@ import { spawn, spawnSync } from 'node:child_process';
 import { parseArgs, reelDir, openReel, ffmpegPath, OUT, ROOT, readJSON, run, die } from './lib.mjs';
 import { renderScore, scoreIsStale } from './score.mjs';
 import { ensureDepthMaps } from './depth.mjs';
+import { ensureFaceTracks } from './faces.mjs';
+import { ensureTalkClips } from './footage.mjs';
 import { glTransition } from './transitions.mjs';
 
 const args = parseArgs();
@@ -83,6 +85,8 @@ const timer = setInterval(() => {
 const W = tl.width || 1080, H = tl.height || 1920;
 console.log(`\n▸ ${name}: ${(to - from).toFixed(2)}s @ ${fps}fps, ${draft ? `${W / 2}x${H / 2} draft` : `${W}x${H}`}, ${workers} worker${workers > 1 ? 's' : ''}`);
 await ensureDepthMaps(dir);
+await ensureTalkClips(dir);
+await ensureFaceTracks(dir);
 const per = Math.ceil(total / workers);
 let segs;
 try {

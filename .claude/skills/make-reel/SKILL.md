@@ -37,6 +37,16 @@ Read `.claude/skills/make-reel/guides/script.md` and write `reels/<slug>/script.
 - Each scene has `id`, `say` (exact narration) and `visual` (what the viewer sees, with the word each visual beat lands on).
 - If the topic is factual, get the facts right. Check anything you are not sure of (search if you can) and put the source in a kicker or note on screen. Prefer hedged numbers ("up to 30%") over invented precision.
 
+### 2b · When the user brings footage
+
+- **A talk (interview, talking head, podcast clip):** `npm run footage -- <slug> <file or direct link> --talk`. It copies the video into `footage/`, prints every shot and sentence, writes a shot contact sheet to `out/` (open it), and writes `script.json` with one scene per sentence: `{ "id", "say", "footage": { "src", "cut": [[from, to], …] } }`, pauses already cut. Edit by deleting and reordering scenes, renaming ids (they become `assets/<id>.talk.mp4`), or trimming a scene's `cut` ranges using the word times in `footage/<name>.json`. `say` is Whisper's transcript: fix a mis-heard word there (captions only; the sound is the person's). Never put words in someone's mouth: cut what they said, don't rewrite it.
+- `--from/--to` keeps only sentences starting in that range; `--keep` adds to the existing scenes, so a Kokoro-narrated intro can sit before the talk.
+- Each talk scene's visual is `<video class="abs" data-clip src="assets/<id>.talk.mp4" data-reframe="face" style="left:0;top:0;width:1080px;height:1920px">`. Footage scenes run straight on (no pause) unless you give `pause`.
+- **Look for burned-in text** on the contact sheet (lower thirds, subtitles, logos). A vertical crop cuts it in half; cover it with your own (a dark band with the name) or pick lines where it isn't on screen.
+- If the source already has music under the voice, don't add a `bed` in score.js (two musics clash); hits on the chapter words are fine.
+- A footage link is remembered in script.json `"sources"` and re-downloaded on a fresh clone. Only use footage the user has the right to use (their own, public domain, or licensed); credit it on screen.
+- **Silent b-roll:** `npm run footage -- <slug> <file>` (no `--talk`) to see the shots, then `npm run clip` for the parts you want.
+
 ## 3 · Voice it
 
 `npm run voice -- <slug>`

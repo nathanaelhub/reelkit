@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>What can hurt you in space</title>
+<link rel="stylesheet" href="../../engine/kit.css">
+<style>
+  /* the interview, reframed to vertical around the speaker's face (npm run faces), under a shade for the titles */
+  .talk { left: 0; top: 0; width: 1080px; height: 1920px; }
+  .shade { left: 0; top: 0; width: 1080px; height: 720px; background: linear-gradient(180deg, rgba(0,0,0,.7), rgba(0,0,0,0)); }
+  .shade.low { top: auto; bottom: 0; height: 760px; background: linear-gradient(0deg, rgba(0,0,0,.72), rgba(0,0,0,0)); }
+  .lit { color: #fff; text-shadow: 0 4px 28px rgba(0,0,0,.55); }
+  .lit.kicker { color: rgba(255,255,255,.8); }
+  .num { font-family: var(--font-display); font-size: 200px; line-height: .86; color: var(--accent); text-shadow: 0 8px 40px rgba(0,0,0,.45); }
+  .label { font-weight: 700; font-size: 54px; color: #fff; text-shadow: 0 4px 24px rgba(0,0,0,.6); }
+  /* the interview has its own name strip burned in low on the frame; this covers it with ours */
+  .cover { left: 0; top: 1380px; width: 1080px; height: 540px; background: linear-gradient(180deg, rgba(8,8,10,0) 0, rgba(8,8,10,.92) 34%, #08080a 52%); }
+  .end { left: 0; top: 0; width: 1080px; height: 1920px; background: #08080a; }
+  .who { font-weight: 700; font-size: 40px; color: #fff; }
+  .who small { display: block; font-weight: 500; font-size: 28px; opacity: .8; margin-top: 6px; }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- 1 · HOOK + the expert -->
+  <section class="scene" data-scene="rocket">
+    <video class="abs talk" data-clip src="assets/rocket.talk.mp4" data-reframe="face"></video>
+    <div class="abs shade"></div>
+    <div class="pad kicker lit" style="top:170px" data-anim="fade">// we asked a nasa scientist</div>
+    <h1 class="pad headline lit" style="top:230px" data-anim="rise" data-at="0.1">What can hurt you in <em>space</em>?</h1>
+    <div class="abs cover"></div>
+    <div class="abs who" style="left:72px;top:1530px" data-anim="rise" data-at="0.6">Dr. Lisa Carnell<small>Biological and physical sciences expert, NASA</small></div>
+    <div class="abs num" style="left:72px;top:520px" data-anim="pop" data-at="@strapping">01</div>
+    <div class="abs label" style="left:80px;top:700px" data-anim="rise" data-at="@strapping">the ride up</div>
+  </section>
+
+  <!-- 2 · RADIATION -->
+  <section class="scene" data-scene="radiation" data-transition="gl:WhipPan" data-transition-dur="0.4">
+    <video class="abs talk" data-clip src="assets/radiation.talk.mp4" data-reframe="face"></video>
+    <div class="abs shade"></div>
+    <div class="abs num" style="left:72px;top:220px" data-anim="pop" data-at="@radiation">02</div>
+    <div class="abs stamp" style="left:80px;top:420px" data-anim="stamp" data-at="@radiation">radiation</div>
+  </section>
+
+  <!-- 3 · FROM ALL DIRECTIONS -->
+  <section class="scene" data-scene="directions" data-transition="cut">
+    <video class="abs talk" data-clip src="assets/directions.talk.mp4" data-reframe="face"></video>
+    <div class="abs shade"></div>
+    <h1 class="pad headline lit" style="top:230px" data-anim="rise" data-at="@coming">from <em>all</em> directions</h1>
+  </section>
+
+  <!-- 4 · COSMIC RAYS -->
+  <section class="scene" data-scene="cosmic" data-transition="cut">
+    <video class="abs talk" data-clip src="assets/cosmic.talk.mp4" data-reframe="face"></video>
+    <div class="abs shade"></div>
+    <div class="abs chip red" style="left:72px;top:240px" data-anim="pop" data-at="@galactic">galactic cosmic rays</div>
+  </section>
+
+  <!-- 5 · DNA -->
+  <section class="scene" data-scene="dna" data-transition="cut">
+    <video class="abs talk" data-clip src="assets/dna.talk.mp4" data-reframe="face"></video>
+    <div class="abs shade"></div>
+    <div class="abs stamp" style="left:80px;top:260px" data-anim="stamp" data-at="@DNA">DNA damage</div>
+  </section>
+
+  <!-- 6 · MICROGRAVITY -->
+  <section class="scene" data-scene="microgravity" data-transition="gl:CrossZoom" data-transition-dur="0.5">
+    <video class="abs talk" data-clip src="assets/microgravity.talk.mp4" data-reframe="face"></video>
+    <div class="abs shade"></div>
+    <div class="abs num" style="left:72px;top:220px" data-anim="pop" data-at="@microgravity">03</div>
+    <div class="abs stamp" style="left:80px;top:420px" data-anim="stamp" data-at="@microgravity">microgravity</div>
+  </section>
+
+  <!-- 7 · BONE AND MUSCLE -->
+  <section class="scene" data-scene="bone" data-transition="cut">
+    <video class="abs talk" data-clip src="assets/bone.talk.mp4" data-reframe="face"></video>
+    <div class="abs shade"></div>
+    <div class="abs chip" style="left:72px;top:240px" data-anim="pop" data-at="@bone">bone loss</div>
+    <div class="abs chip" style="left:72px;top:350px" data-anim="pop" data-at="@muscle">muscle loss</div>
+  </section>
+
+  <!-- 8 · EXERCISE + credit -->
+  <section class="scene" data-scene="exercise" data-transition="cut">
+    <video class="abs talk" data-clip src="assets/exercise.talk.mp4" data-reframe="face"></video>
+    <div class="abs shade"></div>
+    <div class="abs num" style="left:72px;top:220px" data-anim="pop" data-at="@hours">~2 h</div>
+    <div class="abs label" style="left:80px;top:400px" data-anim="rise" data-at="@every">of exercise, every day</div>
+    <!-- end card over the last beat, so the reel doesn't end on whatever shot follows in the source -->
+    <div class="abs end" data-anim="fade" data-at="@day.+0.25" data-dur="0.5"></div>
+    <h1 class="pad headline lit" style="top:620px" data-anim="rise" data-at="@day.+0.45">Space is <em>hard</em> on bodies.</h1>
+    <div class="abs note lit" style="left:72px;top:900px" data-anim="fade" data-at="@day.+0.7">More: nasa.gov/hrp/hazards</div>
+    <div class="abs note lit" style="left:72px;top:1240px" data-anim="fade" data-at="@day.+0.7">Footage: NASA, public domain</div>
+    <div class="abs note lit" style="left:72px;top:1285px" data-anim="fade" data-at="@day.+0.7">Cut, reframed and captioned with reelkit</div>
+  </section>
+
+</div>
+<script src="../../engine/kit.js"></script>
+<script>Reel.init();</script>
+</body>
+</html>

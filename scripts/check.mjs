@@ -10,6 +10,8 @@ import crypto from 'node:crypto';
 import { parseArgs, reelDir, openReel, OUT, ROOT, readJSON } from './lib.mjs';
 import { tasteDir } from './ref.mjs';
 import { ensureDepthMaps } from './depth.mjs';
+import { ensureFaceTracks } from './faces.mjs';
+import { ensureTalkClips } from './footage.mjs';
 import { glTransitions, suggest } from './transitions.mjs';
 
 const args = parseArgs();
@@ -23,6 +25,8 @@ const script = readJSON(path.join(dir, 'script.json'));
 const stale = (script.scenes || []).some(s => { const t = tl.scenes.find(x => x.id === s.id); return !t || t.say !== s.say; }) || script.scenes.length !== tl.scenes.length;
 
 await ensureDepthMaps(dir);
+await ensureTalkClips(dir);
+await ensureFaceTracks(dir);
 const { page, close, errors } = await openReel(dir, { scale: 1 });
 const issues = await page.evaluate(() => window.__reel.lint());
 // gl: transitions are drawn by render; check the names here (preview and the contact sheets show a fade)

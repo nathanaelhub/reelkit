@@ -30,3 +30,8 @@ tests/fixtures/depth-demo/
 tests/fixtures/gl/timeline.json
 tests/fixtures/gl/.voice-cache/
 reels/*/assets/*.depth.png
+reels/*/assets/*.talk.mp4
+reels/*/assets/*.talk.faces.json
+reels/*/footage/.*
+tests/fixtures/talk/
+reels/*/footage/*.mp4

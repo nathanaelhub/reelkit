@@ -1,0 +1,550 @@
+{
+  "title": "What can hurt you in space",
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "loudness": -14,
+  "theme": "ink",
+  "captions": true,
+  "voice": "footage",
+  "audio": "voice.mp3",
+  "music": null,
+  "musicVolume": 0.12,
+  "duration": 38.033,
+  "scenes": [
+    {
+      "id": "rocket",
+      "start": 0,
+      "end": 7.3,
+      "say": "For human space flights, the first thing I think about is the astronauts actually strapping themselves to a rocket.",
+      "words": [
+        {
+          "w": "For",
+          "start": 0.1,
+          "end": 0.32
+        },
+        {
+          "w": "human",
+          "start": 0.32,
+          "end": 0.78
+        },
+        {
+          "w": "space",
+          "start": 0.78,
+          "end": 1.04
+        },
+        {
+          "w": "flights,",
+          "start": 1.04,
+          "end": 1.3
+        },
+        {
+          "w": "the",
+          "start": 1.38,
+          "end": 1.6
+        },
+        {
+          "w": "first",
+          "start": 1.6,
+          "end": 1.78
+        },
+        {
+          "w": "thing",
+          "start": 1.78,
+          "end": 2.04
+        },
+        {
+          "w": "I",
+          "start": 2.04,
+          "end": 2.28
+        },
+        {
+          "w": "think",
+          "start": 2.28,
+          "end": 2.56
+        },
+        {
+          "w": "about",
+          "start": 2.56,
+          "end": 2.96
+        },
+        {
+          "w": "is",
+          "start": 2.96,
+          "end": 3.6
+        },
+        {
+          "w": "the",
+          "start": 3.6,
+          "end": 3.98
+        },
+        {
+          "w": "astronauts",
+          "start": 3.98,
+          "end": 4.72
+        },
+        {
+          "w": "actually",
+          "start": 4.72,
+          "end": 5.16
+        },
+        {
+          "w": "strapping",
+          "start": 5.16,
+          "end": 5.78
+        },
+        {
+          "w": "themselves",
+          "start": 5.78,
+          "end": 6.28
+        },
+        {
+          "w": "to",
+          "start": 6.28,
+          "end": 6.38
+        },
+        {
+          "w": "a",
+          "start": 6.38,
+          "end": 6.8
+        },
+        {
+          "w": "rocket.",
+          "start": 6.8,
+          "end": 7
+        }
+      ]
+    },
+    {
+      "id": "radiation",
+      "start": 7.3,
+      "end": 12.3,
+      "say": "And if that isn't dangerous enough, we have to worry about radiation.",
+      "words": [
+        {
+          "w": "And",
+          "start": 7.4,
+          "end": 7.56
+        },
+        {
+          "w": "if",
+          "start": 7.56,
+          "end": 7.72
+        },
+        {
+          "w": "that",
+          "start": 7.72,
+          "end": 7.98
+        },
+        {
+          "w": "isn't",
+          "start": 7.98,
+          "end": 8.5
+        },
+        {
+          "w": "dangerous",
+          "start": 8.5,
+          "end": 9.08
+        },
+        {
+          "w": "enough,",
+          "start": 9.08,
+          "end": 9.48
+        },
+        {
+          "w": "we",
+          "start": 9.9,
+          "end": 10.02
+        },
+        {
+          "w": "have",
+          "start": 10.02,
+          "end": 10.16
+        },
+        {
+          "w": "to",
+          "start": 10.16,
+          "end": 10.44
+        },
+        {
+          "w": "worry",
+          "start": 10.44,
+          "end": 10.82
+        },
+        {
+          "w": "about",
+          "start": 10.82,
+          "end": 11.52
+        },
+        {
+          "w": "radiation.",
+          "start": 11.52,
+          "end": 11.94
+        }
+      ]
+    },
+    {
+      "id": "directions",
+      "start": 12.3,
+      "end": 15.067,
+      "say": "Radiation is coming at them from all directions.",
+      "words": [
+        {
+          "w": "Radiation",
+          "start": 12.35,
+          "end": 12.84
+        },
+        {
+          "w": "is",
+          "start": 12.84,
+          "end": 13.14
+        },
+        {
+          "w": "coming",
+          "start": 13.14,
+          "end": 13.38
+        },
+        {
+          "w": "at",
+          "start": 13.38,
+          "end": 13.56
+        },
+        {
+          "w": "them",
+          "start": 13.56,
+          "end": 13.78
+        },
+        {
+          "w": "from",
+          "start": 13.78,
+          "end": 14.12
+        },
+        {
+          "w": "all",
+          "start": 14.12,
+          "end": 14.62
+        },
+        {
+          "w": "directions.",
+          "start": 14.62,
+          "end": 14.9
+        }
+      ]
+    },
+    {
+      "id": "cosmic",
+      "start": 15.067,
+      "end": 19.267,
+      "say": "We have galactic cosmic rays that are all over the universe.",
+      "words": [
+        {
+          "w": "We",
+          "start": 15.167,
+          "end": 15.307
+        },
+        {
+          "w": "have",
+          "start": 15.307,
+          "end": 15.607
+        },
+        {
+          "w": "galactic",
+          "start": 15.607,
+          "end": 16.407
+        },
+        {
+          "w": "cosmic",
+          "start": 16.407,
+          "end": 16.767
+        },
+        {
+          "w": "rays",
+          "start": 16.767,
+          "end": 17.047
+        },
+        {
+          "w": "that",
+          "start": 17.047,
+          "end": 17.187
+        },
+        {
+          "w": "are",
+          "start": 17.187,
+          "end": 17.687
+        },
+        {
+          "w": "all",
+          "start": 17.687,
+          "end": 18.027
+        },
+        {
+          "w": "over",
+          "start": 18.027,
+          "end": 18.287
+        },
+        {
+          "w": "the",
+          "start": 18.287,
+          "end": 18.767
+        },
+        {
+          "w": "universe.",
+          "start": 18.767,
+          "end": 19.067
+        }
+      ]
+    },
+    {
+      "id": "dna",
+      "start": 19.267,
+      "end": 22.533,
+      "say": "And those cause damage to DNA.",
+      "words": [
+        {
+          "w": "And",
+          "start": 19.367,
+          "end": 19.827
+        },
+        {
+          "w": "those",
+          "start": 19.827,
+          "end": 20.387
+        },
+        {
+          "w": "cause",
+          "start": 20.387,
+          "end": 20.987
+        },
+        {
+          "w": "damage",
+          "start": 20.987,
+          "end": 21.387
+        },
+        {
+          "w": "to",
+          "start": 21.387,
+          "end": 22.007
+        },
+        {
+          "w": "DNA.",
+          "start": 22.007,
+          "end": 22.267
+        }
+      ]
+    },
+    {
+      "id": "microgravity",
+      "start": 22.533,
+      "end": 25.2,
+      "say": "We also have to worry about microgravity.",
+      "words": [
+        {
+          "w": "We",
+          "start": 22.613,
+          "end": 22.873
+        },
+        {
+          "w": "also",
+          "start": 22.873,
+          "end": 23.093
+        },
+        {
+          "w": "have",
+          "start": 23.093,
+          "end": 23.253
+        },
+        {
+          "w": "to",
+          "start": 23.253,
+          "end": 23.453
+        },
+        {
+          "w": "worry",
+          "start": 23.453,
+          "end": 23.833
+        },
+        {
+          "w": "about",
+          "start": 23.833,
+          "end": 24.213
+        },
+        {
+          "w": "microgravity.",
+          "start": 24.213,
+          "end": 25.053
+        }
+      ]
+    },
+    {
+      "id": "bone",
+      "start": 25.2,
+      "end": 30.2,
+      "say": "So what happens there, we see a lot of bone and muscle loss in our astronauts.",
+      "words": [
+        {
+          "w": "So",
+          "start": 25.28,
+          "end": 25.42
+        },
+        {
+          "w": "what",
+          "start": 25.42,
+          "end": 25.78
+        },
+        {
+          "w": "happens",
+          "start": 25.78,
+          "end": 26.36
+        },
+        {
+          "w": "there,",
+          "start": 26.36,
+          "end": 26.86
+        },
+        {
+          "w": "we",
+          "start": 26.96,
+          "end": 27.18
+        },
+        {
+          "w": "see",
+          "start": 27.18,
+          "end": 27.32
+        },
+        {
+          "w": "a",
+          "start": 27.32,
+          "end": 27.46
+        },
+        {
+          "w": "lot",
+          "start": 27.46,
+          "end": 27.6
+        },
+        {
+          "w": "of",
+          "start": 27.6,
+          "end": 27.94
+        },
+        {
+          "w": "bone",
+          "start": 27.94,
+          "end": 28.18
+        },
+        {
+          "w": "and",
+          "start": 28.18,
+          "end": 28.52
+        },
+        {
+          "w": "muscle",
+          "start": 28.52,
+          "end": 28.78
+        },
+        {
+          "w": "loss",
+          "start": 28.78,
+          "end": 29.06
+        },
+        {
+          "w": "in",
+          "start": 29.06,
+          "end": 29.2
+        },
+        {
+          "w": "our",
+          "start": 29.2,
+          "end": 29.66
+        },
+        {
+          "w": "astronauts.",
+          "start": 29.66,
+          "end": 30.08
+        }
+      ]
+    },
+    {
+      "id": "exercise",
+      "start": 30.2,
+      "end": 38.033,
+      "say": "And so to prevent this, we actually have the astronauts exercising for hours every day.",
+      "words": [
+        {
+          "w": "And",
+          "start": 30.3,
+          "end": 30.52
+        },
+        {
+          "w": "so",
+          "start": 30.52,
+          "end": 30.86
+        },
+        {
+          "w": "to",
+          "start": 30.86,
+          "end": 31.1
+        },
+        {
+          "w": "prevent",
+          "start": 31.1,
+          "end": 31.52
+        },
+        {
+          "w": "this,",
+          "start": 31.52,
+          "end": 31.68
+        },
+        {
+          "w": "we",
+          "start": 31.86,
+          "end": 32.22
+        },
+        {
+          "w": "actually",
+          "start": 32.22,
+          "end": 32.46
+        },
+        {
+          "w": "have",
+          "start": 32.46,
+          "end": 32.66
+        },
+        {
+          "w": "the",
+          "start": 32.66,
+          "end": 33.08
+        },
+        {
+          "w": "astronauts",
+          "start": 33.08,
+          "end": 33.44
+        },
+        {
+          "w": "exercising",
+          "start": 34.02,
+          "end": 34.78
+        },
+        {
+          "w": "for",
+          "start": 34.78,
+          "end": 35.3
+        },
+        {
+          "w": "hours",
+          "start": 35.3,
+          "end": 35.84
+        },
+        {
+          "w": "every",
+          "start": 35.84,
+          "end": 36.2
+        },
+        {
+          "w": "day.",
+          "start": 36.2,
+          "end": 36.5
+        }
+      ]
+    }
+  ]
+}

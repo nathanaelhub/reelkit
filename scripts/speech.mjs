@@ -233,6 +233,9 @@ function similar(a, b) {
 // Pure alignment: target tokens (script words) + heard words [{w,start,end}] → [{start,end}] per target token.
 export function alignTokens(tokens, heard, clipStart = 0, clipEnd = null) {
   const T = []; tokens.forEach((tok, i) => { const ex = expand(tok); (ex.length ? ex : ['']).forEach(w => T.push({ w, i })); });
+  // Whisper sometimes stamps the last word past the end of the audio (start beyond it, end many seconds out): a word
+  // that starts after the clip is treated as unheard, and every end is held inside the clip
+  if (clipEnd != null) heard = heard.filter(h => h.start < clipEnd - 0.02).map(h => ({ ...h, end: Math.min(h.end, clipEnd) }));
   const H = []; heard.forEach(h => expand(h.w).forEach((w, k, all) => {
     const d = (h.end - h.start) / all.length; H.push({ w, start: h.start + k * d, end: h.start + (k + 1) * d });
   }));

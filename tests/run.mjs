@@ -6,6 +6,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ffmpegPath, ffprobePath } from '../scripts/lib.mjs';
+import { sentences, keepRanges, parseCuts } from '../scripts/footage.mjs';
+import { buildTrack } from '../scripts/faces.mjs';
 import { numberToWords, prepareForKokoro, alignTokens, cmuToKokoro, kokoroInstalled, sherpaInstalled, inflect } from '../scripts/speech.mjs';
 
 const node = (script, args) => {
@@ -62,7 +64,87 @@ const cases = [
     if (!(at('your').start >= 6.3 && at('your').end <= 6.6 + 1e-6)) problems.push(`unmatched "your" should sit between feet and taste: ${JSON.stringify(at('your'))}`);
     if (!times.every((t, i) => t.end > t.start && (i === 0 || t.start >= times[i - 1].start))) problems.push('times not ordered');
     if (!(matched > 0.7)) problems.push(`matched ${matched}`);
+    // Whisper can stamp the last word past the end of the clip; it must land inside it
+    const tail = alignTokens(['damage', 'to', 'DNA.'], [{ w: 'damage', start: 1.72, end: 2.12 }, { w: 'to', start: 2.12, end: 2.74 }, { w: 'DNA.', start: 3.96, end: 17.46 }], 0, 3.27).times;
+    if (!(tail[2].start >= 2.74 && tail[2].end <= 3.27 + 1e-6)) problems.push(`a word Whisper placed after the clip should fit inside it: ${JSON.stringify(tail[2])}`);
     return { ok: !problems.length, detail: problems.join('\n  ') };
+  }],
+  ['footage: sentences, kept ranges and shot cuts from what Whisper and FFmpeg report', () => {
+    const W = (w, start, end) => ({ w, start, end });
+    const words = [W('Hi.', 0.5, 0.8), W('This', 1.0, 1.2), W('is', 1.2, 1.3), W('the', 1.3, 1.4), W('first', 1.4, 1.8), W('sentence.', 3.5, 4.0), W('And', 4.2, 4.4), W('a', 4.4, 4.5), W('second', 4.5, 4.9), W('one.', 4.9, 6.0)];
+    const problems = [];
+    const ss = sentences(words);
+    // "Hi." is too short to stand alone, so it joins the next sentence
+    if (ss.length !== 2 || ss[0][0].w !== 'Hi.' || ss[1][0].w !== 'And') problems.push(`sentences ${JSON.stringify(ss.map(x => x.map(w => w.w).join(' ')))}`);
+    const r = keepRanges(ss[0], { gap: 0.35, pad: 0.08 });
+    // the 1.7 s pause before "sentence." is cut; the 0.2 s gap after "Hi." stays
+    if (r.length !== 2 || r[0][0] !== 0.42 || r[0][1] !== 1.88 || r[1][0] !== 3.42) problems.push(`keep ranges ${JSON.stringify(r)}`);
+    // a silence the audio shows inside a word span Whisper stretched over it is cut too
+    const r2 = keepRanges([W('first', 1.0, 3.2), W('sentence.', 3.2, 3.8)], { gap: 0.35, pad: 0.08, silences: [[1.6, 2.9]] });
+    if (r2.length !== 2 || r2[0][1] !== 1.68 || r2[1][0] !== 2.82) problems.push(`silence inside a stretched word not cut: ${JSON.stringify(r2)}`);
+    // but a "silence" a word starts inside is quiet speech: it stays
+    const r3 = keepRanges([W('first', 1.0, 2.0), W('quiet', 2.0, 2.3), W('word.', 2.3, 2.8)], { gap: 0.35, pad: 0.08, silences: [[1.5, 2.6]] });
+    if (r3.length !== 1 || r3[0][0] !== 0.92 || r3[0][1] !== 2.88) problems.push(`a silence holding the start of a word should be ignored: ${JSON.stringify(r3)}`);
+    const cuts = parseCuts('n:0 pts_time:3.136 x\nn:1 pts_time:3.17 x\nn:2 pts_time:14.882', 0.5);
+    if (JSON.stringify(cuts) !== '[3.136,14.882]') problems.push(`cuts ${JSON.stringify(cuts)} (a cut 34 ms after another is the same cut)`);
+    return { ok: !problems.length, detail: problems.join('\n  ') };
+  }],
+  ['faces: a still face gets one crop, a moving face is followed, no face is centred, and a cut jumps', () => {
+    const samples = [];
+    for (let i = 0; i <= 60; i++) {
+      const t = i / 6;
+      // 0–3 s: face steady at x 0.30 (detector jitter ±0.01); 3–6 s: face walks 0.3 → 0.7; 6–10 s: nobody
+      const f = t < 3 ? [[0.30 + (i % 2 ? 0.01 : -0.01), 0.4, 0.3, 0.9]] : t < 6 ? [[0.3 + 0.4 * (t - 3) / 3, 0.4, 0.3, 0.9]] : [];
+      samples.push([+t.toFixed(3), f]);
+    }
+    const tr = buildTrack(samples, [3, 6], 10);
+    const at = t => { let a = tr[0]; for (const p of tr) if (p[0] <= t) a = p; return a; };
+    const problems = [];
+    const still = tr.filter(p => p[0] < 3);
+    if (new Set(still.map(p => p[1])).size !== 1 || Math.abs(still[0][1] - 0.3) > 0.011) problems.push(`steady shot should be one crop near 0.30: ${JSON.stringify(still)}`);
+    if (!(at(4)[1] > 0.38 && at(4)[1] < 0.5 && at(5.2)[1] > at(4)[1])) problems.push(`moving face not followed: ${JSON.stringify([at(4), at(5.2)])}`);
+    if (at(8)[1] !== 0.5) problems.push(`no face should centre: ${JSON.stringify(at(8))}`);
+    if (!(tr.filter(p => p[0] === 3).length >= 2 && tr.filter(p => p[0] === 6).length >= 2)) problems.push('no jump points at the cuts');
+    return { ok: !problems.length, detail: problems.join('\n  ') };
+  }],
+  ['talk: footage --talk cuts the pauses out, and voice makes a picture clip that matches the sound', () => {
+    if (!sherpaInstalled() || !kokoroInstalled()) return { ok: true, skip: 'Kokoro model not downloaded (npm run doctor -- --fix)' };
+    const fx = path.resolve('tests/fixtures/talk'), problems = [];
+    fs.rmSync(fx, { recursive: true, force: true });
+    // a speaker: Kokoro says two sentences with a 1.2 s pause in the middle of the first
+    const spk = path.join(fx, 'speaker'), reel = path.join(fx, 'reel');
+    fs.mkdirSync(spk, { recursive: true }); fs.mkdirSync(reel, { recursive: true });
+    fs.writeFileSync(path.join(spk, 'script.json'), JSON.stringify({ voice: { provider: 'kokoro' }, scenes: [
+      { id: 'a', say: 'Here is the first sentence', pause: 1.2 }, { id: 'b', say: 'about cats.', pause: 0.7 }, { id: 'c', say: 'And here is the second one about dogs.', pause: 0.3 }] }));
+    const v = node('scripts/voice.mjs', [spk]); if (v.status !== 0) return { ok: false, detail: v.out };
+    const dur = +spawnSync(ffprobePath(), ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', path.join(spk, 'voice.mp3')], { encoding: 'utf8' }).stdout;
+    // the camera: red, then a cut to blue at 2 s
+    // picture first, then the sound (FFmpeg 6.0 writes silent audio when both happen in one pass with -shortest)
+    const src = path.join(fx, 'interview.mp4'), pic = path.join(fx, 'picture.mp4');
+    spawnSync(ffmpegPath(), ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', `color=c=red:s=640x360:r=30:d=2`, '-f', 'lavfi', '-i', `color=c=blue:s=640x360:r=30:d=${(dur - 2).toFixed(2)}`,
+      '-filter_complex', '[0:v][1:v]concat=n=2:v=1[v]', '-map', '[v]', '-c:v', 'libx264', pic]);
+    spawnSync(ffmpegPath(), ['-y', '-loglevel', 'error', '-i', pic, '-i', path.join(spk, 'voice.mp3'), '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', src]);
+    fs.writeFileSync(path.join(reel, 'script.json'), JSON.stringify({ title: 'talk' }));
+    const f = node('scripts/footage.mjs', [reel, src, '--talk']);
+    if (f.status !== 0) return { ok: false, detail: f.out };
+    const meta = JSON.parse(fs.readFileSync(path.join(reel, 'footage', 'interview.json'), 'utf8'));
+    if (!meta.cuts.some(c => Math.abs(c - 2) < 0.1)) problems.push(`shot cut at 2 s not found: ${JSON.stringify(meta.cuts)}`);
+    const sc = JSON.parse(fs.readFileSync(path.join(reel, 'script.json'), 'utf8')).scenes;
+    // how Whisper punctuates Kokoro's sentences varies, so the scene count may too; the pauses must go either way
+    if (sc.length < 1 || sc.length > 3) problems.push(`${sc.length} scenes, wanted 1 to 3: ${sc.map(s => s.say).join(' | ')}`);
+    if (!sc.some(s => s.footage.cut.length >= 2)) problems.push(`no pause cut inside any sentence: ${JSON.stringify(sc.map(s => s.footage.cut))}`);
+    const v2 = node('scripts/voice.mjs', [reel]);
+    if (v2.status !== 0) return { ok: false, detail: v2.out + `\nsilences ${JSON.stringify(meta.silences)}\nwords ${JSON.stringify(meta.words)}\ncuts ${JSON.stringify(sc.map(s => s.footage.cut))}` };
+    const probe = file => +spawnSync(ffprobePath(), ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', file], { encoding: 'utf8' }).stdout;
+    const tl = JSON.parse(fs.readFileSync(path.join(reel, 'timeline.json'), 'utf8'));
+    for (const s of tl.scenes) {
+      const clip = probe(path.join(reel, 'assets', `${s.id}.talk.mp4`)), len = s.end - s.start;
+      if (Math.abs(clip - len) > 0.05) problems.push(`${s.id}: picture ${clip.toFixed(3)}s but sound ${len.toFixed(3)}s`);
+      if (!s.words.every(w => w.start >= s.start - 1e-6 && w.end <= s.end + 1e-6)) problems.push(`${s.id}: words outside the scene`);
+    }
+    if (tl.voice !== 'footage') problems.push(`timeline voice ${tl.voice}`);
+    if (!(tl.duration < dur - 0.8)) problems.push(`talk is ${tl.duration}s, source speech ${dur.toFixed(2)}s: the pause should be gone`);
+    return { ok: !problems.length, detail: problems.join('\n  ') + '\n' + f.out };
   }],
 
   ['kokoro: voices a reel locally with numbers and a phoneme, timed by Whisper', () => {
