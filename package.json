@@ -15,7 +15,9 @@
     "ref": "node scripts/ref.mjs",
     "clip": "node scripts/clip.mjs",
     "score": "node scripts/score.mjs",
-    "depth": "node scripts/depth.mjs"
+    "depth": "node scripts/depth.mjs",
+    "footage": "node scripts/footage.mjs",
+    "faces": "node scripts/faces.mjs"
   },
   "engines": {
     "node": ">=18"
@@ -26,6 +28,7 @@
     "@fontsource/inter": "^5.0.0",
     "@fontsource/jetbrains-mono": "^5.0.0",
     "@huggingface/transformers": "^4.3.2",
+    "@mediapipe/tasks-vision": "^1.2.2",
     "ffmpeg-static": "^5.2.0",
     "ffprobe-static": "^3.1.0",
     "gl-transitions": "^3.2.0",

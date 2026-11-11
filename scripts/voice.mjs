@@ -18,6 +18,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { parseArgs, reelDir, readJSON, writeJSON, ffmpegPath, mediaDuration, run, die, which, ROOT } from './lib.mjs';
+import { cutTalk, talkSource, talkClipPath, ensureFootage } from './footage.mjs';
 import { kokoro as kokoroSay, kokoroInstalled, sherpaInstalled, KOKORO_DEFAULT, cmuToKokoro, ipaToKokoro, writeExtraLexicon, alignClip, KOKORO_FRONTEND, stopWhisperWorker } from './speech.mjs';
 
 const args = parseArgs();
@@ -25,6 +26,7 @@ const dir = reelDir(args._[0]);
 const script = readJSON(path.join(dir, 'script.json'));
 const ff = ffmpegPath(); if (!ff) die('ffmpeg not found. Run: npm run doctor -- --fix');
 const vcfg = script.voice || {};
+await ensureFootage(dir); // footage listed under "sources" but not downloaded yet
 const cacheDir = path.join(dir, '.voice-cache'); fs.mkdirSync(cacheDir, { recursive: true });
 
 export function pickProvider(want) {
@@ -112,6 +114,12 @@ async function none(text, wav) {
 }
 
 const PROVIDERS = { elevenlabs, openai, kokoro, piper, say, none };
+
+// footage scenes (npm run footage -- … --talk) use their own cut speech: see cutTalk in footage.mjs
+function footage(s, wav) { cutTalk(dir, s, wav); return { wav, words: null }; }
+const footageSrc = s => talkSource(dir, s);
+const talkVideo = s => talkClipPath(dir, s);
+
 if (!PROVIDERS[provider]) die(`Unknown voice provider "${provider}". Use: ${Object.keys(PROVIDERS).join(', ')}`);
 
 // ---------- timing helpers ----------
@@ -190,19 +198,26 @@ const wantAlign = !args['no-align'] && vcfg.align !== false && !['elevenlabs', '
 const clips = [];
 for (const s of scenes) {
   const text = s.say.trim();
-  const { spoken, groups } = toSpoken(text);
-  const h = crypto.createHash('sha1').update(JSON.stringify([provider, vcfg[provider] || {}, vcfg.speed ?? 1, spoken, text, provider === 'kokoro' ? [lexiconEntries, KOKORO_FRONTEND] : 0])).digest('hex').slice(0, 12);
+  const prov = s.footage ? 'footage' : provider;
+  // footage is already spoken: align to the written words, no respellings
+  const { spoken, groups } = s.footage ? { spoken: text, groups: text.split(/\s+/).filter(Boolean).map(display => ({ display, n: 1 })) } : toSpoken(text);
+  const src = s.footage ? footageSrc(s) : null;
+  const h = crypto.createHash('sha1').update(JSON.stringify(s.footage
+    ? ['footage', s.footage, fs.statSync(src).size, Math.round(fs.statSync(src).mtimeMs)]
+    : [provider, vcfg[provider] || {}, vcfg.speed ?? 1, spoken, text, provider === 'kokoro' ? [lexiconEntries, KOKORO_FRONTEND] : 0])).digest('hex').slice(0, 12);
   const wav = path.join(cacheDir, `${s.id}-${h}.wav`), meta = wav.replace(/\.wav$/, '.json');
   let words, timing;
-  const cached = fs.existsSync(wav) && fs.existsSync(meta) ? readJSON(meta) : null;
+  let cached = fs.existsSync(wav) && fs.existsSync(meta) ? readJSON(meta) : null;
+  if (cached && s.footage && (cached.text !== text || !fs.existsSync(talkVideo(s)))) cached = null; // caption edit or lost clip
   // re-time a cached clip (no re-voicing) when it was only estimated and alignment can now run
-  if (cached && !(wantAlign && (cached.timing ?? 'estimated') === 'estimated')) { words = cached.words; process.stdout.write(`  · ${s.id} (cached)\n`); }
+  const align = wantAlign || (s.footage && !args['no-align'] && vcfg.align !== false);
+  if (cached && !(align && (cached.timing ?? 'estimated') === 'estimated')) { words = cached.words; process.stdout.write(`  · ${s.id} (cached)\n`); }
   else {
     process.stdout.write(`  · ${s.id} …`);
-    const r = cached ? { words: null } : await PROVIDERS[provider](spoken, wav);
+    const r = cached ? { words: null } : s.footage ? footage(s, wav) : await PROVIDERS[provider](spoken, wav);
     const d = mediaDuration(wav);
     let spokenWords = r.words; timing = r.words ? 'voice' : 'estimated';
-    if (!spokenWords && wantAlign) {
+    if (!spokenWords && align) {
       try {
         const a = await alignClip(wav, spoken, ff);
         if (a.matched >= 0.6) { spokenWords = a.words; timing = 'aligned'; }
@@ -213,7 +228,7 @@ for (const s of scenes) {
     writeJSON(meta, { text, words, timing });
     process.stdout.write(` ${d.toFixed(2)}s, ${timing} timing\n`);
   }
-  clips.push({ s, wav, words, dur: mediaDuration(wav) });
+  clips.push({ s, prov, wav, words, dur: mediaDuration(wav) });
 }
 
 stopWhisperWorker(); // a running worker would keep this process alive
@@ -224,7 +239,8 @@ const sr = 44100;
 const silence = sec => { const f = path.join(cacheDir, `sil-${sec.toFixed(3)}.wav`); if (!fs.existsSync(f)) run(ff, ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', `anullsrc=r=${sr}:cl=mono`, '-t', sec.toFixed(3), f]); return f; };
 clips.forEach((c, i) => {
   const last = i === clips.length - 1;
-  let len = c.dur + (c.s.pause ?? (last ? 0.8 : 0.2));
+  // footage runs straight on: a pause would freeze its picture
+  let len = c.dur + (c.s.pause ?? (c.s.footage ? 0 : last ? 0.8 : 0.2));
   if (c.s.min && len < c.s.min) len = c.s.min;
   const pad = len - c.dur;
   parts.push(c.wav); if (pad > 0.001) parts.push(silence(pad));
@@ -233,14 +249,14 @@ clips.forEach((c, i) => {
 });
 const list = path.join(cacheDir, 'concat.txt');
 fs.writeFileSync(list, parts.map(p => `file '${p.replace(/'/g, "'\\''")}'`).join('\n'));
-const audio = provider === 'none' ? null : 'voice.mp3';
+const audio = clips.every(c => c.prov === 'none') ? null : 'voice.mp3';
 if (audio) run(ff, ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', list, '-af', 'loudnorm=I=-15:TP=-1.5:LRA=11', '-ar', '44100', '-ac', '1', '-b:a', '160k', path.join(dir, audio)]);
 else if (fs.existsSync(path.join(dir, 'voice.mp3'))) fs.rmSync(path.join(dir, 'voice.mp3'));
 
 const FORMATS = { '9:16': [1080, 1920], '16:9': [1920, 1080], '1:1': [1080, 1080] };
 const [W, H] = FORMATS[script.format || '9:16'] || die(`unknown format "${script.format}". Use 9:16, 16:9 or 1:1`);
 const timeline = { title: script.title || path.basename(dir), fps: script.fps || 30, width: W, height: H, loudness: script.loudness ?? -14, theme: script.theme || 'paper', captions: script.captions !== false,
-  voice: provider, audio, music: script.music || null, musicVolume: script.musicVolume ?? 0.12, duration: +t.toFixed(3), scenes: tlScenes };
+  voice: clips.every(c => c.prov === 'footage') ? 'footage' : provider, audio, music: script.music || null, musicVolume: script.musicVolume ?? 0.12, duration: +t.toFixed(3), scenes: tlScenes };
 writeJSON(path.join(dir, 'timeline.json'), timeline);
 console.log(`✓ timeline.json: ${tlScenes.length} scenes, ${t.toFixed(1)}s${audio ? ', voice.mp3' : ''}\n`);
 tlScenes.forEach(s => console.log(`  ${s.id.padEnd(16)} ${s.start.toFixed(2).padStart(6)} → ${s.end.toFixed(2).padStart(6)}  ${s.words.map(w => w.w).join(' ')}`));

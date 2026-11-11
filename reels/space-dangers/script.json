@@ -1,0 +1,120 @@
+{
+  "title": "What can hurt you in space",
+  "theme": "ink",
+  "fps": 30,
+  "captions": true,
+  "scenes": [
+    {
+      "id": "rocket",
+      "say": "For human space flights, the first thing I think about is the astronauts actually strapping themselves to a rocket.",
+      "footage": {
+        "src": "footage/nasa-dangers.mp4",
+        "cut": [
+          [
+            8.5,
+            15.8
+          ]
+        ]
+      }
+    },
+    {
+      "id": "radiation",
+      "say": "And if that isn't dangerous enough, we have to worry about radiation.",
+      "footage": {
+        "src": "footage/nasa-dangers.mp4",
+        "cut": [
+          [
+            15.7,
+            18.18
+          ],
+          [
+            22.94,
+            25.44
+          ]
+        ]
+      }
+    },
+    {
+      "id": "directions",
+      "say": "Radiation is coming at them from all directions.",
+      "footage": {
+        "src": "footage/nasa-dangers.mp4",
+        "cut": [
+          [
+            25.56,
+            28.34
+          ]
+        ]
+      }
+    },
+    {
+      "id": "cosmic",
+      "say": "We have galactic cosmic rays that are all over the universe.",
+      "footage": {
+        "src": "footage/nasa-dangers.mp4",
+        "cut": [
+          [
+            30.68,
+            34.86
+          ]
+        ]
+      }
+    },
+    {
+      "id": "dna",
+      "say": "And those cause damage to DNA.",
+      "footage": {
+        "src": "footage/nasa-dangers.mp4",
+        "cut": [
+          [
+            34.78,
+            38.02
+          ]
+        ]
+      }
+    },
+    {
+      "id": "microgravity",
+      "say": "We also have to worry about microgravity.",
+      "footage": {
+        "src": "footage/nasa-dangers.mp4",
+        "cut": [
+          [
+            47.16,
+            49.82
+          ]
+        ]
+      }
+    },
+    {
+      "id": "bone",
+      "say": "So what happens there, we see a lot of bone and muscle loss in our astronauts.",
+      "footage": {
+        "src": "footage/nasa-dangers.mp4",
+        "cut": [
+          [
+            49.72,
+            54.72
+          ]
+        ]
+      }
+    },
+    {
+      "id": "exercise",
+      "say": "And so to prevent this, we actually have the astronauts exercising for hours every day.",
+      "footage": {
+        "src": "footage/nasa-dangers.mp4",
+        "cut": [
+          [
+            54.64,
+            61.06
+          ]
+        ]
+      },
+      "pause": 1.4
+    }
+  ],
+  "sources": {
+    "footage/nasa-dangers.mp4": "https://upload.wikimedia.org/wikipedia/commons/1/17/What_Are_the_Dangers_of_Going_to_Space_-_We_Asked_a_NASA_Expert.webm"
+  }
+}

@@ -1,0 +1,31 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>reelkit face tracker</title>
+<video id="v" muted playsinline preload="auto"></video>
+<script type="module">
+// Used by scripts/faces.mjs: finds faces in a clip with MediaPipe's BlazeFace (Apache-2.0), all on this machine.
+import { FilesetResolver, FaceDetector } from '/node_modules/@mediapipe/tasks-vision/vision_bundle.mjs';
+let det = null;
+const seek = (v, t) => new Promise(res => { v.addEventListener('seeked', () => requestAnimationFrame(() => res()), { once: true }); v.currentTime = t; });
+// returns { w, h, duration, samples: [[t, [[cx, cy, height, score], …]], …] }, positions as fractions of the frame
+window.detectFaces = async (src, fps) => {
+  if (!det) {
+    const files = await FilesetResolver.forVisionTasks('/node_modules/@mediapipe/tasks-vision/wasm');
+    det = await FaceDetector.createFromOptions(files, { baseOptions: { modelAssetPath: '/models/blaze_face_short_range.tflite', delegate: 'CPU' }, runningMode: 'IMAGE', minDetectionConfidence: 0.5 });
+  }
+  const v = document.getElementById('v');
+  await new Promise((res, rej) => { v.onloadeddata = res; v.onerror = () => rej(new Error(`cannot load ${src}`)); v.src = src; });
+  const samples = [], n = Math.floor(v.duration * fps);
+  for (let i = 0; i <= n; i++) {
+    const t = Math.min(i / fps, v.duration - 0.02);
+    await seek(v, t);
+    const faces = det.detect(v).detections.map(d => {
+      const b = d.boundingBox;
+      return [(b.originX + b.width / 2) / v.videoWidth, (b.originY + b.height / 2) / v.videoHeight, b.height / v.videoHeight, d.categories[0]?.score ?? 0];
+    });
+    samples.push([+t.toFixed(3), faces]);
+  }
+  return { w: v.videoWidth, h: v.videoHeight, duration: v.duration, samples };
+};
+window.facesReady = true;
+</script>

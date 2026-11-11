@@ -123,6 +123,17 @@ Real footage plays inside a scene, frame-accurate in renders:
 - Keep footage near its native size: a 1920×1080 source looks sharp as a full-width band (1080×608) or a 608×1080 portrait crop; filling the whole 1080×1920 frame upscales it 1.8×.
 - Clips can take `data-anim` like any element (wipe, iris, rise) for their entrance.
 
+### Reframing around a face: `data-reframe="face"`
+
+```html
+<video class="abs" data-clip src="assets/s01.talk.mp4" data-reframe="face" style="left:0;top:0;width:1080px;height:1920px"></video>
+```
+
+- check / render / preview run `npm run faces` first: MediaPipe finds the face in the clip and writes `assets/s01.talk.faces.json` (redone when the clip changes; `--force` to redo).
+- The crop is `object-fit: cover` positioned on the face: centred across, two-fifths down. A shot where the face stays put gets one fixed crop; a moving face is followed with a ~1 s average; a shot without a face is centred; at a cut the crop jumps instead of panning.
+- `data-faces="other.json"` points at a hand-made track (`{ "track": [[t, x, y], …] }`, x/y as fractions of the frame).
+- A 1920×1080 source filling 1080×1920 is upscaled about 1.8×. Fine for talk; keep text and detail shots at native size.
+
 ## Images
 
 Put files in `reels/<slug>/assets/` and reference `assets/name.png`. Transparent PNGs/SVGs look best as cut-outs with `filter: drop-shadow(...)`. A host character (`assets/host.png`) placed in the global layer with `data-loop="talk"` gives the "creator explaining" look.

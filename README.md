@@ -5,12 +5,13 @@ Free, open source, and it runs on your own computer: no subscription, no waterma
 
 <table>
 <tr>
-<td width="50%" align="center"><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.2.0/grand-canyon.mp4"><img src="docs/grand-canyon.webp" width="270" alt="Grand Canyon reel: photos moving in 3D with shader transitions"></a><br><b>The canyon is younger than its rocks</b><br><sub>public-domain photos with 3D camera moves · film-burn, ink and whip transitions · cinematic score · British narrator<br><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.2.0/grand-canyon.mp4">▶ watch with sound</a> · <a href="reels/grand-canyon">source</a></sub></td>
-<td width="50%" align="center"><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.2.0/airplane-food.mp4"><img src="docs/airplane-food.webp" width="270" alt="Airplane food reel: animated editorial explainer"></a><br><b>Why airplane food tastes so bland</b><br><sub>animated editorial explainer · word-synced stamps, counters and charts · upbeat score<br><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.2.0/airplane-food.mp4">▶ watch with sound</a> · <a href="reels/airplane-food">source</a></sub></td>
+<td width="33%" align="center"><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.2.0/grand-canyon.mp4"><img src="docs/grand-canyon.webp" width="240" alt="Grand Canyon reel: photos moving in 3D with shader transitions"></a><br><b>The canyon is younger than its rocks</b><br><sub>public-domain photos with 3D camera moves · film-burn, ink and whip transitions · cinematic score · British narrator<br><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.2.0/grand-canyon.mp4">▶ watch with sound</a> · <a href="reels/grand-canyon">source</a></sub></td>
+<td width="33%" align="center"><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.2.0/airplane-food.mp4"><img src="docs/airplane-food.webp" width="240" alt="Airplane food reel: animated editorial explainer"></a><br><b>Why airplane food tastes so bland</b><br><sub>animated editorial explainer · word-synced stamps, counters and charts · upbeat score<br><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.2.0/airplane-food.mp4">▶ watch with sound</a> · <a href="reels/airplane-food">source</a></sub></td>
+<td width="33%" align="center"><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.3.0/space-dangers.mp4"><img src="docs/space-dangers.webp" width="240" alt="Space dangers reel: a 16:9 NASA interview cut and reframed to vertical"></a><br><b>What can hurt you in space</b><br><sub>a 16:9 NASA interview, cut to its best lines and reframed to 9:16 around the speaker's face · captions on her own words<br><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.3.0/space-dangers.mp4">▶ watch with sound</a> · <a href="reels/space-dangers">source</a></sub></td>
 </tr>
 </table>
 
-<sub>Both made with the free defaults: every voice, note, camera move and frame above came from the open tools listed below, on a laptop.</sub>
+<sub>All made with the free defaults, on a laptop: every voice, note, camera move, cut and crop above came from the open tools listed below.</sub>
 
 ```
 you:     make a reel about why the Grand Canyon is younger than its rocks, use these photos
@@ -35,6 +36,7 @@ agent:   tightens scene 1, re-voices only that scene, lowers the bed, re-checks,
 | Transitions | [gl-transitions](https://github.com/gl-transitions/gl-transitions) | MIT / BSD | 214 GPU shader transitions between scenes |
 | Music & sound | [Tone.js](https://tonejs.github.io) | MIT | an original score and sound effects, written in code, timed to the words |
 | Encode & mix | [FFmpeg](https://ffmpeg.org) | LGPL/GPL | H.264, ducking under the voice, two-pass loudness to −14 LUFS |
+| Your footage | FFmpeg scene + silence detection, Whisper, [MediaPipe](https://github.com/google-ai-edge/mediapipe) BlazeFace | LGPL/GPL · MIT · Apache-2.0 | finds the shots and every spoken word in a video, cuts the pauses out of a talk, and keeps the speaker's face in a vertical crop |
 | References | [yt-dlp](https://github.com/yt-dlp/yt-dlp) | Unlicense | downloads videos you like so reelkit can measure their pacing and colour |
 
 Every piece is optional or swappable: bring an ElevenLabs key for a different voice, your own `music.mp3`, your own footage.
@@ -98,7 +100,15 @@ export default function ({ bed, sfx }) {
 
 **Taste from references.** Give it 3 to 5 videos you like and it measures their cut rhythm, motion, loudness and colours, writes notes on their style, and compares your reel against them. See [taste/README.md](taste/README.md).
 
-**Your footage.** Trim clips with `npm run clip` and place them with `<video data-clip>`; every rendered frame shows the exact source frame.
+**Your footage, talk included.** Point it at a video file (or a direct link) and it lists every shot and every spoken word, with a contact sheet of the shots. Add `--talk` and what the person says becomes the reel: one scene per sentence, with the pauses cut out, their own voice as the voiceover and captions on their words. Delete the sentences you don't want, and that's the edit.
+```bash
+npm run footage -- my-reel interview.mp4 --talk
+```
+A 16:9 interview turns vertical without losing the speaker: MediaPipe finds the face in every shot and the crop follows it the way an operator would (locked off when they sit still, a smooth follow when they move, a clean jump at each cut).
+```html
+<video class="abs" data-clip src="assets/s01.talk.mp4" data-reframe="face" style="left:0;top:0;width:1080px;height:1920px"></video>
+```
+For silent b-roll, `npm run clip` trims any part of a video; every rendered frame shows the exact source frame.
 
 **Formats.** 9:16 (default), 16:9 or 1:1, and every render ends at a consistent −14 LUFS.
 
@@ -121,6 +131,7 @@ script.json ──voice (Kokoro)──▶ voice.mp3 ──Whisper──▶ timel
                                                              │
 score.js ──Tone.js, offline──▶ score.wav                     │
 photos ──Depth Anything──▶ depth maps                        │
+footage ──FFmpeg + Whisper──▶ shots, words, talk scenes ──MediaPipe──▶ face crops
 reel.html (scenes + data-anim) ─────────────────────────────┤
                                                              ▼
                  headless Chromium: seek(t) → screenshot, every frame
@@ -131,7 +142,7 @@ reel.html (scenes + data-anim) ────────────────�
 
 - `engine/kit.js`, `engine/kit.css`: the motion runtime and visual vocabulary (themes, headlines, cards, stamps, chips, phone and window mockups, word-by-word captions, depth photos).
 - `engine/score-kit.js`: moods, instruments and sound effects for score.js.
-- `scripts/`: `voice`, `score`, `depth`, `check`, `render`, `preview`, `ref`, `clip`, `doctor`.
+- `scripts/`: `voice`, `score`, `depth`, `footage`, `faces`, `check`, `render`, `preview`, `ref`, `clip`, `doctor`.
 - `.claude/skills/make-reel/`: the instructions the agent follows, with guides for scripting, scenes, style and feedback.
 
 ## Commands (if you want to drive it yourself)
@@ -142,6 +153,8 @@ npm run new -- my-reel "Title"      # scaffold reels/my-reel/
 npm run voice -- my-reel            # voiceover + timeline.json
 npm run score -- my-reel            # score.js → score.wav (render does this for you)
 npm run depth -- my-reel            # depth maps for data-depth photos (check/render do this for you)
+npm run footage -- my-reel talk.mp4 # shots, words and a contact sheet of a video (--talk: scenes from its speech)
+npm run faces -- my-reel            # face tracks for data-reframe="face" clips (check/render do this for you)
 npm run check -- my-reel            # lint + design rules + motion + taste check, contact sheets in out/
 npm run preview -- my-reel          # watch in your browser with audio (space, ←/→)
 npm run render -- my-reel           # out/my-reel.mp4 (--draft for fast half-res, --from/--to for a section)
@@ -157,6 +170,7 @@ The workflow lives in plain Markdown (`.claude/skills/make-reel/`), and [AGENTS.
 ## Examples
 
 - [`reels/grand-canyon/`](reels/grand-canyon): a 33-second photo story. Six public-domain NPS photos with depth moves, five shader transitions, counters on spoken numbers, a cinematic score with hits on the numbers.
+- [`reels/space-dangers/`](reels/space-dangers): a 38-second talk cut from an 88-second NASA interview. Eight sentences picked from the transcript, reframed to 9:16 around the speaker, chapter stamps on her words. The footage is downloaded on first use (it's listed under `sources` in its script.json).
 - [`reels/airplane-food/`](reels/airplane-food): a 37-second animated explainer. Nine scenes, word-synced stamps, counters, drawn SVG, bars driven by a custom hook, five kinds of transitions.
 
 Read their `reel.html` and `score.js` to see everything the kit can do.
@@ -168,7 +182,8 @@ Read their `reel.html` and `score.js` to see everything the kit can do.
 - [x] Photos with 3D camera moves
 - [x] Shader transitions
 - [ ] Style packs: named looks (engraving, risograph, blueprint, documentary…) with a rulebook and a demo each
-- [ ] Raw footage in: scene detection, silence trimming, auto-reframing 16:9 → 9:16 around faces
+- [x] Your footage: shot detection, talk scenes with the pauses cut, reframing 16:9 → 9:16 around faces
+- [x] Tested on Linux, macOS and Windows
 - [ ] An MCP server, so any agent or app can call voice / check / render as tools
 - [ ] A local studio page: timeline with word markers, notes box, render queue
 
@@ -176,7 +191,7 @@ Ideas and PRs welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Credits and licences
 
-reelkit's own code is MIT. It installs, and does not bundle, the tools in the table above; each keeps its own licence. Model weights used by default: Kokoro-82M (Apache-2.0), Whisper base (MIT), Depth Anything V2 Small (Apache-2.0). The larger Depth Anything V2 models are non-commercial, so reelkit doesn't use them. Grand Canyon photos: U.S. National Park Service, public domain.
+reelkit's own code is MIT. It installs, and does not bundle, the tools in the table above; each keeps its own licence. Model weights used by default: Kokoro-82M (Apache-2.0), Whisper base (MIT), Depth Anything V2 Small (Apache-2.0). The larger Depth Anything V2 models are non-commercial, so reelkit doesn't use them. Face tracking: MediaPipe BlazeFace short-range (Apache-2.0). Grand Canyon photos: U.S. National Park Service, public domain. Space interview: NASA, public domain ("What Are the Dangers of Going to Space? We Asked a NASA Expert", via Wikimedia Commons).
 
 ## License
 
