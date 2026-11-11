@@ -42,7 +42,7 @@ const ff = ffmpegPath(), fp = ffprobePath();
 if (ff && fp) {
   const v = spawnSync(ff, ['-version'], { encoding: 'utf8' }).stdout.split('\n')[0].split(' ')[2];
   ok('ffmpeg (render)', `${v}${ff.includes('node_modules') ? ' (bundled)' : ''}`);
-} else bad('ffmpeg (render)', `${ff ? '' : 'ffmpeg '}${fp ? '' : 'ffprobe '}not found`, process.platform === 'darwin' ? 'brew install ffmpeg   (or npm install for the bundled one)' : 'install ffmpeg, or npm install for the bundled one');
+} else bad('ffmpeg (render)', `${ff ? '' : 'ffmpeg '}${fp ? '' : 'ffprobe '}not found (or the bundled build doesn't run on this machine)`, process.platform === 'darwin' ? 'brew install ffmpeg   (or npm install for the bundled one)' : 'install ffmpeg, or npm install for the bundled one');
 
 // voice
 const speech = await import('./speech.mjs');

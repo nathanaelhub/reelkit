@@ -57,14 +57,21 @@ function which(bin) {
   const r = spawnSync(process.platform === 'win32' ? 'where' : 'which', [bin], { encoding: 'utf8' });
   return r.status === 0 ? r.stdout.split(/\r?\n/)[0].trim() : null;
 }
+// A bundled binary is only returned if it actually runs: a wrong-architecture build (an x86 binary on an Apple
+// Silicon Mac without Rosetta) exists on disk but fails with "bad CPU type".
+const runs = new Map();
+function works(bin) {
+  if (!runs.has(bin)) runs.set(bin, spawnSync(bin, ['-version'], { stdio: 'ignore' }).status === 0);
+  return runs.get(bin);
+}
 export function ffmpegPath() {
   const sys = which('ffmpeg'); if (sys) return sys;
-  try { const p = require('ffmpeg-static'); if (p && fs.existsSync(p)) return p; } catch {}
+  try { const p = require('ffmpeg-static'); if (p && fs.existsSync(p) && works(p)) return p; } catch {}
   return null;
 }
 export function ffprobePath() {
   const sys = which('ffprobe'); if (sys) return sys;
-  try { const p = require('ffprobe-static').path; if (p && fs.existsSync(p)) return p; } catch {}
+  try { const p = require('@ffprobe-installer/ffprobe').path; if (p && fs.existsSync(p) && works(p)) return p; } catch {}
   return null;
 }
 export { which };
