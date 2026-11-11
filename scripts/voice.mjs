@@ -18,7 +18,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { parseArgs, reelDir, readJSON, writeJSON, ffmpegPath, mediaDuration, run, die, which, ROOT } from './lib.mjs';
-import { kokoro as kokoroSay, kokoroInstalled, sherpaInstalled, KOKORO_DEFAULT, cmuToKokoro, ipaToKokoro, writeExtraLexicon, alignClip, KOKORO_FRONTEND } from './speech.mjs';
+import { kokoro as kokoroSay, kokoroInstalled, sherpaInstalled, KOKORO_DEFAULT, cmuToKokoro, ipaToKokoro, writeExtraLexicon, alignClip, KOKORO_FRONTEND, stopWhisperWorker } from './speech.mjs';
 
 const args = parseArgs();
 const dir = reelDir(args._[0]);
@@ -215,6 +215,8 @@ for (const s of scenes) {
   }
   clips.push({ s, wav, words, dur: mediaDuration(wav) });
 }
+
+stopWhisperWorker(); // a running worker would keep this process alive
 
 // stitch: each scene = clip + pause (default 0.2s), padded up to scene.min seconds
 const parts = []; const tlScenes = []; let t = 0;
