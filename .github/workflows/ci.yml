@@ -6,6 +6,7 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,4 +20,25 @@ jobs:
           path: models
           key: models-kokoro-int8-v1_0-whisper-base-q8-depth-v2-small
       - run: npm run doctor -- --fix || true
+      - run: npm test
+  platforms:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install chromium
+      - uses: actions/cache@v4
+        with:
+          path: models
+          key: models-${{ runner.os }}-kokoro-int8-v1_0-whisper-base-q8-depth-v2-small
+      - run: npm run doctor -- --fix
       - run: npm test

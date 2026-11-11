@@ -197,7 +197,7 @@ export function kokoro(text, wav, { voice = KOKORO_DEFAULT, speed = 1, extraLexi
   const lexicon = [extra.size && extraLexicon, autoMap.size && auto, base].filter(Boolean).join(',');
   const key = lexicon + ':' + autoMap.size;
   if (!tts || ttsKey !== key) {
-    const sherpa = require('sherpa-onnx-node');
+    const sherpa = require('sherpa-onnx-node'); kokoroLoaded = true;
     tts = new sherpa.OfflineTts({ model: { kokoro: { model: path.join(KOKORO_DIR, 'model.int8.onnx'), voices: path.join(KOKORO_DIR, 'voices.bin'),
       tokens: path.join(KOKORO_DIR, 'tokens.txt'), lexicon }, numThreads: 4, debug: false }, maxNumSentences: 1 });
     ttsKey = key;
@@ -283,10 +283,43 @@ export async function transcribeWords(wav16k) {
 export async function alignClip(wav, text, ff) {
   const raw = wav.replace(/\.wav$/, '.16k.f32');
   run(ff, ['-y', '-loglevel', 'error', '-i', wav, '-ar', '16000', '-ac', '1', '-f', 'f32le', raw]);
-  const buf = fs.readFileSync(raw); fs.rmSync(raw);
-  const audio = new Float32Array(buf.buffer, buf.byteOffset, buf.length / 4);
-  const heard = await transcribeWords(audio);
+  let heard, samples;
+  if (useWorker()) { samples = fs.statSync(raw).size / 4; heard = await workerTranscribe(raw); fs.rmSync(raw); }
+  else {
+    const buf = fs.readFileSync(raw); fs.rmSync(raw);
+    const audio = new Float32Array(buf.buffer, buf.byteOffset, buf.length / 4);
+    samples = audio.length; heard = await transcribeWords(audio);
+  }
   const tokens = text.split(/\s+/).filter(Boolean);
-  const { times, matched } = alignTokens(tokens, heard, 0, audio.length / 16000);
+  const { times, matched } = alignTokens(tokens, heard, 0, samples / 16000);
   return { words: tokens.map((w, i) => ({ w, ...times[i] })), matched };
 }
+
+// ---------- Whisper in its own process ----------
+// On Windows, sherpa-onnx (Kokoro) and onnxruntime-node (Whisper) each ship an onnxruntime.dll; once Kokoro has loaded
+// its copy, Whisper's binding gets that one and fails ("The operating system cannot run %1"). So after Kokoro has run,
+// Windows transcribes in a child process with a clean DLL table. REELKIT_WHISPER_WORKER=1 forces this anywhere (tests).
+let kokoroLoaded = false;
+const useWorker = () => process.env.REELKIT_WHISPER_WORKER === '1' || (process.platform === 'win32' && kokoroLoaded);
+let worker = null;
+function startWorker() {
+  const { spawn } = require('node:child_process');
+  const child = spawn(process.execPath, [path.join(ROOT, 'scripts', 'whisper-worker.mjs')], { stdio: ['pipe', 'pipe', 'inherit'] });
+  const waiting = []; let buf = '';
+  child.stdout.setEncoding('utf8');
+  child.stdout.on('data', d => {
+    buf += d; let i;
+    while ((i = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, i); buf = buf.slice(i + 1);
+      const w = waiting.shift(); if (!w) continue;
+      const m = JSON.parse(line); m.error ? w.reject(new Error(m.error)) : w.resolve(m.words);
+    }
+  });
+  child.on('exit', code => { worker = null; while (waiting.length) waiting.shift().reject(new Error(`Whisper worker exited (${code})`)); });
+  return { child, waiting };
+}
+function workerTranscribe(raw) {
+  if (!worker) worker = startWorker();
+  return new Promise((resolve, reject) => { worker.waiting.push({ resolve, reject }); worker.child.stdin.write(raw + '\n'); });
+}
+export function stopWhisperWorker() { if (worker) { worker.child.stdin.end(); worker = null; } }
