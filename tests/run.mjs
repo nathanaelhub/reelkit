@@ -119,9 +119,11 @@ const cases = [
     const v = node('scripts/voice.mjs', [spk]); if (v.status !== 0) return { ok: false, detail: v.out };
     const dur = +spawnSync(ffprobePath(), ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', path.join(spk, 'voice.mp3')], { encoding: 'utf8' }).stdout;
     // the camera: red, then a cut to blue at 2 s
-    const src = path.join(fx, 'interview.mp4');
+    // picture first, then the sound (FFmpeg 6.0 writes silent audio when both happen in one pass with -shortest)
+    const src = path.join(fx, 'interview.mp4'), pic = path.join(fx, 'picture.mp4');
     spawnSync(ffmpegPath(), ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', `color=c=red:s=640x360:r=30:d=2`, '-f', 'lavfi', '-i', `color=c=blue:s=640x360:r=30:d=${(dur - 2).toFixed(2)}`,
-      '-i', path.join(spk, 'voice.mp3'), '-filter_complex', '[0:v][1:v]concat=n=2:v=1[v]', '-map', '[v]', '-map', '2:a', '-c:v', 'libx264', '-c:a', 'aac', '-shortest', src]);
+      '-filter_complex', '[0:v][1:v]concat=n=2:v=1[v]', '-map', '[v]', '-c:v', 'libx264', pic]);
+    spawnSync(ffmpegPath(), ['-y', '-loglevel', 'error', '-i', pic, '-i', path.join(spk, 'voice.mp3'), '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', src]);
     fs.writeFileSync(path.join(reel, 'script.json'), JSON.stringify({ title: 'talk' }));
     const f = node('scripts/footage.mjs', [reel, src, '--talk']);
     if (f.status !== 0) return { ok: false, detail: f.out };

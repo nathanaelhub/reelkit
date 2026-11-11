@@ -240,7 +240,9 @@ async function main() {
     const raw = path.join(fdir, `.${name}.16k.f32`);
     run(ff, ['-y', '-loglevel', 'error', '-i', src, '-vn', '-ar', '16000', '-ac', '1', '-f', 'f32le', raw]);
     const buf = fs.readFileSync(raw); fs.rmSync(raw);
-    words = (await transcribeWords(new Float32Array(buf.buffer, buf.byteOffset, buf.length / 4))).map(w => ({ w: w.w, start: +w.start.toFixed(3), end: +w.end.toFixed(3) }));
+    // Whisper invents words in silence and can place them past the end; keep only words inside the video
+    words = (await transcribeWords(new Float32Array(buf.buffer, buf.byteOffset, buf.length / 4)))
+      .filter(w => w.start < info.duration - 0.05).map(w => ({ w: w.w, start: +w.start.toFixed(3), end: +Math.min(w.end, info.duration).toFixed(3) }));
     console.log(` ${words.length} words`);
   }
   const silences = info.audio ? findSilences(src) : [];
