@@ -1,6 +1,6 @@
 {
   "name": "reelkit",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Open-source AI reel maker: one line in, a finished voiced, scored, animated vertical video out. Runs locally with open tools.",
   "type": "module",
   "license": "MIT",
@@ -51,7 +51,10 @@
     "ffmpeg",
     "playwright",
     "tone.js",
-    "gl-transitions"
+    "gl-transitions",
+    "mediapipe",
+    "face-tracking",
+    "reframe"
   ],
   "repository": {
     "type": "git",
