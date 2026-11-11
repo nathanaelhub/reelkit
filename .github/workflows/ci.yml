@@ -39,6 +39,6 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: models
-          key: models-${{ runner.os }}-kokoro-int8-v1_0-whisper-base-q8-depth-v2-small
+          key: models-${{ runner.os }}-kokoro-int8-v1_0-whisper-base-q8-depth-v2-small-blazeface
       - run: npm run doctor -- --fix
       - run: npm test
