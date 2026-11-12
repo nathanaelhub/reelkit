@@ -3,18 +3,24 @@
 **Type one line. Get a finished vertical video: written, voiced, scored, animated, captioned and checked.**
 Free, open source, and it runs on your own computer: no subscription, no watermark, no API key required.
 
+<a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.7.0/studio-demo.mp4"><img src="docs/studio-demo.webp" width="800" alt="reelkit studio: typing 'how honeybees tell each other where the flowers are', choosing Risograph, pressing Make it, the log running, and the finished reel playing"></a>
+
+<sub>A real run in reelkit studio (`npm start`): one line typed, Risograph picked, **Make it** pressed. The agent took 8 minutes, sped up 40× here, and the log is blurred.</sub>
+
 <table>
 <tr>
-<td width="33%" align="center"><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.2.0/grand-canyon.mp4"><img src="docs/grand-canyon.webp" width="240" alt="Grand Canyon reel: photos moving in 3D with shader transitions"></a><br><b>The canyon is younger than its rocks</b><br><sub>public-domain photos with 3D camera moves · film-burn, ink and whip transitions · cinematic score · British narrator<br><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.2.0/grand-canyon.mp4">▶ watch with sound</a> · <a href="reels/grand-canyon">source</a></sub></td>
-<td width="33%" align="center"><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.2.0/airplane-food.mp4"><img src="docs/airplane-food.webp" width="240" alt="Airplane food reel: animated editorial explainer"></a><br><b>Why airplane food tastes so bland</b><br><sub>animated editorial explainer · word-synced stamps, counters and charts · upbeat score<br><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.2.0/airplane-food.mp4">▶ watch with sound</a> · <a href="reels/airplane-food">source</a></sub></td>
-<td width="33%" align="center"><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.3.0/space-dangers.mp4"><img src="docs/space-dangers.webp" width="240" alt="Space dangers reel: a 16:9 NASA interview cut and reframed to vertical"></a><br><b>What can hurt you in space</b><br><sub>a 16:9 NASA interview, cut to its best lines and reframed to 9:16 around the speaker's face · captions on her own words<br><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.3.0/space-dangers.mp4">▶ watch with sound</a> · <a href="reels/space-dangers">source</a></sub></td>
+<td width="33%" align="center" valign="top"><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.7.0/octopuses-have-three-hearts.mp4"><img src="docs/octopus.webp" width="240" alt="Octopus reel made by one press of Make it in the studio, blueprint style"></a><br><b>Typed: “why octopuses have three hearts”</b><br><sub>one line into the studio, blueprint look, one press of <b>Make it</b>: the agent wrote, drew, checked and rendered it unattended (re-voiced with Kokoro afterwards)<br><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.7.0/octopuses-have-three-hearts.mp4">▶ watch with sound</a> · <a href="reels/octopuses-have-three-hearts">source</a></sub></td>
+<td width="33%" align="center" valign="top"><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.7.0/moon-photo.mp4"><img src="docs/moon-photo.webp" width="240" alt="Apollo 11 photo with MOON set behind Buzz Aldrin using a cut-out"></a><br><b>The photographer in the visor</b><br><sub>one public-domain Apollo 11 photo · words set <i>behind</i> Aldrin with cut-outs · Armstrong found in the visor<br><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.7.0/moon-photo.mp4">▶ watch with sound</a> · <a href="reels/moon-photo">source</a></sub></td>
+<td width="33%" align="center" valign="top"><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.3.0/space-dangers.mp4"><img src="docs/space-dangers.webp" width="240" alt="NASA interview cut to its best lines and reframed from 16:9 to 9:16 around the speaker"></a><br><b>What can hurt you in space</b><br><sub>a 16:9 NASA interview cut to its best lines, pauses removed, reframed to 9:16 around her face · captions on her own words<br><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.3.0/space-dangers.mp4">▶ watch with sound</a> · <a href="reels/space-dangers">source</a></sub></td>
 </tr>
 <tr>
-<td colspan="3" align="center"><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.4.0/sky-blue-styles.mp4"><img src="docs/sky-blue-styles.webp" width="360" alt="One reel about why the sky is blue, rendered in four style packs: risograph, blueprint, engraving and terminal"></a><br><b>One script, four style packs</b><br><sub>the same reel.html rendered as risograph, blueprint, copperplate engraving and green-screen terminal, by changing one word<br><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.4.0/sky-blue-styles.mp4">▶ watch with sound</a> · <a href="reels/sky-blue">source</a> · <a href="styles">the packs</a></sub></td>
+<td width="33%" align="center" valign="top"><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.2.0/grand-canyon.mp4"><img src="docs/grand-canyon.webp" width="240" alt="Grand Canyon reel: photos moving in 3D with shader transitions"></a><br><b>The canyon is younger than its rocks</b><br><sub>six public-domain photos with 3D camera moves · film-burn, ink and whip transitions · cinematic score<br><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.2.0/grand-canyon.mp4">▶ watch with sound</a> · <a href="reels/grand-canyon">source</a></sub></td>
+<td width="33%" align="center" valign="top"><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.2.0/airplane-food.mp4"><img src="docs/airplane-food.webp" width="240" alt="Airplane food reel: animated editorial explainer"></a><br><b>Why airplane food tastes so bland</b><br><sub>animated editorial explainer · stamps, counters and charts that land on the spoken word · upbeat score<br><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.2.0/airplane-food.mp4">▶ watch with sound</a> · <a href="reels/airplane-food">source</a></sub></td>
+<td width="33%" align="center" valign="top"><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.4.0/sky-blue-styles.mp4"><img src="docs/sky-blue-styles.webp" width="240" alt="One reel about why the sky is blue rendered in four style packs"></a><br><b>One script, four looks</b><br><sub>the same reel rendered as risograph, blueprint, copperplate engraving and terminal, by changing one word<br><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.4.0/sky-blue-styles.mp4">▶ watch with sound</a> · <a href="reels/sky-blue">source</a> · <a href="styles">the packs</a></sub></td>
 </tr>
 </table>
 
-<sub>All made with the free defaults, on a laptop: every voice, note, camera move, cut and crop above came from the open tools listed below.</sub>
+<sub>All made on a laptop with the free defaults: every voice, note, camera move, cut, crop and caption above came from the open tools listed below. The previews are 7-second loops; ▶ plays the full reel with sound.</sub>
 
 ```
 you:     make a reel about why the Grand Canyon is younger than its rocks, use these photos
@@ -71,8 +77,6 @@ npm start
 ```
 
 It opens reelkit studio in your browser: write the idea, pick a look, press **Make it**. The agent writes, voices, draws, checks and renders while you watch the log. Then watch the result, give notes ("the hook is slow"), edit what's said scene by scene, drop in a video to cut a talk from it, and re-render, all without a terminal.
-
-<img src="docs/studio.webp" width="720" alt="reelkit studio: one big field for the idea, look and shape choices, and a shelf of finished reels">
 
 *Make it* runs Claude Code on your account. Without it the studio still voices, checks and renders; the scenes are then built by hand or by another coding agent. The studio only listens on your own machine (127.0.0.1) and won't serve your `.env`.
 
@@ -137,6 +141,8 @@ A pack is `styles/<name>/style.css` (+ `style.js` for SVG patterns, `rules.md` f
 ```bash
 npm run footage -- my-reel interview.mp4 --talk
 ```
+<img src="docs/footage-before-after.webp" width="560" alt="Left: the original 16:9 NASA interview. Right: the same moment in the reel, cut vertical around her face, with titles and captions.">
+
 A 16:9 interview turns vertical without losing the speaker: MediaPipe finds the face in every shot and the crop follows it the way an operator would (locked off when they sit still, a smooth follow when they move, a clean jump at each cut).
 ```html
 <video class="abs" data-clip src="assets/s01.talk.mp4" data-reframe="face" style="left:0;top:0;width:1080px;height:1920px"></video>
