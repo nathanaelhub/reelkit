@@ -88,6 +88,12 @@ function agentLine(raw) {
       return '';
     }).filter(Boolean).join('\n');
   }
+  // a tool the agent wasn't allowed to use, or one that failed: show it, or the log hides why a step was skipped
+  if (ev.type === 'user' && Array.isArray(ev.message?.content)) {
+    const errs = ev.message.content.filter(c => c.type === 'tool_result' && c.is_error)
+      .map(c => (Array.isArray(c.content) ? c.content.map(x => x.text || '').join(' ') : String(c.content || '')).split('\n')[0].slice(0, 200));
+    return errs.length ? errs.map(e => `  ✗ ${e}`).join('\n') : null;
+  }
   if (ev.type === 'result') return ev.is_error ? `✗ agent: ${ev.result || ev.subtype}` : `agent finished${ev.total_cost_usd != null ? ` (cost $${ev.total_cost_usd.toFixed(2)})` : ''}`;
   return null;
 }
@@ -95,7 +101,8 @@ function runAgent(label, prompt, reel) {
   const bin = claudeBin();
   if (!bin) throw new Error('Claude Code is not installed, so the agent can\'t build scenes. Install it from claude.com/claude-code, or open this folder in another coding agent (see AGENTS.md).');
   return startJob(label, bin, ['-p', prompt, '--output-format', 'stream-json', '--verbose', '--permission-mode', 'acceptEdits',
-    '--allowedTools', 'Bash(npm run:*)', 'Bash(node scripts/:*)', 'Bash(ls:*)', 'Read', 'Write', 'Edit', 'Glob', 'Grep', 'WebSearch', 'WebFetch'],
+    '--allowedTools', 'Bash(npm run:*)', 'Bash(node scripts/:*)', 'Bash(ls:*)', 'Bash(mkdir:*)', 'Bash(ffmpeg:*)', 'Bash(ffprobe:*)',
+    'Read', 'Write', 'Edit', 'Glob', 'Grep', 'WebSearch', 'WebFetch', 'ToolSearch'],
     { reel, parse: agentLine });
 }
 
