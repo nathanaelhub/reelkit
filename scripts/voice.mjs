@@ -6,6 +6,8 @@
 //   elevenlabs  ELEVENLABS_API_KEY        best quality, word timings from the API
 //   openai      OPENAI_API_KEY            good quality, paid
 //   kokoro      free, local, open weights  natural voice, no key (npm run doctor -- --fix downloads it)
+//   chatterbox  free, local, MIT weights   clones a voice from a 10-30 s sample ("chatterbox": { "reference": "voices/me.wav" });
+//               ~1.5 GB, downloaded on first use; never picked automatically
 //   piper       PIPER_MODEL=/path.onnx    free, offline; check the voice's licence before publishing
 //   say         macOS built-in            Apple licenses these voices for personal, non-commercial use only
 //   none        silent                    for layout drafts
@@ -19,6 +21,7 @@ import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { parseArgs, reelDir, readJSON, writeJSON, ffmpegPath, mediaDuration, run, die, which, ROOT } from './lib.mjs';
 import { cutTalk, talkSource, talkClipPath, ensureFootage } from './footage.mjs';
+import { chatterbox as chatterboxSay, CHATTERBOX_DEFAULT_VOICE } from './speech.mjs';
 import { kokoro as kokoroSay, kokoroInstalled, sherpaInstalled, KOKORO_DEFAULT, cmuToKokoro, ipaToKokoro, writeExtraLexicon, alignClip, KOKORO_FRONTEND, stopWhisperWorker } from './speech.mjs';
 
 const args = parseArgs();
@@ -97,6 +100,25 @@ async function kokoro(text, wav) {
   return { words: null };
 }
 
+async function chatterbox(text, wav) {
+  const c = vcfg.chatterbox || {};
+  const raw = wav.replace(/\.wav$/, '.raw.wav');
+  try { await chatterboxSay(text, raw, { reference: chatterboxRef(), exaggeration: c.exaggeration ?? 0.5, ff, log: m => process.stdout.write(`\n${m}\n   `) }); }
+  catch (e) { die(`Chatterbox: ${e.message}`); }
+  // Chatterbox doesn't take a speed; speed it up or slow it down without changing the pitch
+  const tempo = vcfg.speed ?? 1;
+  run(ff, ['-y', '-loglevel', 'error', '-i', raw, ...(Math.abs(tempo - 1) > 0.01 ? ['-af', `atempo=${tempo}`] : []), '-ar', '44100', '-ac', '1', wav]); fs.rmSync(raw);
+  return { words: null };
+}
+// the reference voice: relative to the reel, then the repo (voices/ is the place for them)
+function chatterboxRef() {
+  const r = (vcfg.chatterbox || {}).reference;
+  if (!r) return CHATTERBOX_DEFAULT_VOICE;
+  const f = [path.resolve(dir, r), path.resolve(ROOT, r)].find(x => fs.existsSync(x));
+  if (!f) die(`Chatterbox reference voice "${r}" not found (looked in the reel folder and the repo)`);
+  return f;
+}
+
 async function piper(text, wav) {
   const model = (vcfg.piper && vcfg.piper.model) || process.env.PIPER_MODEL; if (!model) die('Set PIPER_MODEL to a .onnx voice file');
   const raw = wav.replace(/\.wav$/, '.raw.wav');
@@ -113,7 +135,7 @@ async function none(text, wav) {
   return { words: estimateWords(text, 0.05, d - 0.1) };
 }
 
-const PROVIDERS = { elevenlabs, openai, kokoro, piper, say, none };
+const PROVIDERS = { elevenlabs, openai, kokoro, chatterbox, piper, say, none };
 
 // footage scenes (npm run footage -- … --talk) use their own cut speech: see cutTalk in footage.mjs
 function footage(s, wav) { cutTalk(dir, s, wav); return { wav, words: null }; }
@@ -204,7 +226,7 @@ for (const s of scenes) {
   const src = s.footage ? footageSrc(s) : null;
   const h = crypto.createHash('sha1').update(JSON.stringify(s.footage
     ? ['footage', s.footage, fs.statSync(src).size, Math.round(fs.statSync(src).mtimeMs)]
-    : [provider, vcfg[provider] || {}, vcfg.speed ?? 1, spoken, text, provider === 'kokoro' ? [lexiconEntries, KOKORO_FRONTEND] : 0])).digest('hex').slice(0, 12);
+    : [provider, vcfg[provider] || {}, vcfg.speed ?? 1, spoken, text, provider === 'kokoro' ? [lexiconEntries, KOKORO_FRONTEND] : provider === 'chatterbox' ? (f => [f, fs.existsSync(f) ? fs.statSync(f).size : 0])(chatterboxRef()) : 0])).digest('hex').slice(0, 12);
   const wav = path.join(cacheDir, `${s.id}-${h}.wav`), meta = wav.replace(/\.wav$/, '.json');
   let words, timing;
   let cached = fs.existsSync(wav) && fs.existsSync(meta) ? readJSON(meta) : null;

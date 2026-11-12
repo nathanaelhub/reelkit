@@ -1,0 +1,2 @@
+{ "title": "cb", "voice": { "provider": "chatterbox", "chatterbox": { "exaggeration": 0.5 } },
+  "scenes": [ { "id": "one", "say": "In 1776, a reel cost $1,200." }, { "id": "two", "say": "Welcome to the future of talking machines." } ] }

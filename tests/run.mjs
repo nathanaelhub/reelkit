@@ -199,6 +199,21 @@ const cases = [
     return { ok: !problems.length, detail: problems.join('\n  ') + '\n' + v.out };
   }],
 
+  ['chatterbox: voices a reel locally (numbers as words), timed by Whisper', () => {
+    const cached = path.resolve('models/transformers/onnx-community/chatterbox-ONNX/onnx/language_model_q4.onnx_data');
+    if (!fs.existsSync(cached)) return { ok: true, skip: 'Chatterbox not downloaded (1.5 GB; it downloads on first use)' };
+    const fx = path.resolve('tests/fixtures/chatterbox');
+    fs.rmSync(path.join(fx, '.voice-cache'), { recursive: true, force: true });
+    const v = node('scripts/voice.mjs', [fx]);
+    if (v.status !== 0) return { ok: false, detail: v.out };
+    const problems = [];
+    if (!/aligned timing/.test(v.out) || /estimated timing/.test(v.out)) problems.push('not every scene was aligned by Whisper');
+    const tl = JSON.parse(fs.readFileSync(path.join(fx, 'timeline.json'), 'utf8'));
+    if (tl.voice !== 'chatterbox') problems.push(`voice ${tl.voice}`);
+    const w = tl.scenes[0].words.map(x => x.w).join(' ');
+    if (w !== 'In 1776, a reel cost $1,200.') problems.push(`captions should keep the written numbers: ${w}`);
+    return { ok: !problems.length, detail: problems.join('\n  ') + '\n' + v.out };
+  }],
   ['score: score.js renders to the reel\'s exact length, audibly, and the same every time (to rounding)', () => {
     const fx = path.resolve('tests/fixtures/score'), wav = path.join(fx, 'score.wav');
     if (!fs.existsSync(path.join(fx, 'timeline.json'))) { const v = node('scripts/voice.mjs', [fx]); if (v.status !== 0) return { ok: false, detail: v.out }; }

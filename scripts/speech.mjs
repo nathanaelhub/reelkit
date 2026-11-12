@@ -4,6 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
+import { spawnSync } from 'node:child_process';
 import { ROOT, run } from './lib.mjs';
 
 const require = createRequire(import.meta.url);
@@ -326,3 +327,51 @@ function workerTranscribe(raw) {
   return new Promise((resolve, reject) => { worker.waiting.push({ resolve, reject }); worker.child.stdin.write(raw + '\n'); });
 }
 export function stopWhisperWorker() { if (worker) { worker.child.stdin.end(); worker = null; } }
+
+// ---------- Chatterbox: local voice cloning (Resemble AI, MIT code and weights) ----------
+// Runs through transformers.js (onnx-community/chatterbox-ONNX, 4-bit language model): ~1.5 GB, downloaded on first use.
+// Give it 10-30 s of clean speech as the reference and it speaks in that voice. Only clone your own voice or one you
+// have permission to use.
+export const CHATTERBOX_MODEL = 'onnx-community/chatterbox-ONNX';
+export const CHATTERBOX_DEFAULT_VOICE = path.join(MODELS, 'chatterbox-default-voice.wav');
+let cb = null;
+async function chatterboxModel(log) {
+  if (cb) return cb;
+  const { ChatterboxModel, AutoProcessor, env } = await import('@huggingface/transformers');
+  env.cacheDir = path.join(MODELS, 'transformers');
+  if (!fs.existsSync(path.join(env.cacheDir, CHATTERBOX_MODEL, 'onnx', 'language_model_q4.onnx_data'))) log?.('  downloading Chatterbox (about 1.5 GB, once) …');
+  const processor = await AutoProcessor.from_pretrained(CHATTERBOX_MODEL);
+  const model = await ChatterboxModel.from_pretrained(CHATTERBOX_MODEL, { dtype: { embed_tokens: 'fp32', speech_encoder: 'fp32', language_model: 'q4', conditional_decoder: 'fp32' } });
+  if (!fs.existsSync(CHATTERBOX_DEFAULT_VOICE)) {
+    const r = await fetch(`https://huggingface.co/${CHATTERBOX_MODEL}/resolve/main/default_voice.wav`);
+    if (!r.ok) throw new Error(`could not download Chatterbox's default voice: ${r.status}`);
+    fs.writeFileSync(CHATTERBOX_DEFAULT_VOICE, Buffer.from(await r.arrayBuffer()));
+  }
+  return (cb = { processor, model, refs: new Map() });
+}
+// 16-bit mono WAV from float samples
+export function writeWav(file, samples, rate) {
+  const buf = Buffer.alloc(44 + samples.length * 2);
+  buf.write('RIFF', 0); buf.writeUInt32LE(36 + samples.length * 2, 4); buf.write('WAVEfmt ', 8); buf.writeUInt32LE(16, 16); buf.writeUInt16LE(1, 20); buf.writeUInt16LE(1, 22);
+  buf.writeUInt32LE(rate, 24); buf.writeUInt32LE(rate * 2, 28); buf.writeUInt16LE(2, 32); buf.writeUInt16LE(16, 34); buf.write('data', 36); buf.writeUInt32LE(samples.length * 2, 40);
+  for (let i = 0; i < samples.length; i++) buf.writeInt16LE(Math.max(-32768, Math.min(32767, Math.round(samples[i] * 32767))), 44 + i * 2);
+  fs.writeFileSync(file, buf);
+}
+export async function chatterbox(text, wav, { reference = null, exaggeration = 0.5, ff, log } = {}) {
+  const { processor, model, refs } = await chatterboxModel(log);
+  const ref = reference || CHATTERBOX_DEFAULT_VOICE;
+  if (!fs.existsSync(ref)) throw new Error(`reference voice not found: ${ref}`);
+  if (!refs.has(ref)) {
+    // 24 kHz mono, at most 30 s (more doesn't help and slows every line)
+    const r = spawnSync(ff, ['-loglevel', 'error', '-i', ref, '-t', '30', '-ar', '24000', '-ac', '1', '-f', 'f32le', '-'], { encoding: 'buffer', maxBuffer: 1 << 28 });
+    if (r.status !== 0 || !r.stdout.length) throw new Error(`could not read the reference voice ${ref}`);
+    refs.set(ref, new Float32Array(r.stdout.buffer, r.stdout.byteOffset, r.stdout.length / 4));
+  }
+  // numbers as words, the same as Kokoro gets them, so "1776" is a year and "$1,200" is money
+  const said = text.split(/\s+/).map(tok => { const m = tok.match(/^([^\p{L}\p{N}$]*)(.*?)([,.!?;:"')\]]*)$/u); const w = numberToWords(m[2]); return w ? m[1] + w + m[3] : tok; }).join(' ');
+  const inputs = await processor(said, refs.get(ref));
+  const words = said.split(/\s+/).length;
+  const out = await model.generate({ ...inputs, audio_values: inputs.input_values, exaggeration, max_new_tokens: Math.min(1500, 120 + words * 30) });
+  writeWav(wav, out.data, 24000);
+  return said;
+}

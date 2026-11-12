@@ -37,3 +37,8 @@ tests/fixtures/talk/
 reels/*/footage/*.mp4
 # Finder/iCloud duplicates ("name 2.ext")
 * 2.*
+voices/*
+!voices/README.md
+tests/fixtures/chatterbox/timeline.json
+tests/fixtures/chatterbox/voice.mp3
+tests/fixtures/chatterbox/.voice-cache/

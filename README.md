@@ -31,7 +31,7 @@ agent:   tightens scene 1, re-voices only that scene, lowers the bed, re-checks,
 | Craft | Tool | Licence | What it does here |
 |---|---|---|---|
 | Direction | [Claude Code](https://claude.com/claude-code) (or any coding agent, see below) | n/a | writes the script, builds the scenes, looks at its own frames, takes your notes |
-| Voice | [Kokoro-82M](https://github.com/hexgrad/kokoro) via [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) | Apache-2.0 | a natural narrator, 28 English voices, on your CPU |
+| Voice | [Kokoro-82M](https://github.com/hexgrad/kokoro) via [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx); [Chatterbox](https://github.com/resemble-ai/chatterbox) for your own voice | Apache-2.0 · MIT | a natural narrator, 28 English voices, on your CPU; or clone your voice from a short sample |
 | Word timing | [Whisper](https://github.com/openai/whisper) via [transformers.js](https://github.com/huggingface/transformers.js) | MIT / Apache-2.0 | hears the voiceover so captions and animation land on the exact word |
 | Picture | [Chromium](https://www.chromium.org) via [Playwright](https://playwright.dev) | BSD / Apache-2.0 | every scene is a web page, rendered frame by frame |
 | Motion | `engine/kit.js` (this repo) | MIT | spring physics, word-synced entrances, counters, drawn SVG |
@@ -142,12 +142,15 @@ For silent b-roll, `npm run clip` trims any part of a video; every rendered fram
 | Voice | Cost | Quality | Publish or sell? |
 |---|---|---|---|
 | Kokoro (default, local) | free | natural | yes (Apache-2.0) |
+| Chatterbox (local, opt-in): **your own voice** from a 10-30 s sample | free | natural, expressive | yes (MIT code and weights); clone only your own voice or one you have permission to use |
 | `ELEVENLABS_API_KEY` in `.env` | free tier, then paid | most expressive | yes, under their terms |
 | `OPENAI_API_KEY` in `.env` | pay per use | good | yes, under their terms |
 | [Piper](https://github.com/OHF-Voice/piper1-gpl) (`PIPER_MODEL`) | free, offline | decent | only voices whose licence allows it; Lessac-based voices don't |
 | macOS `say` | free, built in | robotic | no: Apple licenses it for personal, non-commercial use |
 
 reelkit picks the best one available. Every voice except ElevenLabs gets Whisper word timing.
+
+**Your own voice.** Record 10 to 30 seconds of yourself talking (a phone voice memo is fine), save it as `voices/me.m4a`, and set `"voice": { "provider": "chatterbox", "chatterbox": { "reference": "voices/me.m4a" } }`. [Chatterbox](https://github.com/resemble-ai/chatterbox) runs locally through transformers.js (about 1.5 GB, downloaded the first time) and every line is still timed by Whisper. Recordings in `voices/` are never committed. See [voices/README.md](voices/README.md).
 
 ## How it works
 
@@ -213,7 +216,8 @@ Read their `reel.html` and `score.js` to see everything the kit can do.
 - [x] Your footage: shot detection, talk scenes with the pauses cut, reframing 16:9 → 9:16 around faces
 - [x] Tested on Linux, macOS and Windows
 - [x] reelkit studio: `npm start` opens a local app to make, preview, note and render reels without a terminal
-- [ ] Clone your own voice (Chatterbox, MIT weights), subject cut-outs (BiRefNet), light upscaling (Swin2SR): see [open tools worth knowing](docs/open-tools.md)
+- [x] Your own voice, cloned locally (Chatterbox, MIT weights)
+- [ ] Subject cut-outs (BiRefNet), light upscaling (Swin2SR): see [open tools worth knowing](docs/open-tools.md)
 - [ ] An MCP server, so any agent or app can call voice / check / render as tools
 
 Ideas and PRs welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).
