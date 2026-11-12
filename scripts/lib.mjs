@@ -105,12 +105,16 @@ export function mediaDuration(file) {
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
   '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.webp': 'image/webp',
   '.woff2': 'font/woff2', '.woff': 'font/woff', '.ttf': 'font/ttf', '.otf': 'font/otf', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.m4a': 'audio/mp4', '.mp4': 'video/mp4', '.wasm': 'application/wasm' };
-export function serve(port = 0) {
-  return new Promise(resolve => {
-    const srv = http.createServer((req, res) => {
-      const u = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+// `handler(req, res, pathname)` (optional) answers first and returns true if it handled the request (the studio's API).
+// Dotfiles and dot-folders (.env, .git, .voice-cache) are never served.
+export function serve(port = 0, handler = null) {
+  return new Promise((resolve, reject) => {
+    const srv = http.createServer(async (req, res) => {
+      let u;
+      try { u = decodeURIComponent(new URL(req.url, 'http://x').pathname); } catch { res.writeHead(400); res.end('bad url'); return; }
+      if (handler) { try { if (await handler(req, res, u)) return; } catch (e) { if (!res.headersSent) res.writeHead(500, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); return; } }
       const f = path.normalize(path.join(ROOT, u));
-      if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); res.end('not found'); return; }
+      if (!f.startsWith(ROOT) || path.relative(ROOT, f).split(path.sep).some(seg => seg.startsWith('.')) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); res.end('not found'); return; }
       const stat = fs.statSync(f);
       const type = TYPES[path.extname(f).toLowerCase()] || 'application/octet-stream';
       const range = req.headers.range;
@@ -122,6 +126,7 @@ export function serve(port = 0) {
       res.writeHead(200, { 'Content-Type': type, 'Content-Length': stat.size, 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-store' });
       fs.createReadStream(f).pipe(res);
     });
+    srv.on('error', reject);
     srv.listen(port, '127.0.0.1', () => resolve({ srv, port: srv.address().port, url: p => `http://127.0.0.1:${srv.address().port}/${p}` }));
   });
 }

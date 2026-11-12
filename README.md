@@ -62,6 +62,21 @@ That's it. No account, no key.
 
 ## Make a reel
 
+### In the studio
+
+```bash
+npm run doctor -- --fix   # once: installs everything
+npm start
+```
+
+It opens reelkit studio in your browser: write the idea, pick a look, press **Make it**. The agent writes, voices, draws, checks and renders while you watch the log. Then watch the result, give notes ("the hook is slow"), edit what's said scene by scene, drop in a video to cut a talk from it, and re-render, all without a terminal.
+
+<img src="docs/studio.webp" width="720" alt="reelkit studio: one big field for the idea, look and shape choices, and a shelf of finished reels">
+
+*Make it* runs Claude Code on your account. Without it the studio still voices, checks and renders; the scenes are then built by hand or by another coding agent. The studio only listens on your own machine (127.0.0.1) and won't serve your `.env`.
+
+### By talking to the agent
+
 Say what you want, in plain words:
 
 > make a reel about why airplane food tastes so bland
@@ -158,6 +173,7 @@ reel.html (scenes + data-anim) ────────────────�
 ## Commands (if you want to drive it yourself)
 
 ```bash
+npm start                           # reelkit studio in your browser
 npm run doctor [-- --fix]           # check / install everything
 npm run new -- my-reel "Title"      # scaffold reels/my-reel/
 npm run voice -- my-reel            # voiceover + timeline.json
@@ -196,7 +212,7 @@ Read their `reel.html` and `score.js` to see everything the kit can do.
 - [x] Style packs: risograph, blueprint, copperplate engraving, terminal
 - [x] Your footage: shot detection, talk scenes with the pauses cut, reframing 16:9 → 9:16 around faces
 - [x] Tested on Linux, macOS and Windows
-- [ ] reelkit studio: `npm start` opens a local app to make, preview, note and render reels without a terminal
+- [x] reelkit studio: `npm start` opens a local app to make, preview, note and render reels without a terminal
 - [ ] Clone your own voice (Chatterbox, MIT weights), subject cut-outs (BiRefNet), light upscaling (Swin2SR): see [open tools worth knowing](docs/open-tools.md)
 - [ ] An MCP server, so any agent or app can call voice / check / render as tools
 
