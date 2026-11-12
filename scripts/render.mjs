@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
-import { parseArgs, reelDir, openReel, ffmpegPath, OUT, ROOT, readJSON, run, die } from './lib.mjs';
+import { parseArgs, reelDir, openReel, ffmpegPath, OUT, ROOT, readJSON, run, die, checkStyle } from './lib.mjs';
 import { renderScore, scoreIsStale } from './score.mjs';
 import { ensureDepthMaps } from './depth.mjs';
 import { ensureFaceTracks } from './faces.mjs';
@@ -14,8 +14,11 @@ import { glTransition } from './transitions.mjs';
 
 const args = parseArgs();
 const dir = reelDir(args._[0]);
-const name = path.basename(dir);
 const tl = readJSON(path.join(dir, 'timeline.json'));
+// --style <pack> renders the same reel in another style pack, to out/<reel>.<pack>.mp4
+const style = checkStyle(args.style || null);
+checkStyle(tl.style);
+const name = path.basename(dir) + (style ? `.${style}` : '');
 // mix settings are read live from script.json, so changing them doesn't need a re-voice
 const mix = fs.existsSync(path.join(dir, 'script.json')) ? readJSON(path.join(dir, 'script.json')) : {};
 const draft = !!args.draft;
@@ -33,7 +36,7 @@ const outFile = path.resolve(args.out || path.join(OUT, `${name}${draft ? '.draf
 
 async function renderChunk(k, f0, f1) {
   const seg = path.join(tmp, `seg${k}.mp4`);
-  const { page, close, errors, server, browser } = await openReel(dir, { scale });
+  const { page, close, errors, server, browser } = await openReel(dir, { scale, style });
   const enc = spawn(ff, ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'mjpeg', '-i', '-',
     // screenshots are full-range JPEG; convert to limited-range bt709 yuv420p, the standard for social video
     '-vf', 'scale=in_range=pc:out_range=tv:out_color_matrix=bt709,format=yuv420p',

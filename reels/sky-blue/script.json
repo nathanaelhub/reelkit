@@ -1,0 +1,16 @@
+{
+  "title": "Why the sky is blue",
+  "theme": "paper",
+  "style": "riso",
+  "fps": 30,
+  "voice": { "provider": "kokoro", "kokoro": { "voice": "af_heart" } },
+  "captions": true,
+  "scenes": [
+    { "id": "hook", "say": "The sky is blue for the same reason sunsets are red.", "visual": "Half sun on a horizon, headline. 'red' lands on @red." },
+    { "id": "light", "say": "Sunlight is every colour mixed together.", "visual": "Sun, one white beam splitting into a fan of rays, labels red to violet." },
+    { "id": "scatter", "say": "On its way down, it hits the tiny molecules that make up the air.", "visual": "Beam crossing a field of molecules; little arrows bounce off them on @molecules." },
+    { "id": "waves", "say": "They scatter short blue waves around five times more than long red ones.", "visual": "Short wave and long wave drawn; counter to 5 on @five." },
+    { "id": "sky", "say": "So blue light reaches you from every part of the sky.", "visual": "Dome of sky over a viewer, arrows from every direction on @every." },
+    { "id": "sunset", "say": "At sunset, light crosses far more air. The blue scatters away, and the reds are left.", "visual": "Curved Earth, low sun, long path through the air band; 'the reds are left' on @reds.", "pause": 1.4 }
+  ]
+}

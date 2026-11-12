@@ -1,0 +1,43 @@
+/* Blueprint: white line work on cyanotype blue, a drafting grid, monospaced annotations. */
+@import url('../../node_modules/@fontsource/space-mono/400.css');
+@import url('../../node_modules/@fontsource/space-mono/700.css');
+
+#stage {
+  --blue: #12408a; --white: #eef5ff; --a: #ffd84d; --b: #9fd2ff;
+  --bg: var(--blue); --bg-2: #0e3573; --ink: var(--white); --muted: #a9c3ea;
+  --accent: var(--a); --accent-ink: var(--blue); --card: transparent; --card-ink: var(--white);
+  --line: rgba(238,245,255,.18); --shadow: none;
+  --font-sans: 'Space Mono', ui-monospace, monospace; --font-display: 'Space Mono', ui-monospace, monospace;
+  --font-serif: 'Space Mono', ui-monospace, monospace; --font-mono: 'Space Mono', ui-monospace, monospace;
+  --style-label: 'blueprint';
+}
+/* the drafting grid: a fine 30 px grid and a heavier 150 px one */
+#stage .scene { background-color: var(--blue); background-image:
+  linear-gradient(rgba(238,245,255,.16) 2px, transparent 2px), linear-gradient(90deg, rgba(238,245,255,.16) 2px, transparent 2px),
+  linear-gradient(rgba(238,245,255,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(238,245,255,.07) 1px, transparent 1px);
+  background-size: 150px 150px, 150px 150px, 30px 30px, 30px 30px; background-position: -1px -1px; }
+
+#stage .headline { font-weight: 700; font-size: 66px; line-height: 1.12; letter-spacing: -.02em; text-transform: uppercase; color: var(--white); }
+#stage .headline em, #stage .accent { font-style: normal; color: var(--a); font-size: 1em; }
+#stage .display, #stage .huge { font-weight: 700; color: var(--white); letter-spacing: -.04em; }
+#stage .kicker, #stage .note { color: var(--b); text-transform: uppercase; letter-spacing: .08em; }
+#stage .chip { background: transparent; color: var(--white); border: 3px solid var(--white); border-radius: 0; font-weight: 700; font-size: 30px; text-transform: uppercase; letter-spacing: .06em; }
+#stage .chip.red { border-color: var(--a); color: var(--a); }
+#stage .stamp { border: 5px solid var(--a); color: var(--a); border-radius: 0; transform: none; font-weight: 700; mix-blend-mode: normal; letter-spacing: .04em; }
+#stage .card { background: rgba(18,64,138,.7); border: 3px solid var(--white); border-radius: 0; }
+
+/* drawings: everything is line work; fills are pale washes, fill-c is a hatch */
+#stage .fill-a { fill: rgba(255,216,77,.22); stroke: var(--a); stroke-width: 4; }
+#stage .fill-b { fill: rgba(159,210,255,.18); stroke: var(--white); stroke-width: 4; }
+#stage .fill-c { fill: url(#bp-hatch); stroke: var(--white); stroke-width: 3; }
+#stage .line { fill: none; stroke: var(--white); stroke-width: 4; stroke-linecap: square; }
+#stage .line.alt { stroke: var(--a); stroke-dasharray: 18 12; }
+#stage .label { fill: var(--b); font-family: var(--font-mono); font-size: 34px; text-transform: uppercase; letter-spacing: .06em; }
+
+/* captions: typed annotations in a box */
+#stage #captions .w { font-family: var(--font-mono); font-weight: 700; font-size: 60px; color: var(--white); -webkit-text-stroke: 0; text-transform: uppercase; letter-spacing: -.02em; }
+#stage #captions .w.on { color: var(--blue); background: var(--a); }
+
+/* a title block in the corner of every frame, like the sheet it was drawn on */
+#stage::after { content: 'REELKIT · SHEET 1 OF 1 · SCALE 1:1'; position: absolute; right: 40px; bottom: 40px; z-index: 60; pointer-events: none;
+  border: 3px solid rgba(238,245,255,.55); padding: 12px 18px; font: 700 20px/1 'Space Mono', monospace; letter-spacing: .1em; color: rgba(238,245,255,.7); }

@@ -69,6 +69,28 @@ const cases = [
     if (!(tail[2].start >= 2.74 && tail[2].end <= 3.27 + 1e-6)) problems.push(`a word Whisper placed after the clip should fit inside it: ${JSON.stringify(tail[2])}`);
     return { ok: !problems.length, detail: problems.join('\n  ') };
   }],
+  ['styles: one reel renders in each pack, the pack really changes the look, and unknown packs are refused', () => {
+    const problems = [];
+    const l = node('scripts/styles.mjs', []);
+    for (const n of ['riso', 'blueprint', 'engraving', 'terminal']) if (!l.out.includes(n)) problems.push(`npm run styles doesn't list ${n}`);
+    // the page background (top-left corner, inside the texture) in each pack, from a 1-frame draft
+    const corner = st => {
+      const out = path.join(os.tmpdir(), `reelkit-style-${st}.mp4`);
+      const r = node('scripts/render.mjs', ['sky-blue', '--draft', '--from', '0.5', '--to', '0.6', '--style', st, '--out', out]);
+      if (r.status !== 0) { problems.push(`${st} render failed:\n${r.out}`); return null; }
+      const px = spawnSync(ffmpegPath(), ['-loglevel', 'error', '-i', out, '-frames:v', '1', '-vf', 'crop=40:40:200:20,scale=1:1,format=rgb24', '-f', 'rawvideo', '-'], { encoding: 'buffer' }).stdout;
+      fs.rmSync(out, { force: true });
+      return [...px];
+    };
+    const want = { riso: [243, 237, 225], blueprint: [18, 64, 138], terminal: [4, 10, 5] };
+    for (const [st, rgb] of Object.entries(want)) {
+      const c = corner(st); if (!c) continue;
+      if (Math.hypot(...c.map((v, i) => v - rgb[i])) > 45) problems.push(`${st}: background ${c} not near ${rgb}`);
+    }
+    const bad = node('scripts/render.mjs', ['sky-blue', '--draft', '--style', 'vaporwave']);
+    if (bad.status === 0 || !bad.out.includes('unknown style "vaporwave"')) problems.push(`unknown style not refused:\n${bad.out}`);
+    return { ok: !problems.length, detail: problems.join('\n  ') };
+  }],
   ['footage: sentences, kept ranges and shot cuts from what Whisper and FFmpeg report', () => {
     const W = (w, start, end) => ({ w, start, end });
     const words = [W('Hi.', 0.5, 0.8), W('This', 1.0, 1.2), W('is', 1.2, 1.3), W('the', 1.3, 1.4), W('first', 1.4, 1.8), W('sentence.', 3.5, 4.0), W('And', 4.2, 4.4), W('a', 4.4, 4.5), W('second', 4.5, 4.9), W('one.', 4.9, 6.0)];

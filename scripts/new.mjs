@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Scaffold a new reel folder.
-//   npm run new -- <slug> ["Optional title"]
+//   npm run new -- <slug> ["Optional title"] [--style <pack>]   (npm run styles lists the packs)
 import fs from 'node:fs';
 import path from 'node:path';
-import { parseArgs, REELS, ROOT, die, writeJSON } from './lib.mjs';
+import { parseArgs, REELS, ROOT, die, writeJSON, checkStyle } from './lib.mjs';
 
 const args = parseArgs();
 const slug = (args._[0] || '').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '');
@@ -12,10 +12,12 @@ const dir = path.join(REELS, slug);
 if (fs.existsSync(dir)) die(`reels/${slug} already exists`);
 fs.mkdirSync(path.join(dir, 'assets'), { recursive: true });
 const title = args._[1] || slug.replace(/-/g, ' ');
+const style = checkStyle(args.style || null);
 
 writeJSON(path.join(dir, 'script.json'), {
   title,
   theme: 'paper',
+  ...(style ? { style } : {}),
   fps: 30,
   voice: { provider: 'auto', speed: 1.05, elevenlabs: { voiceId: 'JBFqnCBsd6RMkjVDRZzb' }, openai: { voice: 'ash' } },
   captions: true,

@@ -1,6 +1,6 @@
 {
   "name": "reelkit",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Open-source AI reel maker: one line in, a finished voiced, scored, animated vertical video out. Runs locally with open tools.",
   "type": "module",
   "license": "MIT",
@@ -17,7 +17,8 @@
     "score": "node scripts/score.mjs",
     "depth": "node scripts/depth.mjs",
     "footage": "node scripts/footage.mjs",
-    "faces": "node scripts/faces.mjs"
+    "faces": "node scripts/faces.mjs",
+    "styles": "node scripts/styles.mjs"
   },
   "engines": {
     "node": ">=18"
@@ -25,9 +26,13 @@
   "dependencies": {
     "@ffprobe-installer/ffprobe": "^2.1.2",
     "@fontsource/anton": "^5.0.0",
+    "@fontsource/archivo-black": "^5.3.0",
+    "@fontsource/im-fell-english": "^5.3.0",
     "@fontsource/instrument-serif": "^5.0.0",
     "@fontsource/inter": "^5.0.0",
     "@fontsource/jetbrains-mono": "^5.0.0",
+    "@fontsource/space-mono": "^5.3.0",
+    "@fontsource/vt323": "^5.3.0",
     "@huggingface/transformers": "^4.3.2",
     "@mediapipe/tasks-vision": "^1.2.2",
     "ffmpeg-static": "^5.2.0",

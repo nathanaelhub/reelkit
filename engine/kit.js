@@ -19,6 +19,7 @@
 
   const params = new URLSearchParams(location.search);
   const RENDER = params.has('render');
+  const KIT_SRC = (document.currentScript && document.currentScript.src) || location.href;
 
   // ---------- math ----------
   const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -242,6 +243,25 @@
     return phrases;
   }
 
+  // ---------- style packs ----------
+  // styles/<name>/style.css goes right after kit.css (so the reel's own <style> still wins); styles/<name>/style.js,
+  // if there is one, runs once with (Reel, stage) to add what CSS can't (SVG patterns and filters).
+  async function loadStyle(stage, name) {
+    if (!/^[a-z0-9-]+$/.test(name)) throw new Error(`style "${name}": use a folder name from styles/ (npm run styles lists them)`);
+    const base = new URL(`../styles/${name}/`, KIT_SRC);
+    const link = document.createElement('link');
+    link.rel = 'stylesheet'; link.href = new URL('style.css', base).href;
+    const kitCss = document.querySelector('link[href*="kit.css"]');
+    await new Promise((res, rej) => {
+      link.onload = res;
+      link.onerror = () => rej(new Error(`style "${name}" not found (no styles/${name}/style.css). npm run styles lists them`));
+      if (kitCss) kitCss.after(link); else document.head.appendChild(link);
+    });
+    stage.dataset.style = name; document.documentElement.dataset.style = name;
+    const js = await fetch(new URL('style.js', base), { cache: 'no-store' }).then(r => (r.ok ? r.text() : null)).catch(() => null);
+    if (js) new Function('Reel', 'stage', js)(window.Reel, stage);
+  }
+
   async function init(opts = {}) {
     if (RENDER) document.body.classList.add('render');
     const tl = opts.timeline && typeof opts.timeline === 'object'
@@ -254,6 +274,9 @@
     stage.style.width = R.width + 'px'; stage.style.height = R.height + 'px';
     if (R.width > R.height) stage.style.setProperty('--caption-y', (R.height - 230) + 'px'); // landscape: captions near the bottom
     if (tl.theme) stage.classList.add('theme-' + tl.theme);
+    // a style pack (styles/<name>/) restyles the whole reel: script.json "style", or ?style= for a one-off render
+    const style = params.get('style') || tl.style;
+    if (style) await loadStyle(stage, style);
 
     // words with global times
     R.words = [];

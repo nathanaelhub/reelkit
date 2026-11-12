@@ -7,7 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { parseArgs, reelDir, openReel, OUT, ROOT, readJSON } from './lib.mjs';
+import { parseArgs, reelDir, openReel, OUT, ROOT, readJSON, checkStyle } from './lib.mjs';
 import { tasteDir } from './ref.mjs';
 import { ensureDepthMaps } from './depth.mjs';
 import { ensureFaceTracks } from './faces.mjs';
@@ -16,9 +16,11 @@ import { glTransitions, suggest } from './transitions.mjs';
 
 const args = parseArgs();
 const dir = reelDir(args._[0]);
-const name = path.basename(dir);
+const style = checkStyle(args.style || null);
+const name = path.basename(dir) + (style ? `.${style}` : '');
 const per = +(args.frames || 4);
 const tl = readJSON(path.join(dir, 'timeline.json'));
+checkStyle(tl.style);
 
 // timeline freshness: the script changed since voicing?
 const script = readJSON(path.join(dir, 'script.json'));
@@ -27,7 +29,7 @@ const stale = (script.scenes || []).some(s => { const t = tl.scenes.find(x => x.
 await ensureDepthMaps(dir);
 await ensureTalkClips(dir);
 await ensureFaceTracks(dir);
-const { page, close, errors } = await openReel(dir, { scale: 1 });
+const { page, close, errors } = await openReel(dir, { scale: 1, style });
 const issues = await page.evaluate(() => window.__reel.lint());
 // gl: transitions are drawn by render; check the names here (preview and the contact sheets show a fade)
 for (const m of fs.readFileSync(path.join(dir, 'reel.html'), 'utf8').matchAll(/data-transition="gl:([^"]+)"/g))
