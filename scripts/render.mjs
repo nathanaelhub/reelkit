@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
-import { parseArgs, reelDir, openReel, ffmpegPath, OUT, ROOT, readJSON, run, die, checkStyle } from './lib.mjs';
+import { parseArgs, reelDir, openReel, ffmpegPath, OUT, ROOT, readJSON, run, die, checkStyle, TOOL_TIMEOUT } from './lib.mjs';
 import { renderScore, scoreIsStale } from './score.mjs';
 import { ensureDepthMaps } from './depth.mjs';
 import { ensureCutouts } from './cutout.mjs';
@@ -35,15 +35,34 @@ fs.mkdirSync(OUT, { recursive: true });
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'reelkit-'));
 const outFile = path.resolve(args.out || path.join(OUT, `${name}${draft ? '.draft' : ''}.mp4`));
 
+// Watchdog: a render that stops making frames fails loudly, naming the frame and the step it was stuck on, instead of
+// hanging until someone kills it (a killed render's Chromium and FFmpeg can keep the caller waiting forever).
+const STALL = +(process.env.REELKIT_STALL_SECONDS || 120) * 1000;
+const where = []; // per worker: { f, step, at }
+const mark = (k, f, step) => { where[k] = { f, step, at: Date.now() }; };
+const browsers = new Set(); // close functions of the open reels, so a stalled render doesn't leave Chromium behind
+const watchdog = setInterval(async () => {
+  const stuck = where.map((w, k) => ({ ...w, k })).filter(w => w.step !== 'done' && Date.now() - w.at > STALL);
+  if (!stuck.length) return;
+  console.error(`\n✗ render stalled: ${stuck.map(w => `worker ${w.k} at frame ${w.f} (${(from + w.f / fps).toFixed(2)} s), step "${w.step}"`).join('; ')}, nothing for ${STALL / 1000} s`);
+  clearInterval(watchdog);
+  await Promise.race([Promise.all([...browsers].map(c => c().catch(() => {}))), new Promise(r => setTimeout(r, 3000))]);
+  process.exit(3);
+}, Math.max(50, Math.min(5000, STALL / 2)));
+watchdog.unref();
+
 async function renderChunk(k, f0, f1) {
+  mark(k, f0, 'open the reel');
   const seg = path.join(tmp, `seg${k}.mp4`);
   const { page, close, errors, server, browser } = await openReel(dir, { scale, style });
+  browsers.add(close);
   const enc = spawn(ff, ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'mjpeg', '-i', '-',
     // screenshots are full-range JPEG; convert to limited-range bt709 yuv420p, the standard for social video
     '-vf', 'scale=in_range=pc:out_range=tv:out_color_matrix=bt709,format=yuv420p',
     '-c:v', 'libx264', '-preset', draft ? 'ultrafast' : 'veryfast', '-crf', draft ? '28' : '18', '-pix_fmt', 'yuv420p',
     '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', '-color_range', 'tv', '-r', String(fps), seg], { stdio: ['pipe', 'inherit', 'inherit'] });
   const done = new Promise((res, rej) => enc.on('close', c => (c === 0 ? res() : rej(new Error('ffmpeg exited ' + c)))));
+  mark(k, f0, 'set up');
   const stage = await page.$('#stage');
   // gl: transitions: capture both scenes and the overlay separately, blend them in a WebGL compositor page
   const windows = (await page.evaluate(() => window.__reel.glWindows())).map(w => ({ ...w, gl: glTransition(w.name) }));
@@ -56,7 +75,9 @@ async function renderChunk(k, f0, f1) {
   const png = async () => 'data:image/png;base64,' + (await stage.screenshot({ type: 'png', omitBackground: true })).toString('base64');
   for (let f = f0; f < f1; f++) {
     const t = from + f / fps;
+    mark(k, f, 'seek and settle');
     await page.evaluate(async t => { window.__reel.seek(t); await window.__reel.settle(); }, t);
+    mark(k, f, 'screenshot');
     const w = windows.find(w => t >= w.start && t < w.start + w.dur);
     let buf;
     if (w) {
@@ -67,11 +88,14 @@ async function renderChunk(k, f0, f1) {
       const url = await comp.evaluate(a => window.composite(a), { name: w.gl.name, glsl: w.gl.glsl, types: w.gl.paramsTypes || {}, params: { ...w.gl.defaultParams, ...w.params }, from: A, to: B, overlay: O, progress: eased });
       buf = Buffer.from(url.split(',')[1], 'base64');
     } else buf = await stage.screenshot({ type: 'jpeg', quality: draft ? 80 : 94 });
+    mark(k, f, 'encode');
     if (!enc.stdin.write(buf)) await new Promise(r => enc.stdin.once('drain', r));
     progress[k] = f - f0 + 1;
   }
+  mark(k, f1, 'finish the segment');
   enc.stdin.end();
-  await done; await close();
+  await done; await close(); browsers.delete(close);
+  mark(k, f1, 'done');
   if (errors.length) console.warn(`\n⚠ page errors in worker ${k}:\n  ${[...new Set(errors)].join('\n  ')}`);
   return seg;
 }
@@ -144,7 +168,7 @@ run(ff, a);
 // card pull the mix away from the target. Skipped for clips under 3 s, where the measurement is unreliable.
 const target = tl.loudness ?? -14;
 if ((ai || filter) && to - from >= 3) {
-  const meas = spawnSync(ff, ['-hide_banner', '-nostats', '-i', outFile, '-vn', '-af', `loudnorm=I=${target}:TP=-1.5:LRA=11:print_format=json`, '-f', 'null', '-'], { encoding: 'utf8' }).stderr;
+  const meas = spawnSync(ff, ['-nostdin', '-hide_banner', '-nostats', '-i', outFile, '-vn', '-af', `loudnorm=I=${target}:TP=-1.5:LRA=11:print_format=json`, '-f', 'null', '-'], { encoding: 'utf8', timeout: TOOL_TIMEOUT, killSignal: 'SIGKILL' }).stderr;
   const j = JSON.parse(meas.slice(meas.lastIndexOf('{'), meas.lastIndexOf('}') + 1));
   const norm = path.join(tmp, 'norm.mp4');
   run(ff, ['-y', '-loglevel', 'error', '-i', outFile, '-c:v', 'copy', '-af',

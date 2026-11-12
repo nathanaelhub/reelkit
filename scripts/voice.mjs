@@ -160,7 +160,7 @@ function estimateWords(text, s0, s1) {
 
 // Find where speech actually starts/ends inside a clip (trims TTS silence padding).
 function speechBounds(wav, dur) {
-  const r = spawnSync(ff, ['-hide_banner', '-i', wav, '-af', 'silencedetect=noise=-38dB:d=0.12', '-f', 'null', '-'], { encoding: 'utf8' });
+  const r = spawnSync(ff, ['-nostdin', '-hide_banner', '-i', wav, '-af', 'silencedetect=noise=-38dB:d=0.12', '-f', 'null', '-'], { encoding: 'utf8', timeout: 120000, killSignal: 'SIGKILL' });
   const log = r.stderr || '';
   const starts = [...log.matchAll(/silence_start: ([\d.]+)/g)].map(m => +m[1]);
   const ends = [...log.matchAll(/silence_end: ([\d.]+)/g)].map(m => +m[1]);
