@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
-import { parseArgs, reelDir, openReel, ffmpegPath, OUT, ROOT, readJSON, run, die, checkStyle } from './lib.mjs';
+import { parseArgs, reelDir, openReel, ffmpegPath, OUT, ROOT, readJSON, run, die, checkStyle, TOOL_TIMEOUT } from './lib.mjs';
 import { renderScore, scoreIsStale } from './score.mjs';
 import { ensureDepthMaps } from './depth.mjs';
 import { ensureCutouts } from './cutout.mjs';
@@ -168,7 +168,7 @@ run(ff, a);
 // card pull the mix away from the target. Skipped for clips under 3 s, where the measurement is unreliable.
 const target = tl.loudness ?? -14;
 if ((ai || filter) && to - from >= 3) {
-  const meas = spawnSync(ff, ['-hide_banner', '-nostats', '-i', outFile, '-vn', '-af', `loudnorm=I=${target}:TP=-1.5:LRA=11:print_format=json`, '-f', 'null', '-'], { encoding: 'utf8' }).stderr;
+  const meas = spawnSync(ff, ['-nostdin', '-hide_banner', '-nostats', '-i', outFile, '-vn', '-af', `loudnorm=I=${target}:TP=-1.5:LRA=11:print_format=json`, '-f', 'null', '-'], { encoding: 'utf8', timeout: TOOL_TIMEOUT, killSignal: 'SIGKILL' }).stderr;
   const j = JSON.parse(meas.slice(meas.lastIndexOf('{'), meas.lastIndexOf('}') + 1));
   const norm = path.join(tmp, 'norm.mp4');
   run(ff, ['-y', '-loglevel', 'error', '-i', outFile, '-c:v', 'copy', '-af',
