@@ -35,3 +35,5 @@ reels/*/assets/*.talk.faces.json
 reels/*/footage/.*
 tests/fixtures/talk/
 reels/*/footage/*.mp4
+# Finder/iCloud duplicates ("name 2.ext")
+* 2.*
