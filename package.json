@@ -1,6 +1,6 @@
 {
   "name": "reelkit",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Open-source AI reel maker: one line in, a finished voiced, scored, animated vertical video out. Runs locally with open tools.",
   "type": "module",
   "license": "MIT",
