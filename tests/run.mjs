@@ -280,6 +280,20 @@ const cases = [
     return { ok: size === '640,480', detail: `map ${size}, want 640,480\n${r.out}` };
   }],
 
+  ['cutout: npm run cutout finds the subject: it stays opaque, the background goes transparent', () => {
+    const fx = path.resolve('tests/fixtures/cutout'), as = path.join(fx, 'assets');
+    fs.mkdirSync(as, { recursive: true });
+    const photo = path.join(as, 'subject.png');
+    // a dark figure (head and body) standing on a soft sky-to-grass gradient
+    spawnSync(ffmpegPath(), ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'gradients=s=640x480:c0=0x9fd3f0:c1=0x5f9b48:x0=0:y0=0:x1=0:y1=480,drawbox=x=280:y=170:w=80:h=230:color=0x2b2b33:t=fill,drawbox=x=295:y=110:w=50:h=60:color=0xd8a07a:t=fill', '-frames:v', '1', photo]);
+    fs.rmSync(path.join(as, 'subject.cutout.png'), { force: true });
+    const r = node('scripts/cutout.mjs', [fx]);
+    const cut = path.join(as, 'subject.cutout.png');
+    if (r.status !== 0 || !fs.existsSync(cut)) return { ok: false, detail: r.out };
+    const alpha = (x, y) => spawnSync(ffmpegPath(), ['-loglevel', 'error', '-i', cut, '-vf', `crop=8:8:${x}:${y},scale=1:1,format=rgba`, '-f', 'rawvideo', '-'], { encoding: 'buffer' }).stdout[3];
+    const fig = alpha(316, 250), corner = alpha(20, 20), ground = alpha(560, 440);
+    return { ok: fig > 200 && corner < 40 && ground < 40, detail: `alpha: figure ${fig} (want > 200), sky corner ${corner}, ground ${ground} (want < 40)\n${r.out}` };
+  }],
   ['gl transitions: render blends the two scenes mid-way, and check rejects unknown names with a suggestion', () => {
     const fx = path.resolve('tests/fixtures/gl');
     const v = node('scripts/voice.mjs', [fx]); if (v.status !== 0) return { ok: false, detail: v.out };
