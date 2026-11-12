@@ -18,7 +18,7 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: models
-          key: models-kokoro-int8-v1_0-whisper-base-q8-depth-v2-small-blazeface
+          key: models-kokoro-int8-v1_0-whisper-base-q8-depth-v2-small-blazeface-birefnet
       - run: npm run doctor -- --fix || true
       - run: npm test
   platforms:
@@ -39,6 +39,6 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: models
-          key: models-${{ runner.os }}-kokoro-int8-v1_0-whisper-base-q8-depth-v2-small-blazeface
+          key: models-${{ runner.os }}-kokoro-int8-v1_0-whisper-base-q8-depth-v2-small-blazeface-birefnet
       - run: npm run doctor -- --fix
       - run: npm test

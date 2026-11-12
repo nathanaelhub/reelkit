@@ -1,0 +1,39 @@
+{
+  "title": "The photographer in the visor",
+  "theme": "ink",
+  "fps": 30,
+  "voice": {
+    "provider": "kokoro",
+    "kokoro": {
+      "voice": "am_michael"
+    },
+    "speed": 1.0
+  },
+  "captions": true,
+  "scenes": [
+    {
+      "id": "hook",
+      "say": "This might be the most famous photo ever taken on the Moon.",
+      "visual": "The photo; MOON set behind Aldrin (cut-out on top) on @Moon."
+    },
+    {
+      "id": "who",
+      "say": "Neil Armstrong took it, in July 1969.",
+      "visual": "Photo credit chip on @Armstrong, date on @July."
+    },
+    {
+      "id": "visor",
+      "say": "Now look at the visor. That's Armstrong, reflected.",
+      "visual": "Close-up on the visor, ring on @reflected."
+    },
+    {
+      "id": "why",
+      "say": "He carried the camera, so almost every photo from that walk shows Buzz Aldrin.",
+      "visual": "Aldrin cut out over a darkened photo, name on @Aldrin. Credit.",
+      "pause": 1.4
+    }
+  ],
+  "pronounce": {
+    "Neil": "kneel"
+  }
+}

@@ -1,0 +1,576 @@
+{
+  "title": "Why octopuses have three hearts",
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "loudness": -14,
+  "theme": "paper",
+  "style": "blueprint",
+  "captions": true,
+  "voice": "kokoro",
+  "audio": "voice.mp3",
+  "music": null,
+  "musicVolume": 0.12,
+  "duration": 33.999,
+  "scenes": [
+    {
+      "id": "hook",
+      "start": 0,
+      "end": 3.559,
+      "say": "An octopus has three hearts. And it needs every one.",
+      "words": [
+        {
+          "w": "An",
+          "start": 0.05,
+          "end": 0.48
+        },
+        {
+          "w": "octopus",
+          "start": 0.48,
+          "end": 0.9
+        },
+        {
+          "w": "has",
+          "start": 0.9,
+          "end": 1.24
+        },
+        {
+          "w": "three",
+          "start": 1.24,
+          "end": 1.52
+        },
+        {
+          "w": "hearts.",
+          "start": 1.52,
+          "end": 2.02
+        },
+        {
+          "w": "And",
+          "start": 2.02,
+          "end": 2.12
+        },
+        {
+          "w": "it",
+          "start": 2.12,
+          "end": 2.38
+        },
+        {
+          "w": "needs",
+          "start": 2.38,
+          "end": 3.12
+        },
+        {
+          "w": "every",
+          "start": 3.12,
+          "end": 3.28
+        },
+        {
+          "w": "one.",
+          "start": 3.28,
+          "end": 3.359
+        }
+      ]
+    },
+    {
+      "id": "blood",
+      "start": 3.559,
+      "end": 8.922,
+      "say": "The reason is its blood. It's blue, because it carries oxygen with copper instead of iron.",
+      "words": [
+        {
+          "w": "The",
+          "start": 3.719,
+          "end": 4.099
+        },
+        {
+          "w": "reason",
+          "start": 4.099,
+          "end": 4.299
+        },
+        {
+          "w": "is",
+          "start": 4.299,
+          "end": 4.519
+        },
+        {
+          "w": "its",
+          "start": 4.519,
+          "end": 4.839
+        },
+        {
+          "w": "blood.",
+          "start": 4.839,
+          "end": 5.199
+        },
+        {
+          "w": "It's",
+          "start": 5.299,
+          "end": 5.639
+        },
+        {
+          "w": "blue,",
+          "start": 5.639,
+          "end": 5.999
+        },
+        {
+          "w": "because",
+          "start": 5.999,
+          "end": 6.159
+        },
+        {
+          "w": "it",
+          "start": 6.159,
+          "end": 6.459
+        },
+        {
+          "w": "carries",
+          "start": 6.459,
+          "end": 6.939
+        },
+        {
+          "w": "oxygen",
+          "start": 6.939,
+          "end": 7.219
+        },
+        {
+          "w": "with",
+          "start": 7.219,
+          "end": 7.459
+        },
+        {
+          "w": "copper",
+          "start": 7.459,
+          "end": 7.999
+        },
+        {
+          "w": "instead",
+          "start": 7.999,
+          "end": 8.199
+        },
+        {
+          "w": "of",
+          "start": 8.199,
+          "end": 8.539
+        },
+        {
+          "w": "iron.",
+          "start": 8.539,
+          "end": 8.579
+        }
+      ]
+    },
+    {
+      "id": "less",
+      "start": 8.922,
+      "end": 13.397,
+      "say": "Copper blood holds less oxygen than ours, so it has to be pumped harder.",
+      "words": [
+        {
+          "w": "Copper",
+          "start": 9.262,
+          "end": 9.502
+        },
+        {
+          "w": "blood",
+          "start": 9.502,
+          "end": 9.802
+        },
+        {
+          "w": "holds",
+          "start": 9.802,
+          "end": 10.082
+        },
+        {
+          "w": "less",
+          "start": 10.082,
+          "end": 10.542
+        },
+        {
+          "w": "oxygen",
+          "start": 10.542,
+          "end": 10.742
+        },
+        {
+          "w": "than",
+          "start": 10.742,
+          "end": 11.102
+        },
+        {
+          "w": "ours,",
+          "start": 11.102,
+          "end": 11.482
+        },
+        {
+          "w": "so",
+          "start": 11.642,
+          "end": 11.782
+        },
+        {
+          "w": "it",
+          "start": 11.782,
+          "end": 11.902
+        },
+        {
+          "w": "has",
+          "start": 11.902,
+          "end": 12.102
+        },
+        {
+          "w": "to",
+          "start": 12.102,
+          "end": 12.222
+        },
+        {
+          "w": "be",
+          "start": 12.222,
+          "end": 12.442
+        },
+        {
+          "w": "pumped",
+          "start": 12.442,
+          "end": 12.982
+        },
+        {
+          "w": "harder.",
+          "start": 12.982,
+          "end": 13.082
+        }
+      ]
+    },
+    {
+      "id": "gills",
+      "start": 13.397,
+      "end": 17.433,
+      "say": "So two hearts have just one job: pushing blood through the gills.",
+      "words": [
+        {
+          "w": "So",
+          "start": 13.597,
+          "end": 13.837
+        },
+        {
+          "w": "two",
+          "start": 13.837,
+          "end": 14.097
+        },
+        {
+          "w": "hearts",
+          "start": 14.097,
+          "end": 14.337
+        },
+        {
+          "w": "have",
+          "start": 14.337,
+          "end": 14.517
+        },
+        {
+          "w": "just",
+          "start": 14.517,
+          "end": 14.797
+        },
+        {
+          "w": "one",
+          "start": 14.797,
+          "end": 15.137
+        },
+        {
+          "w": "job:",
+          "start": 15.137,
+          "end": 15.517
+        },
+        {
+          "w": "pushing",
+          "start": 15.777,
+          "end": 16.117
+        },
+        {
+          "w": "blood",
+          "start": 16.117,
+          "end": 16.457
+        },
+        {
+          "w": "through",
+          "start": 16.457,
+          "end": 16.617
+        },
+        {
+          "w": "the",
+          "start": 16.617,
+          "end": 16.777
+        },
+        {
+          "w": "gills.",
+          "start": 16.777,
+          "end": 17.233
+        }
+      ]
+    },
+    {
+      "id": "body",
+      "start": 17.433,
+      "end": 21.923,
+      "say": "That leaves the pressure low. So a third heart pumps it out to the whole body.",
+      "words": [
+        {
+          "w": "That",
+          "start": 17.653,
+          "end": 17.993
+        },
+        {
+          "w": "leaves",
+          "start": 17.993,
+          "end": 18.193
+        },
+        {
+          "w": "the",
+          "start": 18.193,
+          "end": 18.493
+        },
+        {
+          "w": "pressure",
+          "start": 18.493,
+          "end": 18.813
+        },
+        {
+          "w": "low.",
+          "start": 18.813,
+          "end": 19.033
+        },
+        {
+          "w": "So",
+          "start": 19.253,
+          "end": 19.433
+        },
+        {
+          "w": "a",
+          "start": 19.433,
+          "end": 19.733
+        },
+        {
+          "w": "third",
+          "start": 19.733,
+          "end": 20.033
+        },
+        {
+          "w": "heart",
+          "start": 20.033,
+          "end": 20.433
+        },
+        {
+          "w": "pumps",
+          "start": 20.433,
+          "end": 20.593
+        },
+        {
+          "w": "it",
+          "start": 20.593,
+          "end": 20.693
+        },
+        {
+          "w": "out",
+          "start": 20.693,
+          "end": 20.833
+        },
+        {
+          "w": "to",
+          "start": 20.833,
+          "end": 20.933
+        },
+        {
+          "w": "the",
+          "start": 20.933,
+          "end": 21.133
+        },
+        {
+          "w": "whole",
+          "start": 21.133,
+          "end": 21.533
+        },
+        {
+          "w": "body.",
+          "start": 21.533,
+          "end": 21.723
+        }
+      ]
+    },
+    {
+      "id": "swim",
+      "start": 21.923,
+      "end": 26.482,
+      "say": "Here's the strange part. When an octopus swims, that main heart stops.",
+      "words": [
+        {
+          "w": "Here's",
+          "start": 22.143,
+          "end": 22.363
+        },
+        {
+          "w": "the",
+          "start": 22.363,
+          "end": 22.763
+        },
+        {
+          "w": "strange",
+          "start": 22.763,
+          "end": 23.103
+        },
+        {
+          "w": "part.",
+          "start": 23.103,
+          "end": 23.443
+        },
+        {
+          "w": "When",
+          "start": 23.443,
+          "end": 23.603
+        },
+        {
+          "w": "an",
+          "start": 23.603,
+          "end": 23.863
+        },
+        {
+          "w": "octopus",
+          "start": 23.863,
+          "end": 24.343
+        },
+        {
+          "w": "swims,",
+          "start": 24.343,
+          "end": 24.743
+        },
+        {
+          "w": "that",
+          "start": 24.743,
+          "end": 24.963
+        },
+        {
+          "w": "main",
+          "start": 24.963,
+          "end": 25.223
+        },
+        {
+          "w": "heart",
+          "start": 25.223,
+          "end": 25.743
+        },
+        {
+          "w": "stops.",
+          "start": 25.743,
+          "end": 25.923
+        }
+      ]
+    },
+    {
+      "id": "crawl",
+      "start": 26.482,
+      "end": 30.693,
+      "say": "So swimming wears it out fast. An octopus would much rather crawl.",
+      "words": [
+        {
+          "w": "So",
+          "start": 26.662,
+          "end": 27.042
+        },
+        {
+          "w": "swimming",
+          "start": 27.042,
+          "end": 27.322
+        },
+        {
+          "w": "wears",
+          "start": 27.322,
+          "end": 27.482
+        },
+        {
+          "w": "it",
+          "start": 27.482,
+          "end": 27.622
+        },
+        {
+          "w": "out",
+          "start": 27.622,
+          "end": 28.002
+        },
+        {
+          "w": "fast.",
+          "start": 28.002,
+          "end": 28.382
+        },
+        {
+          "w": "An",
+          "start": 28.382,
+          "end": 28.922
+        },
+        {
+          "w": "octopus",
+          "start": 28.922,
+          "end": 29.322
+        },
+        {
+          "w": "would",
+          "start": 29.322,
+          "end": 29.562
+        },
+        {
+          "w": "much",
+          "start": 29.562,
+          "end": 29.882
+        },
+        {
+          "w": "rather",
+          "start": 29.882,
+          "end": 30.242
+        },
+        {
+          "w": "crawl.",
+          "start": 30.242,
+          "end": 30.482
+        }
+      ]
+    },
+    {
+      "id": "outro",
+      "start": 30.693,
+      "end": 33.999,
+      "say": "Three hearts. Blue blood. Follow for more.",
+      "words": [
+        {
+          "w": "Three",
+          "start": 30.973,
+          "end": 31.233
+        },
+        {
+          "w": "hearts.",
+          "start": 31.233,
+          "end": 31.533
+        },
+        {
+          "w": "Blue",
+          "start": 31.533,
+          "end": 31.933
+        },
+        {
+          "w": "blood.",
+          "start": 31.933,
+          "end": 32.173
+        },
+        {
+          "w": "Follow",
+          "start": 32.413,
+          "end": 32.673
+        },
+        {
+          "w": "for",
+          "start": 32.673,
+          "end": 32.933
+        },
+        {
+          "w": "more.",
+          "start": 32.933,
+          "end": 33.133
+        }
+      ]
+    }
+  ]
+}

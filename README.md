@@ -35,6 +35,7 @@ agent:   tightens scene 1, re-voices only that scene, lowers the bed, re-checks,
 | Word timing | [Whisper](https://github.com/openai/whisper) via [transformers.js](https://github.com/huggingface/transformers.js) | MIT / Apache-2.0 | hears the voiceover so captions and animation land on the exact word |
 | Picture | [Chromium](https://www.chromium.org) via [Playwright](https://playwright.dev) | BSD / Apache-2.0 | every scene is a web page, rendered frame by frame |
 | Motion | `engine/kit.js` (this repo) | MIT | spring physics, word-synced entrances, counters, drawn SVG |
+| Cut-outs | [BiRefNet lite](https://github.com/ZhengPeng7/BiRefNet) | MIT | finds a photo's subject, so words can sit behind it |
 | Photos in 3D | [Depth Anything V2 Small](https://github.com/DepthAnything/Depth-Anything-V2) | Apache-2.0 | per-pixel depth, so a still photo gets a real camera move |
 | Transitions | [gl-transitions](https://github.com/gl-transitions/gl-transitions) | MIT / BSD | 214 GPU shader transitions between scenes |
 | Music & sound | [Tone.js](https://tonejs.github.io) | MIT | an original score and sound effects, written in code, timed to the words |
@@ -96,6 +97,13 @@ Then give notes like you would to a human editor: *"the hook is weak"*, *"scene 
 **Photos that move in 3D.** A still photo gets a camera move through its depth map: push, pull, pan, rise, orbit, float or vertigo. Near things move more than far things, so it feels filmed instead of slid.
 ```html
 <canvas class="abs" data-depth="assets/street.jpg" data-move="push" style="left:0;top:0;width:1080px;height:1920px"></canvas>
+```
+
+**Words behind the subject.** `data-cutout` shows a photo's subject cut out on transparency ([BiRefNet](https://github.com/ZhengPeng7/BiRefNet), MIT, run locally). Stack the photo, a headline, then the cut-out, and the headline sits behind the person:
+```html
+<img class="abs" src="assets/aldrin.jpg" style="…">
+<div class="abs display">MOON</div>
+<img class="abs" data-cutout="assets/aldrin.jpg" style="…">
 ```
 
 **214 shader transitions.** Ink bleeding through paper, film burns, whip pans, page curls, glitches. Render captures the two scenes separately, blends them on the GPU and lays the captions back on top, so they never smear.
@@ -181,6 +189,7 @@ npm run doctor [-- --fix]           # check / install everything
 npm run new -- my-reel "Title"      # scaffold reels/my-reel/
 npm run voice -- my-reel            # voiceover + timeline.json
 npm run score -- my-reel            # score.js → score.wav (render does this for you)
+npm run cutout -- my-reel            # subject cut-outs for data-cutout photos (check/render do this for you)
 npm run depth -- my-reel            # depth maps for data-depth photos (check/render do this for you)
 npm run footage -- my-reel talk.mp4 # shots, words and a contact sheet of a video (--talk: scenes from its speech)
 npm run faces -- my-reel            # face tracks for data-reframe="face" clips (check/render do this for you)
@@ -200,6 +209,8 @@ The workflow lives in plain Markdown (`.claude/skills/make-reel/`), and [AGENTS.
 ## Examples
 
 - [`reels/grand-canyon/`](reels/grand-canyon): a 33-second photo story. Six public-domain NPS photos with depth moves, five shader transitions, counters on spoken numbers, a cinematic score with hits on the numbers.
+- [`reels/octopuses-have-three-hearts/`](reels/octopuses-have-three-hearts): made with one press of **Make it** in the studio ("why octopuses have three hearts", blueprint): the agent wrote, drew, checked and rendered it unattended. Re-voiced with Kokoro afterwards so anyone can render it.
+- [`reels/moon-photo/`](reels/moon-photo): a 17-second photo story about one public-domain Apollo 11 photo: "MOON" and "BUZZ ALDRIN" set behind Aldrin with cut-outs, and a close-up of Armstrong reflected in the visor.
 - [`reels/sky-blue/`](reels/sky-blue): a 22-second explainer drawn entirely with style-neutral SVG, so every style pack can restyle it. Its default is risograph.
 - [`reels/space-dangers/`](reels/space-dangers): a 38-second talk cut from an 88-second NASA interview. Eight sentences picked from the transcript, reframed to 9:16 around the speaker, chapter stamps on her words. The footage is downloaded on first use (it's listed under `sources` in its script.json).
 - [`reels/airplane-food/`](reels/airplane-food): a 37-second animated explainer. Nine scenes, word-synced stamps, counters, drawn SVG, bars driven by a custom hook, five kinds of transitions.
@@ -217,7 +228,8 @@ Read their `reel.html` and `score.js` to see everything the kit can do.
 - [x] Tested on Linux, macOS and Windows
 - [x] reelkit studio: `npm start` opens a local app to make, preview, note and render reels without a terminal
 - [x] Your own voice, cloned locally (Chatterbox, MIT weights)
-- [ ] Subject cut-outs (BiRefNet), light upscaling (Swin2SR): see [open tools worth knowing](docs/open-tools.md)
+- [x] Subject cut-outs (BiRefNet)
+- [ ] Light upscaling for small photos (Swin2SR): see [open tools worth knowing](docs/open-tools.md)
 - [ ] An MCP server, so any agent or app can call voice / check / render as tools
 
 Ideas and PRs welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -248,7 +260,7 @@ This is a joke. Please be one of the humans: make things you'd watch yourself, p
 
 ## Credits and licences
 
-reelkit's own code is MIT. It installs, and does not bundle, the tools in the table above; each keeps its own licence. Model weights used by default: Kokoro-82M (Apache-2.0), Whisper base (MIT), Depth Anything V2 Small (Apache-2.0). The larger Depth Anything V2 models are non-commercial, so reelkit doesn't use them. Face tracking: MediaPipe BlazeFace short-range (Apache-2.0). Grand Canyon photos: U.S. National Park Service, public domain. Space interview: NASA, public domain ("What Are the Dangers of Going to Space? We Asked a NASA Expert", via Wikimedia Commons).
+reelkit's own code is MIT. It installs, and does not bundle, the tools in the table above; each keeps its own licence. Model weights used by default: Kokoro-82M (Apache-2.0), Whisper base (MIT), Depth Anything V2 Small (Apache-2.0). The larger Depth Anything V2 models are non-commercial, so reelkit doesn't use them. Face tracking: MediaPipe BlazeFace short-range (Apache-2.0). Grand Canyon photos: U.S. National Park Service, public domain. Apollo 11 photo AS11-40-5903: Neil Armstrong / NASA, public domain. Space interview: NASA, public domain ("What Are the Dangers of Going to Space? We Asked a NASA Expert", via Wikimedia Commons).
 
 ## License
 
