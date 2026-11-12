@@ -1,0 +1,254 @@
+{
+  "title": "The photographer in the visor",
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "loudness": -14,
+  "theme": "ink",
+  "style": null,
+  "captions": true,
+  "voice": "kokoro",
+  "audio": "voice.mp3",
+  "music": null,
+  "musicVolume": 0.12,
+  "duration": 16.878,
+  "scenes": [
+    {
+      "id": "hook",
+      "start": 0,
+      "end": 3.441,
+      "say": "This might be the most famous photo ever taken on the Moon.",
+      "words": [
+        {
+          "w": "This",
+          "start": 0.2,
+          "end": 0.38
+        },
+        {
+          "w": "might",
+          "start": 0.38,
+          "end": 0.58
+        },
+        {
+          "w": "be",
+          "start": 0.58,
+          "end": 0.72
+        },
+        {
+          "w": "the",
+          "start": 0.72,
+          "end": 0.9
+        },
+        {
+          "w": "most",
+          "start": 0.9,
+          "end": 1.36
+        },
+        {
+          "w": "famous",
+          "start": 1.36,
+          "end": 1.76
+        },
+        {
+          "w": "photo",
+          "start": 1.76,
+          "end": 2.16
+        },
+        {
+          "w": "ever",
+          "start": 2.16,
+          "end": 2.44
+        },
+        {
+          "w": "taken",
+          "start": 2.44,
+          "end": 2.62
+        },
+        {
+          "w": "on",
+          "start": 2.62,
+          "end": 2.72
+        },
+        {
+          "w": "the",
+          "start": 2.72,
+          "end": 2.98
+        },
+        {
+          "w": "Moon.",
+          "start": 2.98,
+          "end": 3.02
+        }
+      ]
+    },
+    {
+      "id": "who",
+      "start": 3.441,
+      "end": 7.238,
+      "say": "Neil Armstrong took it, in July 1969.",
+      "words": [
+        {
+          "w": "Neil",
+          "start": 3.491,
+          "end": 4.241
+        },
+        {
+          "w": "Armstrong",
+          "start": 4.241,
+          "end": 4.701
+        },
+        {
+          "w": "took",
+          "start": 4.701,
+          "end": 4.881
+        },
+        {
+          "w": "it,",
+          "start": 4.881,
+          "end": 5.201
+        },
+        {
+          "w": "in",
+          "start": 5.201,
+          "end": 5.461
+        },
+        {
+          "w": "July",
+          "start": 5.461,
+          "end": 6.421
+        },
+        {
+          "w": "1969.",
+          "start": 6.421,
+          "end": 6.881
+        }
+      ]
+    },
+    {
+      "id": "visor",
+      "start": 7.238,
+      "end": 10.723,
+      "say": "Now look at the visor. That's Armstrong, reflected.",
+      "words": [
+        {
+          "w": "Now",
+          "start": 7.498,
+          "end": 7.718
+        },
+        {
+          "w": "look",
+          "start": 7.718,
+          "end": 7.818
+        },
+        {
+          "w": "at",
+          "start": 7.818,
+          "end": 7.918
+        },
+        {
+          "w": "the",
+          "start": 7.918,
+          "end": 8.218
+        },
+        {
+          "w": "visor.",
+          "start": 8.218,
+          "end": 8.638
+        },
+        {
+          "w": "That's",
+          "start": 8.858,
+          "end": 9.198
+        },
+        {
+          "w": "Armstrong,",
+          "start": 9.198,
+          "end": 9.538
+        },
+        {
+          "w": "reflected.",
+          "start": 10.218,
+          "end": 10.523
+        }
+      ]
+    },
+    {
+      "id": "why",
+      "start": 10.723,
+      "end": 16.878,
+      "say": "He carried the camera, so almost every photo from that walk shows Buzz Aldrin.",
+      "words": [
+        {
+          "w": "He",
+          "start": 10.903,
+          "end": 11.203
+        },
+        {
+          "w": "carried",
+          "start": 11.203,
+          "end": 11.383
+        },
+        {
+          "w": "the",
+          "start": 11.383,
+          "end": 11.803
+        },
+        {
+          "w": "camera,",
+          "start": 11.803,
+          "end": 12.043
+        },
+        {
+          "w": "so",
+          "start": 12.103,
+          "end": 12.483
+        },
+        {
+          "w": "almost",
+          "start": 12.483,
+          "end": 12.883
+        },
+        {
+          "w": "every",
+          "start": 12.883,
+          "end": 13.283
+        },
+        {
+          "w": "photo",
+          "start": 13.283,
+          "end": 13.503
+        },
+        {
+          "w": "from",
+          "start": 13.503,
+          "end": 13.683
+        },
+        {
+          "w": "that",
+          "start": 13.683,
+          "end": 13.923
+        },
+        {
+          "w": "walk",
+          "start": 13.923,
+          "end": 14.383
+        },
+        {
+          "w": "shows",
+          "start": 14.383,
+          "end": 14.763
+        },
+        {
+          "w": "Buzz",
+          "start": 14.763,
+          "end": 15.183
+        },
+        {
+          "w": "Aldrin.",
+          "start": 15.183,
+          "end": 15.443
+        }
+      ]
+    }
+  ]
+}

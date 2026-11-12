@@ -277,6 +277,8 @@
     // a style pack (styles/<name>/) restyles the whole reel: script.json "style", or ?style= for a one-off render
     const style = params.get('style') || tl.style;
     if (style) await loadStyle(stage, style);
+    // <img data-cutout="assets/photo.jpg">: the photo's subject on transparency, made by npm run cutout (BiRefNet)
+    document.querySelectorAll('img[data-cutout]').forEach(img => { if (!img.getAttribute('src')) img.src = img.dataset.cutout.replace(/\.[a-z0-9]+$/i, '.cutout.png'); });
 
     // words with global times
     R.words = [];

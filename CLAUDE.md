@@ -4,6 +4,6 @@ This repo turns a one-line idea into a finished vertical reel (voice, score, ani
 
 - Reels live in `reels/<slug>/` (script.json, reel.html, timeline.json, voice.mp3, assets/). Finished videos go to `out/`.
 - The engine is `engine/kit.js` + `engine/kit.css`; scripts are in `scripts/`. Change the engine only if the user asks for a new capability, and keep it deterministic (every frame a pure function of time).
-- `reels/airplane-food/` (animated explainer), `reels/grand-canyon/` (photo story with depth moves, shader transitions and a score) `reels/space-dangers/` (an interview cut into a talk and reframed around the speaker's face) and `reels/sky-blue/` (style-neutral drawings, rendered in every style pack) are complete worked examples. Style packs live in `styles/` (`npm run styles`). Read one before your first reel.
+- `reels/airplane-food/` (animated explainer), `reels/grand-canyon/` (photo story with depth moves, shader transitions and a score) `reels/space-dangers/` (an interview cut into a talk and reframed around the speaker's face) `reels/sky-blue/` (style-neutral drawings, rendered in every style pack) and `reels/moon-photo/` (words behind the subject with cut-outs) are complete worked examples. Style packs live in `styles/` (`npm run styles`). Read one before your first reel.
 - Never print or commit `.env`.
 - The user can also work in **reelkit studio** (`npm start`, scripts/studio.mjs + studio/): it runs you headless (`claude -p`) for "Make it" and for notes. In that case nobody can answer questions, so make sensible choices and finish.

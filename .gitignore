@@ -42,3 +42,5 @@ voices/*
 tests/fixtures/chatterbox/timeline.json
 tests/fixtures/chatterbox/voice.mp3
 tests/fixtures/chatterbox/.voice-cache/
+reels/*/assets/*.cutout.png
+tests/fixtures/cutout/assets/
