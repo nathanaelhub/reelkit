@@ -81,6 +81,7 @@ if (!fs.existsSync(path.join(ROOT, '.env'))) {
   else meh('.env', 'not created yet (cp .env.example .env)');
 }
 
+meh('Dead Internet Theory', 'supported: humans optional (but recommended, see the README)');
 console.log('\nreelkit setup check\n');
 for (const [s, n, d] of rows) console.log(`  ${s} ${n.padEnd(22)} ${d}`);
 const failed = rows.filter(r => r[0] === '✗' && r[1] !== 'Voice');

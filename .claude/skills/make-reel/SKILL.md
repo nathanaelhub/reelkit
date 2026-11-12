@@ -37,6 +37,10 @@ Read `.claude/skills/make-reel/guides/script.md` and write `reels/<slug>/script.
 - Each scene has `id`, `say` (exact narration) and `visual` (what the viewer sees, with the word each visual beat lands on).
 - If the topic is factual, get the facts right. Check anything you are not sure of (search if you can) and put the source in a kicker or note on screen. Prefer hedged numbers ("up to 30%") over invented precision.
 
+### 2a · Pick a look
+
+`npm run styles` lists the style packs. If the user names a look, or the topic suits one (an explainer → blueprint, a zine-like or fun topic → riso, history → engraving, tech or internet → terminal), set `"style": "<name>"` in script.json and **read `styles/<name>/rules.md` before building scenes**: it sets the palette, type, how to draw and how things move. Draw with the neutral classes (`fill-a`, `fill-b`, `fill-c`, `line`, `label`) and kit.css blocks so the pack restyles everything; don't hard-code colours. To show the user alternatives, render the same reel in other packs: `npm run render -- <slug> --style blueprint` (→ `out/<slug>.blueprint.mp4`). No pack suits? Use a `theme` and the kit's own look.
+
 ### 2b · When the user brings footage
 
 - **A talk (interview, talking head, podcast clip):** `npm run footage -- <slug> <file or direct link> --talk`. It copies the video into `footage/`, prints every shot and sentence, writes a shot contact sheet to `out/` (open it), and writes `script.json` with one scene per sentence: `{ "id", "say", "footage": { "src", "cut": [[from, to], …] } }`, pauses already cut. Edit by deleting and reordering scenes, renaming ids (they become `assets/<id>.talk.mp4`), or trimming a scene's `cut` ranges using the word times in `footage/<name>.json`. `say` is Whisper's transcript: fix a mis-heard word there (captions only; the sound is the person's). Never put words in someone's mouth: cut what they said, don't rewrite it.

@@ -9,6 +9,9 @@ Free, open source, and it runs on your own computer: no subscription, no waterma
 <td width="33%" align="center"><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.2.0/airplane-food.mp4"><img src="docs/airplane-food.webp" width="240" alt="Airplane food reel: animated editorial explainer"></a><br><b>Why airplane food tastes so bland</b><br><sub>animated editorial explainer · word-synced stamps, counters and charts · upbeat score<br><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.2.0/airplane-food.mp4">▶ watch with sound</a> · <a href="reels/airplane-food">source</a></sub></td>
 <td width="33%" align="center"><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.3.0/space-dangers.mp4"><img src="docs/space-dangers.webp" width="240" alt="Space dangers reel: a 16:9 NASA interview cut and reframed to vertical"></a><br><b>What can hurt you in space</b><br><sub>a 16:9 NASA interview, cut to its best lines and reframed to 9:16 around the speaker's face · captions on her own words<br><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.3.0/space-dangers.mp4">▶ watch with sound</a> · <a href="reels/space-dangers">source</a></sub></td>
 </tr>
+<tr>
+<td colspan="3" align="center"><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.4.0/sky-blue-styles.mp4"><img src="docs/sky-blue-styles.webp" width="360" alt="One reel about why the sky is blue, rendered in four style packs: risograph, blueprint, engraving and terminal"></a><br><b>One script, four style packs</b><br><sub>the same reel.html rendered as risograph, blueprint, copperplate engraving and green-screen terminal, by changing one word<br><a href="https://github.com/nathanaelhub/reelkit/releases/download/v0.4.0/sky-blue-styles.mp4">▶ watch with sound</a> · <a href="reels/sky-blue">source</a> · <a href="styles">the packs</a></sub></td>
+</tr>
 </table>
 
 <sub>All made with the free defaults, on a laptop: every voice, note, camera move, cut and crop above came from the open tools listed below.</sub>
@@ -94,6 +97,13 @@ export default function ({ bed, sfx }) {
 }
 ```
 
+**Style packs.** A named look (palette, type, texture, captions, how things move) in one folder, plus a rulebook the agent follows. Pick one with `"style": "riso"` in script.json, or try another on a finished reel without touching it:
+```bash
+npm run styles                                 # riso · blueprint · engraving · terminal
+npm run render -- sky-blue --style blueprint   # → out/sky-blue.blueprint.mp4
+```
+A pack is `styles/<name>/style.css` (+ `style.js` for SVG patterns, `rules.md` for the agent). Scenes drawn with the neutral classes (`fill-a`, `fill-b`, `fill-c`, `line`, `label`, and kit.css blocks) restyle completely. Adding a pack is a CSS file: [CONTRIBUTING.md](CONTRIBUTING.md).
+
 **Motion with rules.** Every entrance runs on spring physics, everything is a pure function of time (so renders are exact and repeatable), and `npm run check` fails on CSS animations and on all-caps centred text over a gradient: the two most generic looks in AI video.
 
 **It checks its own work.** Before rendering, the check lints every scene (text off-screen or under the app's buttons, overlaps, captions covering content, frozen stretches) and writes contact sheets that the agent opens and looks at.
@@ -155,6 +165,7 @@ npm run score -- my-reel            # score.js → score.wav (render does this f
 npm run depth -- my-reel            # depth maps for data-depth photos (check/render do this for you)
 npm run footage -- my-reel talk.mp4 # shots, words and a contact sheet of a video (--talk: scenes from its speech)
 npm run faces -- my-reel            # face tracks for data-reframe="face" clips (check/render do this for you)
+npm run styles                      # list the style packs (render/check/preview take --style <pack>)
 npm run check -- my-reel            # lint + design rules + motion + taste check, contact sheets in out/
 npm run preview -- my-reel          # watch in your browser with audio (space, ←/→)
 npm run render -- my-reel           # out/my-reel.mp4 (--draft for fast half-res, --from/--to for a section)
@@ -170,6 +181,7 @@ The workflow lives in plain Markdown (`.claude/skills/make-reel/`), and [AGENTS.
 ## Examples
 
 - [`reels/grand-canyon/`](reels/grand-canyon): a 33-second photo story. Six public-domain NPS photos with depth moves, five shader transitions, counters on spoken numbers, a cinematic score with hits on the numbers.
+- [`reels/sky-blue/`](reels/sky-blue): a 22-second explainer drawn entirely with style-neutral SVG, so every style pack can restyle it. Its default is risograph.
 - [`reels/space-dangers/`](reels/space-dangers): a 38-second talk cut from an 88-second NASA interview. Eight sentences picked from the transcript, reframed to 9:16 around the speaker, chapter stamps on her words. The footage is downloaded on first use (it's listed under `sources` in its script.json).
 - [`reels/airplane-food/`](reels/airplane-food): a 37-second animated explainer. Nine scenes, word-synced stamps, counters, drawn SVG, bars driven by a custom hook, five kinds of transitions.
 
@@ -181,13 +193,38 @@ Read their `reel.html` and `score.js` to see everything the kit can do.
 - [x] Scores and sound effects in code, ducked under the voice
 - [x] Photos with 3D camera moves
 - [x] Shader transitions
-- [ ] Style packs: named looks (engraving, risograph, blueprint, documentary…) with a rulebook and a demo each
+- [x] Style packs: risograph, blueprint, copperplate engraving, terminal
 - [x] Your footage: shot detection, talk scenes with the pauses cut, reframing 16:9 → 9:16 around faces
 - [x] Tested on Linux, macOS and Windows
+- [ ] reelkit studio: `npm start` opens a local app to make, preview, note and render reels without a terminal
+- [ ] Clone your own voice (Chatterbox, MIT weights), subject cut-outs (BiRefNet), light upscaling (Swin2SR): see [open tools worth knowing](docs/open-tools.md)
 - [ ] An MCP server, so any agent or app can call voice / check / render as tools
-- [ ] A local studio page: timeline with word markers, notes box, render queue
 
 Ideas and PRs welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## How it compares, and what's next to plug in
+
+We surveyed the open tools that could join reelkit and the projects closest to it: [docs/open-tools.md](docs/open-tools.md). In short:
+
+- **Big cousins:** [MoneyPrinterTurbo](https://github.com/harry0703/MoneyPrinterTurbo) (topic → stock-footage montage, cloud LLM and TTS keys) and [HyperFrames](https://github.com/heygen-com/hyperframes) (HTML → video renderer for agents). reelkit is the whole pipeline, local, with your own photos and footage.
+- **Same audience:** [claude-code-video-toolkit](https://github.com/digitalsamba/claude-code-video-toolkit) drives Remotion and cloud GPUs; reelkit has no Remotion (its licence isn't open source for companies over three people) and no cloud calls by default.
+- **Next tools, commercial-safe weights:** [Chatterbox](https://github.com/resemble-ai/chatterbox) (voice cloning, MIT), [BiRefNet](https://github.com/ZhengPeng7/BiRefNet) (cut-outs, MIT), Swin2SR (upscaling, Apache-2.0, runs in Node), [SAM 2.1](https://github.com/facebookresearch/sam2) (masks, Apache-2.0), and as heavier optional add-ons [ACE-Step 1.5](https://github.com/ace-step/ACE-Step-1.5) (songs, MIT) and [Wan 2.2](https://github.com/Wan-Video/Wan2.2) (image → motion, Apache-2.0).
+- **Licence traps we avoid by default:** F5-TTS, MusicGen, MMAudio, RMBG-2.0 and FLUX-dev weights are non-commercial; LTX-2, Stable Audio 3 and Remotion are free only under a revenue or headcount cap; HunyuanVideo excludes the EU, UK and South Korea.
+
+## Dead Internet Theory support
+
+Some people believe most of the internet is already bots making content for other bots. reelkit is proud to do its part.
+
+| Dead Internet Theory requirement | reelkit |
+|---|---|
+| Content written without a human | ✅ an agent writes the script |
+| Read aloud by no one | ✅ Kokoro voices it, then Whisper listens to make sure Kokoro said it |
+| Drawn for an audience of zero | ✅ a headless browser nobody is looking at draws every frame |
+| Quality control by machines, for machines | ✅ `npm run check`: the agent looks at its own contact sheets and approves of itself |
+| Infinite supply | ✅ `for topic in $(cat everything.txt); do …` |
+| A human | optional |
+
+This is a joke. Please be one of the humans: make things you'd watch yourself, put your name on them, credit your sources, and don't use reelkit to spam, impersonate or deceive anyone.
 
 ## Credits and licences
 

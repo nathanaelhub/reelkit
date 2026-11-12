@@ -1,0 +1,38 @@
+/* Risograph: two spot inks, overprinted, a little out of register, on cheap paper. */
+@import url('../../node_modules/@fontsource/archivo-black/400.css');
+
+#stage {
+  --paper: #f3ede1; --a: #ff48b0; --b: #2c5aa8; --c: #ffd400;
+  --bg: var(--paper); --bg-2: #e9e1d1; --ink: var(--b); --muted: #7b7aa3;
+  --accent: var(--a); --accent-ink: var(--paper); --card: var(--paper); --card-ink: var(--b);
+  --line: rgba(44,90,168,.25); --shadow: none;
+  --font-display: 'Archivo Black', 'Anton', sans-serif; --font-sans: 'Archivo Black', 'Inter', sans-serif;
+  --style-label: 'risograph';
+}
+#stage .scene { background: var(--paper); }
+
+/* type: blue ink with a pink plate printed a few pixels off */
+#stage .headline { font-size: 82px; line-height: 1.02; letter-spacing: -.01em; color: var(--b); text-shadow: 5px 4px 0 rgba(255,72,176,.75); }
+#stage .headline em, #stage .accent { font-family: var(--font-display); font-style: normal; color: var(--a); mix-blend-mode: multiply; text-shadow: -4px -3px 0 rgba(44,90,168,.55); }
+#stage .display, #stage .huge { color: var(--a); mix-blend-mode: multiply; text-shadow: 7px 6px 0 rgba(44,90,168,.8); }
+#stage .kicker, #stage .note { font-family: var(--font-mono); color: var(--b); opacity: .85; }
+#stage .chip { background: transparent; color: var(--b); border: 5px solid var(--b); box-shadow: 6px 5px 0 var(--a); font-family: var(--font-display); font-weight: 400; }
+#stage .chip.red { background: var(--a); color: var(--paper); border-color: var(--a); box-shadow: 6px 5px 0 var(--b); }
+#stage .stamp { border-color: var(--a); color: var(--a); border-radius: 6px; }
+#stage .card { background: transparent; border: 5px solid var(--b); box-shadow: 8px 7px 0 var(--a); color: var(--b); }
+
+/* drawings: fill-a pink plate, fill-b blue plate (shifted), fill-c halftone, line = blue line work */
+#stage .fill-a { fill: var(--a); mix-blend-mode: multiply; }
+#stage .fill-b { fill: var(--b); mix-blend-mode: multiply; transform: translate(6px, 5px); }
+#stage .fill-c { fill: url(#riso-dots); mix-blend-mode: multiply; }
+#stage .line { fill: none; stroke: var(--b); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+#stage .line.alt { stroke: var(--a); mix-blend-mode: multiply; }
+#stage .label { fill: var(--b); font-family: var(--font-display); font-size: 44px; }
+
+/* captions: chunky ink, the spoken word in pink */
+#stage #captions .w { font-family: var(--font-display); color: var(--b); -webkit-text-stroke: 0; text-shadow: 5px 4px 0 rgba(255,72,176,.7); font-size: 84px; text-transform: uppercase; }
+#stage #captions .w.on { color: var(--a); text-shadow: 5px 4px 0 rgba(44,90,168,.7); }
+
+/* grain over everything, like toner on uncoated paper */
+#stage::after { content: ''; position: absolute; inset: 0; z-index: 60; pointer-events: none; mix-blend-mode: multiply; opacity: .5;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.25  0 0 0 0 0.22  0 0 0 0 0.3  0 0 0 .45 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }

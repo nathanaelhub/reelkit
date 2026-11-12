@@ -48,6 +48,20 @@ export function reelDir(name) {
   return d;
 }
 
+// style packs: styles/<name>/style.json + style.css (+ style.js, rules.md)
+export const STYLES = path.join(ROOT, 'styles');
+export function listStyles() {
+  if (!fs.existsSync(STYLES)) return [];
+  return fs.readdirSync(STYLES).filter(d => fs.existsSync(path.join(STYLES, d, 'style.css'))).sort()
+    .map(name => ({ name, ...(fs.existsSync(path.join(STYLES, name, 'style.json')) ? JSON.parse(fs.readFileSync(path.join(STYLES, name, 'style.json'), 'utf8')) : {}) }));
+}
+export function checkStyle(name) {
+  if (!name) return null;
+  const all = listStyles().map(s => s.name);
+  if (!all.includes(name)) die(`unknown style "${name}". Style packs: ${all.join(', ') || '(none)'}`);
+  return name;
+}
+
 export function die(msg) { console.error(`\n✗ ${msg}\n`); process.exit(1); }
 export const readJSON = f => JSON.parse(fs.readFileSync(f, 'utf8'));
 export const writeJSON = (f, o) => fs.writeFileSync(f, JSON.stringify(o, null, 2) + '\n');
@@ -118,7 +132,7 @@ export function reelURL(server, dir, query = '') {
 }
 
 // Open the reel page in headless Chromium, wait for kit.js to be ready.
-export async function openReel(dir, { scale = 1 } = {}) {
+export async function openReel(dir, { scale = 1, style = null } = {}) {
   if (!fs.existsSync(path.join(dir, 'timeline.json'))) die(`No timeline.json in ${path.relative(ROOT, dir)}. Run: npm run voice -- ${path.basename(dir)}`);
   if (!fs.existsSync(path.join(dir, 'reel.html'))) die(`No reel.html in ${path.relative(ROOT, dir)}.`);
   const { chromium } = await import('playwright');
@@ -137,7 +151,7 @@ export async function openReel(dir, { scale = 1 } = {}) {
     if (r.resourceType() === 'media' && r.failure()?.errorText === 'net::ERR_ABORTED') return;
     errors.push(`failed to load ${r.url().replace(/^http:\/\/127\.0\.0\.1:\d+\//, '')}`);
   });
-  await page.goto(reelURL(server, dir, '?render=1'), { waitUntil: 'load' });
+  await page.goto(reelURL(server, dir, '?render=1' + (style ? `&style=${encodeURIComponent(style)}` : '')), { waitUntil: 'load' });
   const ok = await page.waitForFunction(() => window.__reel && (window.__reel.error || window.__reel.ready), null, { timeout: 30000 }).then(() => page.evaluate(async () => { if (window.__reel.error) return window.__reel.error; await window.__reel.ready; return window.__reel.error || true; })).catch(e => e.message);
   if (ok !== true) { await browser.close(); server.srv.close(); die(`reel.html failed to start: ${ok}\n${errors.join('\n')}`); }
   const close = async () => { await browser.close(); server.srv.close(); };

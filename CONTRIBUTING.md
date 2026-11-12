@@ -17,6 +17,7 @@ Thanks for helping. reelkit is small on purpose: an engine you can read in an af
 
 ## Good first contributions
 
+- **A style pack** (the easiest big contribution): copy `styles/riso/` to `styles/<name>/`, change `style.json`, the colours, fonts and texture in `style.css`, and write `rules.md` (palette, type, how drawings are made, motion, music). Show it with `npm run render -- sky-blue --style <name>` and attach the video to your PR. Fonts must be OFL or similar (`@fontsource/*`), textures generated in CSS/SVG, not copied images.
 - A new score mood in `engine/score-kit.js`
 - A new depth camera move in `engine/kit.js` (`DEPTH_MOVES`)
 - A scene recipe or theme in `engine/kit.css` with an example

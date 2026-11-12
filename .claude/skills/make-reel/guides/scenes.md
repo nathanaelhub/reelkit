@@ -134,6 +134,20 @@ Real footage plays inside a scene, frame-accurate in renders:
 - `data-faces="other.json"` points at a hand-made track (`{ "track": [[t, x, y], …] }`, x/y as fractions of the frame).
 - A 1920×1080 source filling 1080×1920 is upscaled about 1.8×. Fine for talk; keep text and detail shots at native size.
 
+## Drawings that any style pack can restyle
+
+Draw diagrams and illustrations as inline `<svg>` using these classes, never hard-coded colours:
+
+| class | meaning | riso | blueprint | engraving | terminal |
+|---|---|---|---|---|---|
+| `fill-a` | the important shape | pink ink | yellow wash | cross-hatch | amber outline |
+| `fill-b` | secondary shape | blue ink (off-register) | white wash | hatch | green outline |
+| `fill-c` | background tone | yellow halftone | 45° hatch | light hatch | dot screen |
+| `line` / `line alt` | line work / highlighted line | blue / pink | white / dashed yellow | ink / red | green / amber |
+| `label` | `<text>` annotations | heavy sans | mono caps | italic serif | VT323 |
+
+Wrap parts in `<g data-anim="draw|pop|fade|wipe" data-at="@word">` to animate them. `reels/sky-blue/reel.html` is the worked example.
+
 ## Images
 
 Put files in `reels/<slug>/assets/` and reference `assets/name.png`. Transparent PNGs/SVGs look best as cut-outs with `filter: drop-shadow(...)`. A host character (`assets/host.png`) placed in the global layer with `data-loop="talk"` gives the "creator explaining" look.

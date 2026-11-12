@@ -1,0 +1,420 @@
+{
+  "title": "Why the sky is blue",
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "loudness": -14,
+  "theme": "paper",
+  "style": "riso",
+  "captions": true,
+  "voice": "kokoro",
+  "audio": "voice.mp3",
+  "music": null,
+  "musicVolume": 0.12,
+  "duration": 22.377,
+  "scenes": [
+    {
+      "id": "hook",
+      "start": 0,
+      "end": 3.235,
+      "say": "The sky is blue for the same reason sunsets are red.",
+      "words": [
+        {
+          "w": "The",
+          "start": 0.14,
+          "end": 0.42
+        },
+        {
+          "w": "sky",
+          "start": 0.42,
+          "end": 0.64
+        },
+        {
+          "w": "is",
+          "start": 0.64,
+          "end": 0.92
+        },
+        {
+          "w": "blue",
+          "start": 0.92,
+          "end": 1.28
+        },
+        {
+          "w": "for",
+          "start": 1.28,
+          "end": 1.38
+        },
+        {
+          "w": "the",
+          "start": 1.38,
+          "end": 1.64
+        },
+        {
+          "w": "same",
+          "start": 1.64,
+          "end": 1.92
+        },
+        {
+          "w": "reason",
+          "start": 1.92,
+          "end": 2.3
+        },
+        {
+          "w": "sunsets",
+          "start": 2.3,
+          "end": 2.64
+        },
+        {
+          "w": "are",
+          "start": 2.64,
+          "end": 2.86
+        },
+        {
+          "w": "red.",
+          "start": 2.86,
+          "end": 3
+        }
+      ]
+    },
+    {
+      "id": "light",
+      "start": 3.235,
+      "end": 5.732,
+      "say": "Sunlight is every colour mixed together.",
+      "words": [
+        {
+          "w": "Sunlight",
+          "start": 3.575,
+          "end": 3.935
+        },
+        {
+          "w": "is",
+          "start": 3.935,
+          "end": 4.315
+        },
+        {
+          "w": "every",
+          "start": 4.315,
+          "end": 4.595
+        },
+        {
+          "w": "colour",
+          "start": 4.595,
+          "end": 4.855
+        },
+        {
+          "w": "mixed",
+          "start": 4.855,
+          "end": 5.355
+        },
+        {
+          "w": "together.",
+          "start": 5.355,
+          "end": 5.475
+        }
+      ]
+    },
+    {
+      "id": "scatter",
+      "start": 5.732,
+      "end": 9.295,
+      "say": "On its way down, it hits the tiny molecules that make up the air.",
+      "words": [
+        {
+          "w": "On",
+          "start": 5.912,
+          "end": 6.072
+        },
+        {
+          "w": "its",
+          "start": 6.072,
+          "end": 6.232
+        },
+        {
+          "w": "way",
+          "start": 6.232,
+          "end": 6.532
+        },
+        {
+          "w": "down,",
+          "start": 6.532,
+          "end": 6.732
+        },
+        {
+          "w": "it",
+          "start": 6.792,
+          "end": 7.012
+        },
+        {
+          "w": "hits",
+          "start": 7.012,
+          "end": 7.192
+        },
+        {
+          "w": "the",
+          "start": 7.192,
+          "end": 7.512
+        },
+        {
+          "w": "tiny",
+          "start": 7.512,
+          "end": 8.012
+        },
+        {
+          "w": "molecules",
+          "start": 8.012,
+          "end": 8.252
+        },
+        {
+          "w": "that",
+          "start": 8.252,
+          "end": 8.392
+        },
+        {
+          "w": "make",
+          "start": 8.392,
+          "end": 8.512
+        },
+        {
+          "w": "up",
+          "start": 8.512,
+          "end": 8.692
+        },
+        {
+          "w": "the",
+          "start": 8.692,
+          "end": 8.892
+        },
+        {
+          "w": "air.",
+          "start": 8.892,
+          "end": 9.095
+        }
+      ]
+    },
+    {
+      "id": "waves",
+      "start": 9.295,
+      "end": 13.541,
+      "say": "They scatter short blue waves around five times more than long red ones.",
+      "words": [
+        {
+          "w": "They",
+          "start": 9.435,
+          "end": 9.755
+        },
+        {
+          "w": "scatter",
+          "start": 9.755,
+          "end": 10.075
+        },
+        {
+          "w": "short",
+          "start": 10.075,
+          "end": 10.375
+        },
+        {
+          "w": "blue",
+          "start": 10.375,
+          "end": 10.755
+        },
+        {
+          "w": "waves",
+          "start": 10.755,
+          "end": 11.095
+        },
+        {
+          "w": "around",
+          "start": 11.095,
+          "end": 11.495
+        },
+        {
+          "w": "five",
+          "start": 11.495,
+          "end": 11.875
+        },
+        {
+          "w": "times",
+          "start": 11.875,
+          "end": 12.115
+        },
+        {
+          "w": "more",
+          "start": 12.115,
+          "end": 12.275
+        },
+        {
+          "w": "than",
+          "start": 12.275,
+          "end": 12.595
+        },
+        {
+          "w": "long",
+          "start": 12.595,
+          "end": 12.835
+        },
+        {
+          "w": "red",
+          "start": 12.835,
+          "end": 13.135
+        },
+        {
+          "w": "ones.",
+          "start": 13.135,
+          "end": 13.295
+        }
+      ]
+    },
+    {
+      "id": "sky",
+      "start": 13.541,
+      "end": 16.558,
+      "say": "So blue light reaches you from every part of the sky.",
+      "words": [
+        {
+          "w": "So",
+          "start": 13.761,
+          "end": 14.021
+        },
+        {
+          "w": "blue",
+          "start": 14.021,
+          "end": 14.281
+        },
+        {
+          "w": "light",
+          "start": 14.281,
+          "end": 14.721
+        },
+        {
+          "w": "reaches",
+          "start": 14.721,
+          "end": 14.961
+        },
+        {
+          "w": "you",
+          "start": 14.961,
+          "end": 15.101
+        },
+        {
+          "w": "from",
+          "start": 15.101,
+          "end": 15.421
+        },
+        {
+          "w": "every",
+          "start": 15.421,
+          "end": 15.641
+        },
+        {
+          "w": "part",
+          "start": 15.641,
+          "end": 15.781
+        },
+        {
+          "w": "of",
+          "start": 15.781,
+          "end": 15.861
+        },
+        {
+          "w": "the",
+          "start": 15.861,
+          "end": 16.121
+        },
+        {
+          "w": "sky.",
+          "start": 16.121,
+          "end": 16.341
+        }
+      ]
+    },
+    {
+      "id": "sunset",
+      "start": 16.558,
+      "end": 22.377,
+      "say": "At sunset, light crosses far more air. The blue scatters away, and the reds are left.",
+      "words": [
+        {
+          "w": "At",
+          "start": 16.738,
+          "end": 17.118
+        },
+        {
+          "w": "sunset,",
+          "start": 17.118,
+          "end": 17.378
+        },
+        {
+          "w": "light",
+          "start": 17.458,
+          "end": 17.758
+        },
+        {
+          "w": "crosses",
+          "start": 17.758,
+          "end": 18.078
+        },
+        {
+          "w": "far",
+          "start": 18.078,
+          "end": 18.238
+        },
+        {
+          "w": "more",
+          "start": 18.238,
+          "end": 18.498
+        },
+        {
+          "w": "air.",
+          "start": 18.498,
+          "end": 18.658
+        },
+        {
+          "w": "The",
+          "start": 18.818,
+          "end": 19.018
+        },
+        {
+          "w": "blue",
+          "start": 19.018,
+          "end": 19.338
+        },
+        {
+          "w": "scatters",
+          "start": 19.338,
+          "end": 19.738
+        },
+        {
+          "w": "away,",
+          "start": 19.738,
+          "end": 19.938
+        },
+        {
+          "w": "and",
+          "start": 19.998,
+          "end": 20.098
+        },
+        {
+          "w": "the",
+          "start": 20.098,
+          "end": 20.278
+        },
+        {
+          "w": "reds",
+          "start": 20.278,
+          "end": 20.478
+        },
+        {
+          "w": "are",
+          "start": 20.478,
+          "end": 20.718
+        },
+        {
+          "w": "left.",
+          "start": 20.718,
+          "end": 20.958
+        }
+      ]
+    }
+  ]
+}

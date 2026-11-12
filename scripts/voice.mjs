@@ -255,7 +255,7 @@ else if (fs.existsSync(path.join(dir, 'voice.mp3'))) fs.rmSync(path.join(dir, 'v
 
 const FORMATS = { '9:16': [1080, 1920], '16:9': [1920, 1080], '1:1': [1080, 1080] };
 const [W, H] = FORMATS[script.format || '9:16'] || die(`unknown format "${script.format}". Use 9:16, 16:9 or 1:1`);
-const timeline = { title: script.title || path.basename(dir), fps: script.fps || 30, width: W, height: H, loudness: script.loudness ?? -14, theme: script.theme || 'paper', captions: script.captions !== false,
+const timeline = { title: script.title || path.basename(dir), fps: script.fps || 30, width: W, height: H, loudness: script.loudness ?? -14, theme: script.theme || 'paper', style: script.style || null, captions: script.captions !== false,
   voice: clips.every(c => c.prov === 'footage') ? 'footage' : provider, audio, music: script.music || null, musicVolume: script.musicVolume ?? 0.12, duration: +t.toFixed(3), scenes: tlScenes };
 writeJSON(path.join(dir, 'timeline.json'), timeline);
 console.log(`✓ timeline.json: ${tlScenes.length} scenes, ${t.toFixed(1)}s${audio ? ', voice.mp3' : ''}\n`);

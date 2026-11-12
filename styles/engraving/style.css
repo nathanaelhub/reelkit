@@ -1,0 +1,40 @@
+/* Copperplate engraving: hatching in black ink on cream paper, a ruled border, an encyclopedia plate's type. */
+@import url('../../node_modules/@fontsource/im-fell-english/400.css');
+@import url('../../node_modules/@fontsource/im-fell-english/400-italic.css');
+
+#stage {
+  --paper: #efe5cf; --ink-black: #1f1a14; --a: #8c2320;
+  --bg: var(--paper); --bg-2: #e4d7bb; --ink: var(--ink-black); --muted: #6e6253;
+  --accent: var(--a); --accent-ink: var(--paper); --card: var(--paper); --card-ink: var(--ink-black);
+  --line: rgba(31,26,20,.25); --shadow: none;
+  --font-sans: 'IM Fell English', Georgia, serif; --font-serif: 'IM Fell English', Georgia, serif; --font-display: 'IM Fell English', Georgia, serif;
+  --style-label: 'engraving';
+}
+#stage .scene { background: var(--paper); }
+
+#stage .headline { font-size: 80px; line-height: 1.06; letter-spacing: 0; font-weight: 400; }
+#stage .headline em, #stage .accent { font-style: italic; color: var(--a); font-family: var(--font-serif); }
+#stage .display, #stage .huge { font-weight: 400; text-transform: none; letter-spacing: 0; }
+#stage .kicker, #stage .note { font-family: var(--font-serif); font-style: italic; font-size: 36px; color: var(--muted); letter-spacing: .02em; }
+#stage .chip { background: transparent; color: var(--ink); border: 0; border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); border-radius: 0;
+  box-shadow: none; font-weight: 400; font-variant: small-caps; letter-spacing: .08em; font-size: 40px; padding: 8px 18px; }
+#stage .chip.red { color: var(--a); border-color: var(--a); background: transparent; }
+#stage .stamp { border: 4px double var(--a); border-width: 8px; color: var(--a); border-radius: 50%; font-weight: 400; padding: 18px 44px; font-variant: small-caps; text-transform: none; }
+#stage .card { background: var(--paper); border: 2px solid var(--ink); outline: 1px solid var(--ink); outline-offset: 6px; border-radius: 0; box-shadow: none; }
+
+/* drawings: hatched tones (fill-a dark, fill-b mid, fill-c light) with an ink outline */
+#stage .fill-a { fill: url(#engr-cross); stroke: var(--ink); stroke-width: 3; }
+#stage .fill-b { fill: url(#engr-hatch); stroke: var(--ink); stroke-width: 3; }
+#stage .fill-c { fill: url(#engr-light); stroke: var(--ink); stroke-width: 2.5; }
+#stage .line { fill: none; stroke: var(--ink); stroke-width: 3.5; stroke-linecap: round; }
+#stage .line.alt { stroke: var(--a); }
+#stage .label { fill: var(--ink); font-family: var(--font-serif); font-style: italic; font-size: 40px; }
+
+/* captions: set like a plate caption */
+#stage #captions .w { font-family: var(--font-serif); font-size: 76px; text-transform: none; color: var(--ink); -webkit-text-stroke: 0; line-height: 1.1; }
+#stage #captions .w.on { color: var(--a); font-style: italic; }
+
+/* the plate: a double rule border and a slightly darker, foxed edge */
+#stage::after { content: ''; position: absolute; inset: 0; z-index: 60; pointer-events: none;
+  box-shadow: inset 0 0 0 34px var(--paper), inset 0 0 0 37px var(--ink-black), inset 0 0 0 46px var(--paper), inset 0 0 0 48px var(--ink-black);
+  background: radial-gradient(ellipse at center, transparent 62%, rgba(120,84,40,.22) 100%); mix-blend-mode: multiply; }
