@@ -237,7 +237,7 @@ const cases = [
     const fx = path.resolve('tests/fixtures/duck'), tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'reelkit-test-'));
     const v = node('scripts/voice.mjs', [fx]); if (v.status !== 0) return { ok: false, detail: v.out };
     const out = path.join(tmp, 'd.mp4');
-    const r = spawnSync(process.execPath, ['scripts/render.mjs', fx, '--draft', '--out', out], { encoding: 'utf8' });
+    const r = spawnSync(process.execPath, ['scripts/render.mjs', fx, '--draft', '--out', out], { encoding: 'utf8', timeout: 8 * 60e3, killSignal: 'SIGKILL' });
     if (r.status !== 0) { fs.rmSync(tmp, { recursive: true, force: true }); return { ok: false, detail: r.stdout + r.stderr }; }
     const tl = JSON.parse(fs.readFileSync(path.join(fx, 'timeline.json'), 'utf8'));
     const level = (t0, t1) => { const e = spawnSync(ffmpegPath(), ['-hide_banner', '-ss', String(t0), '-t', String(t1 - t0), '-i', out, '-af', 'bandpass=f=6000:w=60,volumedetect', '-f', 'null', '-'], { encoding: 'utf8' }).stderr; return +(e.match(/mean_volume: (-?[\d.]+) dB/) || [])[1]; };
@@ -254,7 +254,7 @@ const cases = [
     mk('color=black:s=1080x1920,drawbox=x=0:y=0:w=540:h=1920:color=white:t=fill', 'stripes-map.png');
     const v = node('scripts/voice.mjs', [fx]); if (v.status !== 0) return { ok: false, detail: v.out };
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'reelkit-test-')), out = path.join(tmp, 'd.mp4');
-    const r = spawnSync(process.execPath, ['scripts/render.mjs', fx, '--draft', '--out', out], { encoding: 'utf8' });
+    const r = spawnSync(process.execPath, ['scripts/render.mjs', fx, '--draft', '--out', out], { encoding: 'utf8', timeout: 8 * 60e3, killSignal: 'SIGKILL' });
     if (r.status !== 0) return { ok: false, detail: r.stdout + r.stderr };
     const dur = JSON.parse(fs.readFileSync(path.join(fx, 'timeline.json'), 'utf8')).duration;
     const row = t => spawnSync(ffmpegPath(), ['-loglevel', 'error', '-ss', String(t), '-i', out, '-frames:v', '1', '-vf', 'crop=iw:1:0:ih/2,format=gray', '-f', 'rawvideo', '-'], { encoding: 'buffer' }).stdout;
@@ -299,7 +299,7 @@ const cases = [
     const v = node('scripts/voice.mjs', [fx]); if (v.status !== 0) return { ok: false, detail: v.out };
     const tl = JSON.parse(fs.readFileSync(path.join(fx, 'timeline.json'), 'utf8')), b = tl.scenes[1].start;
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'reelkit-test-')), out = path.join(tmp, 'g.mp4');
-    const r = spawnSync(process.execPath, ['scripts/render.mjs', fx, '--draft', '--from', String(b - 0.3), '--to', String(b + 1.3), '--out', out], { encoding: 'utf8' });
+    const r = spawnSync(process.execPath, ['scripts/render.mjs', fx, '--draft', '--from', String(b - 0.3), '--to', String(b + 1.3), '--out', out], { encoding: 'utf8', timeout: 8 * 60e3, killSignal: 'SIGKILL' });
     if (r.status !== 0) return { ok: false, detail: r.stdout + r.stderr };
     // share of red (scene B's background) pixels in the frame, sampled small
     const red = t => { const px = spawnSync(ffmpegPath(), ['-loglevel', 'error', '-ss', String(t), '-i', out, '-frames:v', '1', '-vf', 'scale=54:96,format=rgb24', '-f', 'rawvideo', '-'], { encoding: 'buffer' }).stdout;
@@ -331,7 +331,7 @@ const cases = [
     const c = node('scripts/check.mjs', [fx]);
     if (c.status !== 0) problems.push('check failed:\n' + c.out);
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'reelkit-test-')), out = path.join(tmp, 'w.mp4');
-    const r = spawnSync(process.execPath, ['scripts/render.mjs', fx, '--draft', '--out', out], { encoding: 'utf8' });
+    const r = spawnSync(process.execPath, ['scripts/render.mjs', fx, '--draft', '--out', out], { encoding: 'utf8', timeout: 8 * 60e3, killSignal: 'SIGKILL' });
     if (r.status !== 0) return { ok: false, detail: problems.join('\n') + r.stdout + r.stderr };
     const size = spawnSync(ffprobePath(), ['-v', 'error', '-select_streams', 'v', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', out], { encoding: 'utf8' }).stdout.trim().replace(/,+$/, '');
     if (size !== '960,540') problems.push(`draft size ${size}, wanted 960,540`);
@@ -366,7 +366,7 @@ const cases = [
     }
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'reelkit-test-')), out = path.join(tmp, 'f.mp4');
     const from = 0.5, n = 8; // data-from=1: scene time t shows source time 1 + t
-    const r = spawnSync(process.execPath, ['scripts/render.mjs', fx, '--draft', '--fps', '30', '--from', String(from), '--to', String(from + n / 30), '--out', out], { encoding: 'utf8' });
+    const r = spawnSync(process.execPath, ['scripts/render.mjs', fx, '--draft', '--fps', '30', '--from', String(from), '--to', String(from + n / 30), '--out', out], { encoding: 'utf8', timeout: 8 * 60e3, killSignal: 'SIGKILL' });
     if (r.status !== 0) return { ok: false, detail: r.stdout + r.stderr };
     const raw = spawnSync(ffmpegPath(), ['-loglevel', 'error', '-i', out, '-vf', 'crop=4:4:iw/2:ih/2,scale=1:1,format=gray', '-f', 'rawvideo', '-'], { encoding: 'buffer' }).stdout;
     fs.rmSync(tmp, { recursive: true, force: true });
@@ -379,7 +379,7 @@ const cases = [
   }],
   ['render: a 1 s draft is standard yuv420p, limited range, bt709', () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'reelkit-test-')), out = path.join(tmp, 'clip.mp4');
-    const r = spawnSync(process.execPath, ['scripts/render.mjs', 'airplane-food', '--draft', '--from', '0', '--to', '1', '--out', out], { encoding: 'utf8' });
+    const r = spawnSync(process.execPath, ['scripts/render.mjs', 'airplane-food', '--draft', '--from', '0', '--to', '1', '--out', out], { encoding: 'utf8', timeout: 8 * 60e3, killSignal: 'SIGKILL' });
     if (r.status !== 0) return { ok: false, detail: r.stdout + r.stderr };
     const p = spawnSync(ffprobePath(), ['-v', 'error', '-select_streams', 'v', '-show_entries', 'stream=pix_fmt,color_range,color_space', '-of', 'csv=p=0', out], { encoding: 'utf8' }).stdout.trim().replace(/,+$/, '');
     fs.rmSync(tmp, { recursive: true, force: true });
