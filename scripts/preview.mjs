@@ -5,12 +5,14 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { parseArgs, reelDir, serve, reelURL, checkStyle } from './lib.mjs';
 import { ensureDepthMaps } from './depth.mjs';
+import { ensureCutouts } from './cutout.mjs';
 import { ensureFaceTracks } from './faces.mjs';
 import { ensureTalkClips } from './footage.mjs';
 
 const args = parseArgs();
 const dir = reelDir(args._[0]);
 await ensureDepthMaps(dir);
+await ensureCutouts(dir);
 await ensureTalkClips(dir);
 await ensureFaceTracks(dir);
 const server = await serve(+(args.port || 4321)).catch(() => serve(0));

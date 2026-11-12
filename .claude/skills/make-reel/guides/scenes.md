@@ -134,6 +134,18 @@ Real footage plays inside a scene, frame-accurate in renders:
 - `data-faces="other.json"` points at a hand-made track (`{ "track": [[t, x, y], …] }`, x/y as fractions of the frame).
 - A 1920×1080 source filling 1080×1920 is upscaled about 1.8×. Fine for talk; keep text and detail shots at native size.
 
+## Cut-outs: words behind the subject
+
+```html
+<img class="abs" src="assets/photo.jpg" style="left:0;top:560px;width:1080px;height:1080px;object-fit:cover">
+<div class="abs display" style="left:72px;right:72px;top:330px;text-align:center" data-anim="rise" data-at="@word">MOON</div>
+<img class="abs" data-cutout="assets/photo.jpg" style="left:0;top:560px;width:1080px;height:1080px;object-fit:cover">
+```
+
+- The cut-out (`assets/photo.cutout.png`) is made by check/render/preview (`npm run cutout`, BiRefNet, a few seconds a photo). Give both images the **same box and object-fit** so they line up.
+- Place the words so the subject covers only part of them (the top of a head, a shoulder); covered too much, they stop being readable. `reels/moon-photo` is the worked example.
+- Works best on one clear subject: a person, an animal, an object. On a landscape there is no subject to cut.
+
 ## Drawings that any style pack can restyle
 
 Draw diagrams and illustrations as inline `<svg>` using these classes, never hard-coded colours:

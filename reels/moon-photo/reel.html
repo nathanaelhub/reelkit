@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>The photographer in the visor</title>
+<link rel="stylesheet" href="../../engine/kit.css">
+<style>
+  /* The photo, then words, then the photo's subject cut out (data-cutout) on top: the words sit behind Aldrin. */
+  .scene { background: #000; }
+  .moon { left: 0; top: 560px; width: 1080px; height: 1080px; object-fit: cover; }
+  .behind { left: 72px; right: 72px; top: 330px; text-align: center; font-family: var(--font-display); font-size: 400px; line-height: .8; color: #f4f2ee; letter-spacing: -.01em; }
+  .behind.name { font-size: 210px; top: 360px; line-height: .86; }
+  .dim { filter: brightness(.33) saturate(.6); }
+  .close { position: absolute; inset: 0; overflow: hidden; }
+  .close img { position: absolute; width: 4000px; left: -1496px; top: 330px; }
+  .ring { left: 270px; top: 592px; width: 540px; height: 540px; border: 9px solid var(--accent); border-radius: 50%; }
+  .lit { color: #fff; text-shadow: 0 4px 28px rgba(0,0,0,.6); }
+  .lit.kicker { color: rgba(255,255,255,.75); }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <section class="scene" data-scene="hook">
+    <img class="abs moon" src="assets/aldrin.jpg" data-anim="fade" data-dur="0.6" alt="">
+    <div class="abs behind" data-anim="rise" data-at="@Moon">MOON</div>
+    <img class="abs moon" data-cutout="assets/aldrin.jpg" data-anim="fade" data-dur="0.6" alt="Buzz Aldrin on the Moon">
+    <div class="pad kicker lit" style="top:170px" data-anim="fade" data-at="0.2">// apollo 11, 20 july 1969</div>
+  </section>
+
+  <section class="scene" data-scene="who" data-transition="cut">
+    <div data-loop="zoom-slow"><img class="abs moon" src="assets/aldrin.jpg" alt=""></div>
+    <h1 class="pad headline lit" style="top:230px" data-anim="rise" data-at="@took">Taken by <em>Neil Armstrong</em>.</h1>
+    <div class="abs chip" style="left:72px;top:420px" data-anim="pop" data-at="@July">20 July 1969</div>
+  </section>
+
+  <section class="scene" data-scene="visor" data-transition="zoom" data-transition-dur="0.5">
+    <div class="close"><img src="assets/aldrin.jpg" alt="Close-up of the visor"></div>
+    <h1 class="pad headline lit" style="top:230px" data-anim="rise" data-at="0.05">Look at the <em>visor</em>.</h1>
+    <div class="abs ring" data-anim="pop" data-at="@Armstrong"></div>
+    <div class="abs chip red" style="left:300px;top:490px" data-anim="pop" data-at="@reflected">that's Armstrong</div>
+  </section>
+
+  <section class="scene" data-scene="why" data-transition="fade" data-transition-dur="0.4">
+    <img class="abs moon dim" src="assets/aldrin.jpg" alt="">
+    <div class="abs behind name" data-anim="rise" data-at="@Buzz">BUZZ<br>ALDRIN</div>
+    <img class="abs moon" data-cutout="assets/aldrin.jpg" alt="Buzz Aldrin">
+    <h1 class="pad headline lit" style="top:230px" data-anim="rise" data-at="@camera">He had the <em>camera</em>.</h1>
+    <div class="abs note lit" style="left:72px;top:1560px" data-anim="fade" data-at="@Aldrin">Photo: Neil Armstrong / NASA, public domain (AS11-40-5903)</div>
+  </section>
+
+</div>
+<script src="../../engine/kit.js"></script>
+<script>Reel.init();</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 {
   "name": "reelkit",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Open-source AI reel maker: one line in, a finished voiced, scored, animated vertical video out. Runs locally with open tools.",
   "type": "module",
   "license": "MIT",
@@ -19,7 +19,8 @@
     "depth": "node scripts/depth.mjs",
     "footage": "node scripts/footage.mjs",
     "faces": "node scripts/faces.mjs",
-    "styles": "node scripts/styles.mjs"
+    "styles": "node scripts/styles.mjs",
+    "cutout": "node scripts/cutout.mjs"
   },
   "engines": {
     "node": ">=18"

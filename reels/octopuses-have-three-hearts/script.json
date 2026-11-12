@@ -1,0 +1,57 @@
+{
+  "title": "Why octopuses have three hearts",
+  "theme": "paper",
+  "style": "blueprint",
+  "fps": 30,
+  "voice": {
+    "provider": "kokoro",
+    "kokoro": {
+      "voice": "am_michael"
+    },
+    "speed": 1.05
+  },
+  "captions": true,
+  "scenes": [
+    {
+      "id": "hook",
+      "say": "An octopus has three hearts. And it needs every one.",
+      "visual": "Octopus outline draws on; three yellow hearts appear inside the mantle on @three, numbered 1-2-3, then beat."
+    },
+    {
+      "id": "blood",
+      "say": "The reason is its blood. It's blue, because it carries oxygen with copper instead of iron.",
+      "visual": "Two drops side by side: octopus drop (yellow) lands on @blue, Cu label on @copper; our drop with Fe label on @iron."
+    },
+    {
+      "id": "less",
+      "say": "Copper blood holds less oxygen than ours, so it has to be pumped harder.",
+      "visual": "Two bars, oxygen per drop: ours long, octopus short on @less. Pressure gauge needle swings up on @harder."
+    },
+    {
+      "id": "gills",
+      "say": "So two hearts have just one job: pushing blood through the gills.",
+      "visual": "Two feathery gills, a small heart at the base of each on @two; flow arrows run up through the gills on @gills."
+    },
+    {
+      "id": "body",
+      "say": "That leaves the pressure low. So a third heart pumps it out to the whole body.",
+      "visual": "Circuit: gills at the sides feed a large yellow heart in the middle on @third; dashed flow down to a BODY box on @body."
+    },
+    {
+      "id": "swim",
+      "say": "Here's the strange part. When an octopus swims, that main heart stops.",
+      "visual": "Octopus drawn swimming sideways, heart beating, pulse trace running; on @stops the heart freezes and the trace goes flat.",
+      "pause": 0.5
+    },
+    {
+      "id": "crawl",
+      "say": "So swimming wears it out fast. An octopus would much rather crawl.",
+      "visual": "Sea floor line; octopus crawling along it, all three hearts beating. SWIM 2 OF 3 on @fast, CRAWL 3 OF 3 on @crawl."
+    },
+    {
+      "id": "outro",
+      "say": "Three hearts. Blue blood. Follow for more.",
+      "visual": "Three hearts in a row drawn on one by one, beating; FOLLOW typed underneath."
+    }
+  ]
+}
