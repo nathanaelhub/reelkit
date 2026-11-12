@@ -91,6 +91,18 @@ const cases = [
     if (bad.status === 0 || !bad.out.includes('unknown style "vaporwave"')) problems.push(`unknown style not refused:\n${bad.out}`);
     return { ok: !problems.length, detail: problems.join('\n  ') };
   }],
+  ['studio: npm start serves the app and its API, and refuses dotfiles, other sites and unknown actions', () => {
+    const r = node('tests/studio-check.mjs', []);
+    let j; try { j = JSON.parse(r.out.trim().split('\n').pop()); } catch { return { ok: false, detail: r.out }; }
+    const problems = [];
+    if (!j.reels.includes('sky-blue') || !j.styles.includes('riso')) problems.push(`state: ${JSON.stringify(j)}`);
+    if (j.page !== 200) problems.push(`page ${j.page}`);
+    if (j.env !== 404 || j.git !== 404) problems.push(`dotfiles served: .env ${j.env}, .git ${j.git}`);
+    if (j.noHeader !== 403) problems.push(`POST without X-Reelkit: ${j.noHeader}`);
+    if (j.badHost !== 403) problems.push(`foreign Host: ${j.badHost}`);
+    if (j.badAction !== 400 || j.badReel !== 404) problems.push(`bad action ${j.badAction}, bad reel ${j.badReel}`);
+    return { ok: !problems.length, detail: problems.join('\n  ') };
+  }],
   ['footage: sentences, kept ranges and shot cuts from what Whisper and FFmpeg report', () => {
     const W = (w, start, end) => ({ w, start, end });
     const words = [W('Hi.', 0.5, 0.8), W('This', 1.0, 1.2), W('is', 1.2, 1.3), W('the', 1.3, 1.4), W('first', 1.4, 1.8), W('sentence.', 3.5, 4.0), W('And', 4.2, 4.4), W('a', 4.4, 4.5), W('second', 4.5, 4.9), W('one.', 4.9, 6.0)];

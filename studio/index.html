@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>reelkit studio</title>
+<link rel="stylesheet" href="studio.css">
+</head>
+<body>
+<header class="top">
+  <a class="mark" href="/studio/index.html">reelkit <span>studio</span></a>
+  <span id="agent" class="agent" role="status"></span>
+</header>
+
+<section class="composer" aria-label="Make a reel">
+  <label for="idea" class="visually-hidden">What's the reel about?</label>
+  <textarea id="idea" rows="2" placeholder="What's the reel about?"></textarea>
+  <div class="options">
+    <fieldset class="looks">
+      <legend>Look</legend>
+      <div id="styles" class="chips"></div>
+    </fieldset>
+    <label class="format">Shape
+      <select id="format"><option value="9:16">Vertical 9:16</option><option value="1:1">Square 1:1</option><option value="16:9">Wide 16:9</option></select>
+    </label>
+    <div class="go">
+      <button id="blank" class="quiet" type="button">Start blank</button>
+      <button id="make" class="primary" type="button">Make it</button>
+    </div>
+  </div>
+  <p id="make-hint" class="hint"></p>
+</section>
+
+<section class="shelf" aria-label="Your reels">
+  <div id="reels" class="reels"></div>
+</section>
+
+<main id="bay" class="bay" hidden>
+  <div class="screen">
+    <div class="tabs" role="tablist">
+      <button role="tab" data-view="video" aria-selected="true">Rendered</button>
+      <button role="tab" data-view="live" aria-selected="false">Live preview</button>
+    </div>
+    <div class="frame" id="frame"></div>
+    <div id="versions" class="versions"></div>
+  </div>
+
+  <div class="desk">
+    <h1 id="title"></h1>
+    <p id="meta" class="meta"></p>
+    <div class="actions">
+      <button data-action="voice" type="button">Voice</button>
+      <button data-action="check" type="button">Check</button>
+      <button data-action="draft" type="button">Draft render</button>
+      <button data-action="render" class="primary" type="button">Render</button>
+    </div>
+
+    <details class="block" open>
+      <summary>Notes for the agent</summary>
+      <textarea id="note" rows="3" placeholder="The hook is slow. Make the music quieter. Use a British voice."></textarea>
+      <button id="send-note" type="button" class="grease">Send notes</button>
+    </details>
+
+    <details class="block">
+      <summary>What's said, scene by scene</summary>
+      <ol id="scenes" class="scenes"></ol>
+      <div class="row"><button id="save-scenes" type="button">Save</button><span class="hint">Saving changes the words. Press Voice to hear them.</span></div>
+    </details>
+
+    <details class="block">
+      <summary>Bring footage</summary>
+      <label class="drop" id="drop">
+        <input type="file" id="file" accept="video/*">
+        <span>Drop a video here, or choose one</span>
+      </label>
+      <label class="check"><input type="checkbox" id="talk" checked> Turn what's said into scenes, with the pauses cut</label>
+    </details>
+
+    <details class="block" id="sheets-block">
+      <summary>Contact sheets from the last check</summary>
+      <div id="sheets" class="sheets"></div>
+    </details>
+  </div>
+</main>
+
+<section class="log" aria-label="Log">
+  <div class="log-head"><span id="log-title">Log</span><button id="stop" type="button" class="quiet" hidden>Stop</button></div>
+  <pre id="log" aria-live="polite"></pre>
+</section>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

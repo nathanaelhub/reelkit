@@ -5,6 +5,7 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
+    "start": "node scripts/studio.mjs",
     "doctor": "node scripts/doctor.mjs",
     "new": "node scripts/new.mjs",
     "voice": "node scripts/voice.mjs",
