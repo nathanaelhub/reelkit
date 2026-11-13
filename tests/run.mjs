@@ -91,7 +91,7 @@ const cases = [
     if (bad.status === 0 || !bad.out.includes('unknown style "vaporwave"')) problems.push(`unknown style not refused:\n${bad.out}`);
     return { ok: !problems.length, detail: problems.join('\n  ') };
   }],
-  ['studio: npm start serves the app and its API, and refuses dotfiles, other sites and unknown actions', () => {
+  ['studio: npm start serves the app and its API, and refuses dotfiles, other sites, unknown actions and bad voice uploads', () => {
     const r = node('tests/studio-check.mjs', []);
     let j; try { j = JSON.parse(r.out.trim().split('\n').pop()); } catch { return { ok: false, detail: r.out }; }
     const problems = [];
@@ -101,6 +101,9 @@ const cases = [
     if (j.noHeader !== 403) problems.push(`POST without X-Reelkit: ${j.noHeader}`);
     if (j.badHost !== 403) problems.push(`foreign Host: ${j.badHost}`);
     if (j.badAction !== 400 || j.badReel !== 404) problems.push(`bad action ${j.badAction}, bad reel ${j.badReel}`);
+    if (!j.voices) problems.push('state has no voices list or consent paragraph');
+    if (j.voiceNoHeader !== 403 || j.voiceBadType !== 400 || j.voiceTooBig !== 413) problems.push(`voice upload guards: no header ${j.voiceNoHeader}, text/plain ${j.voiceBadType}, 20 MB+ ${j.voiceTooBig}`);
+    if (j.voiceMissing !== 404 || j.reelVoiceBad !== 400) problems.push(`unknown voice: delete ${j.voiceMissing}, use in a reel ${j.reelVoiceBad}`);
     return { ok: !problems.length, detail: problems.join('\n  ') };
   }],
   ['footage: sentences, kept ranges and shot cuts from what Whisper and FFmpeg report', () => {
@@ -199,6 +202,33 @@ const cases = [
     return { ok: !problems.length, detail: problems.join('\n  ') + '\n' + v.out };
   }],
 
+  ['my-voice: keeps a clean 24 kHz take of the consent paragraph, refuses other words, silence-like tones and no --mine', () => {
+    if (!sherpaInstalled() || !kokoroInstalled()) return { ok: true, skip: 'Kokoro model not downloaded (npm run doctor -- --fix)' };
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'reelkit-voice-')), para = path.join(tmp, 'para.wav'), tone = path.join(tmp, 'tone.wav');
+    // a stand-in speaker: Kokoro reads the paragraph the studio shows
+    const k = spawnSync(process.execPath, ['--input-type=module', '-e', `import { kokoro } from './scripts/speech.mjs'; import { PARAGRAPH } from './scripts/myvoice.mjs'; kokoro(PARAGRAPH, ${JSON.stringify(para)}, { voice: 'bf_emma' });`], { encoding: 'utf8' });
+    if (k.status !== 0) return { ok: false, detail: k.stderr };
+    spawnSync(ffmpegPath(), ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'sine=f=220:d=12', tone]);
+    const problems = [], V = path.resolve('voices');
+    const ok = node('scripts/myvoice.mjs', ['add', para, '--studio', '--name', 'zz-test-ok']);
+    if (ok.status !== 0) problems.push(`the paragraph was refused:\n${ok.out}`);
+    else {
+      const p = spawnSync(ffprobePath(), ['-v', 'error', '-show_entries', 'stream=sample_rate,channels:format=duration', '-of', 'json', path.join(V, 'zz-test-ok.wav')], { encoding: 'utf8' });
+      const j = JSON.parse(p.stdout), st = j.streams[0];
+      if (st.sample_rate !== '24000' || st.channels !== 1 || !(+j.format.duration <= 30.05)) problems.push(`saved take: ${p.stdout}`);
+      const meta = JSON.parse(fs.readFileSync(path.join(V, 'zz-test-ok.json'), 'utf8'));
+      if (!(meta.paragraphMatch >= 0.5) || !/studio/.test(meta.consent)) problems.push(`meta ${JSON.stringify(meta)}`);
+    }
+    const wrong = node('scripts/myvoice.mjs', ['add', path.resolve('reels/sky-blue/voice.mp3'), '--studio', '--name', 'zz-test-wrong']);
+    if (wrong.status === 0 || !/couldn't hear the paragraph/.test(wrong.out)) problems.push(`different words were accepted:\n${wrong.out}`);
+    const t = node('scripts/myvoice.mjs', ['add', tone, '--mine', '--name', 'zz-test-tone']);
+    if (t.status === 0 || !/make out/.test(t.out)) problems.push(`a tone was accepted:\n${t.out}`);
+    const nomine = node('scripts/myvoice.mjs', ['add', para, '--name', 'zz-test-nomine']);
+    if (nomine.status === 0 || !/--mine/.test(nomine.out)) problems.push('added without --mine');
+    for (const f of fs.readdirSync(V).filter(f => f.startsWith('zz-test-'))) fs.rmSync(path.join(V, f));
+    fs.rmSync(tmp, { recursive: true, force: true });
+    return { ok: !problems.length, detail: problems.join('\n  ') };
+  }],
   ['chatterbox: voices a reel locally (numbers as words), timed by Whisper', () => {
     const cached = path.resolve('models/transformers/onnx-community/chatterbox-ONNX/onnx/language_model_q4.onnx_data');
     if (!fs.existsSync(cached)) return { ok: true, skip: 'Chatterbox not downloaded (1.5 GB; it downloads on first use)' };

@@ -10,6 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { serve, ROOT, REELS, OUT, readJSON, writeJSON, listStyles, which, parseArgs } from './lib.mjs';
+import { listVoices, voiceName, PARAGRAPH, VOICES } from './myvoice.mjs';
 
 const args = parseArgs();
 const PORT = +(args.port || process.env.REELKIT_PORT || 4242);
@@ -43,9 +44,22 @@ function slugFrom(text) {
   return slug;
 }
 
+// A reel's voice settings, switched between the free voice and a recorded one, keeping speed and the other settings.
+function setVoice(v = {}, { provider, voice, exaggeration } = {}) {
+  v = { ...(v || {}) };
+  if (provider === 'chatterbox') {
+    const name = voiceName(voice);
+    if (!fs.existsSync(path.join(VOICES, `${name}.wav`))) throw new Error(`no voice called "${name}": record it first`);
+    const ex = exaggeration == null ? (v.chatterbox?.exaggeration ?? 0.5) : Math.min(1, Math.max(0.25, +exaggeration));
+    return { ...v, provider: 'chatterbox', chatterbox: { ...(v.chatterbox || {}), reference: `voices/${name}.wav`, exaggeration: ex } };
+  }
+  if (provider === 'kokoro') return { ...v, provider: 'kokoro', kokoro: v.kokoro || { voice: 'am_michael' } };
+  throw new Error('provider must be "kokoro" or "chatterbox"');
+}
+
 // ---------- jobs: one process each, output kept and streamed ----------
 const jobs = new Map(); let jobSeq = 0;
-function startJob(label, cmd, cmdArgs, { reel = null, parse = null } = {}) {
+function startJob(label, cmd, cmdArgs, { reel = null, parse = null, onEnd = null } = {}) {
   const busy = reel && [...jobs.values()].find(j => j.reel === reel && j.running);
   if (busy) throw new Error(`"${busy.label}" is still running for ${reel}`);
   const id = String(++jobSeq);
@@ -59,7 +73,7 @@ function startJob(label, cmd, cmdArgs, { reel = null, parse = null } = {}) {
   }); stream.on('end', () => { if (buf) { const out = parse ? parse(buf) : buf; if (out) push(String(out)); } }); };
   onData(child.stdout); onData(child.stderr);
   child.on('error', e => push(`✗ ${e.message}`));
-  child.on('close', code => { job.running = false; job.code = code; push(code === 0 ? '✓ done' : `✗ stopped (exit ${code})`); for (const l of job.listeners) l('end', code); });
+  child.on('close', code => { try { onEnd?.(code); } catch (e) { job.lines.push(`✗ ${e.message}`); } job.running = false; job.code = code; push(code === 0 ? '✓ done' : `✗ stopped (exit ${code})`); for (const l of job.listeners) l('end', code); });
   jobs.set(id, job);
   return job;
 }
@@ -127,7 +141,8 @@ async function api(req, res, u) {
   const m = u.match(/^\/api\/reels\/([^/]+)(\/[a-z]+)?$/);
   if (u === '/api/state' && req.method === 'GET') {
     return json(res, 200, { reels: listReels(), styles: listStyles().map(({ name, title, description, swatch }) => ({ name, title, description, swatch })),
-      agent: !!claudeBin(), jobs: [...jobs.values()].map(j => ({ id: j.id, label: j.label, reel: j.reel, running: j.running, code: j.code })) });
+      agent: !!claudeBin(), voices: listVoices(), paragraph: PARAGRAPH,
+      chatterbox: fs.existsSync(path.join(ROOT, 'models/transformers/onnx-community/chatterbox-ONNX/onnx/language_model_q4.onnx_data')), jobs: [...jobs.values()].map(j => ({ id: j.id, label: j.label, reel: j.reel, running: j.running, code: j.code })) });
   }
   if (m) {
     const slug = m[1], sub = m[2] || '';
@@ -166,21 +181,74 @@ async function api(req, res, u) {
       const job = startJob(`footage ${slug}`, cmd, a, { reel: slug });
       return json(res, 200, { job: job.id });
     }
+    if (sub === '/voice' && req.method === 'PUT') {
+      const { provider, voice, exaggeration } = await jsonBody(req);
+      const script = readJSON(path.join(dir, 'script.json'));
+      try { script.voice = setVoice(script.voice, { provider, voice, exaggeration }); } catch (e) { return json(res, 400, { error: e.message }); }
+      writeJSON(path.join(dir, 'script.json'), script);
+      return json(res, 200, { ok: true, voice: script.voice });
+    }
     return json(res, 404, { error: 'unknown reel action' });
   }
+  // ---------- voices ----------
+  if (u === '/api/voices' && req.method === 'POST') {
+    // a take from the studio's recorder: raw audio body, ?name=… ; checked and cleaned by myvoice.mjs (the paragraph must be heard)
+    const q = new URL(req.url, 'http://x').searchParams, name = voiceName(q.get('name'));
+    const type = String(req.headers['content-type'] || '').split(';')[0].trim();
+    const ext = { 'audio/webm': 'webm', 'audio/ogg': 'ogg', 'audio/mp4': 'm4a', 'audio/x-m4a': 'm4a', 'audio/wav': 'wav', 'audio/x-wav': 'wav', 'audio/wave': 'wav', 'audio/mpeg': 'mp3' }[type];
+    if (!ext) return json(res, 400, { error: `send a recording (audio/webm, ogg, mp4, wav or mpeg), not ${type || 'nothing'}` });
+    const incoming = path.join(VOICES, '.incoming'); fs.mkdirSync(incoming, { recursive: true });
+    const file = path.join(incoming, `${name}-${Date.now()}.${ext}`);
+    const LIMIT = 20 << 20; let n = 0, tooBig = false;
+    await new Promise((resolve, reject) => {
+      const w = fs.createWriteStream(file);
+      w.on('error', reject); req.on('error', reject);
+      req.on('data', c => {
+        n += c.length;
+        if (n > LIMIT) { if (!tooBig) { tooBig = true; w.destroy(); } return; } // keep reading, stop writing
+        if (!w.write(c)) { req.pause(); w.once('drain', () => req.resume()); }
+      });
+      req.on('end', () => { if (tooBig) resolve(); else w.end(resolve); });
+    });
+    if (tooBig || !n) { fs.rmSync(file, { force: true }); return json(res, tooBig ? 413 : 400, { error: tooBig ? 'that recording is over 20 MB: keep it under 30 seconds' : 'the recording was empty' }); }
+    const [cmd, a] = node('myvoice.mjs', ['add', file, '--studio', '--name', name]);
+    const job = startJob(`save voice "${name}"`, cmd, a, { reel: `voice:${name}`, onEnd: () => fs.rmSync(file, { force: true }) });
+    return json(res, 200, { job: job.id, name });
+  }
+  const vm = u.match(/^\/api\/voices\/([a-z0-9-]{1,30})(\/sample)?$/);
+  if (vm) {
+    const name = vm[1];
+    if (!fs.existsSync(path.join(VOICES, `${name}.wav`))) return json(res, 404, { error: `no voice called "${name}"` });
+    if (vm[2] && req.method === 'POST') {
+      const [cmd, a] = node('myvoice.mjs', ['sample', name]);
+      const job = startJob(`sample of "${name}"`, cmd, a, { reel: `voice:${name}` });
+      return json(res, 200, { job: job.id });
+    }
+    if (!vm[2] && req.method === 'DELETE') {
+      for (const ext of ['wav', 'json', 'sample.wav']) fs.rmSync(path.join(VOICES, `${name}.${ext}`), { force: true });
+      const users = listReels().filter(r => { try { return (readJSON(path.join(REELS, r.slug, 'script.json')).voice?.chatterbox?.reference || '').endsWith(`voices/${name}.wav`); } catch { return false; } }).map(r => r.slug);
+      return json(res, 200, { ok: true, stillUsedBy: users });
+    }
+    return json(res, 404, { error: 'unknown voice action' });
+  }
+
   if (u === '/api/make' && req.method === 'POST') {
-    const { idea, style, format, blank } = await jsonBody(req);
+    const { idea, style, format, blank, voice } = await jsonBody(req);
     const text = String(idea || '').trim();
     if (!text) return json(res, 400, { error: 'say what the reel is about first' });
     if (style && !listStyles().some(s => s.name === style)) return json(res, 400, { error: `unknown style "${style}"` });
+    const mine = voice && voice !== 'free' ? voiceName(String(voice).replace(/^mine:/, '')) : null;
+    if (mine && !fs.existsSync(path.join(VOICES, `${mine}.wav`))) return json(res, 400, { error: `no voice called "${mine}": record it first` });
     const slug = slugFrom(text);
+    // the scaffold gets the chosen voice as soon as it exists
+    const giveVoice = () => { const sp = path.join(REELS, slug, 'script.json'); if (mine && fs.existsSync(sp)) { const sc = readJSON(sp); sc.voice = setVoice(sc.voice, { provider: 'chatterbox', voice: mine }); writeJSON(sp, sc); } };
     if (blank || !claudeBin()) {
       // no agent: scaffold, so the scenes can be written here and the HTML by hand or another agent
       const [cmd, a] = node('new.mjs', [slug, text.slice(0, 80), ...(style ? ['--style', style] : [])]);
-      const job = startJob(`new ${slug}`, cmd, a, { reel: slug });
+      const job = startJob(`new ${slug}`, cmd, a, { reel: slug, onEnd: giveVoice });
       return json(res, 200, { job: job.id, slug, agent: false });
     }
-    const job = runAgent(`make ${slug}`, `Make a reel: ${text}\nUse the folder name "${slug}" (npm run new -- ${slug} "<title>"${style ? ` --style ${style}` : ''}).${style ? ` Use the "${style}" style pack (read styles/${style}/rules.md).` : ''}${format && format !== '9:16' ? ` Format ${format}.` : ''} Follow .claude/skills/make-reel/SKILL.md from start to finish, including the check (look at the contact sheets) and the final render. The user is waiting in the reelkit studio and can't answer questions: make sensible choices and finish.`, slug);
+    const job = runAgent(`make ${slug}`, `Make a reel: ${text}\nUse the folder name "${slug}" (npm run new -- ${slug} "<title>"${style ? ` --style ${style}` : ''}).${style ? ` Use the "${style}" style pack (read styles/${style}/rules.md).` : ''}${format && format !== '9:16' ? ` Format ${format}.` : ''} Follow .claude/skills/make-reel/SKILL.md from start to finish, including the check (look at the contact sheets) and the final render. ${mine ? ` Voice it in the user's own recorded voice: set "voice": { "provider": "chatterbox", "chatterbox": { "reference": "voices/${mine}.wav", "exaggeration": 0.5 } } in script.json (it's their voice, recorded with consent in the studio).` : ''} The user is waiting in the reelkit studio and can't answer questions: make sensible choices and finish.`, slug);
     return json(res, 200, { job: job.id, slug, agent: true });
   }
   const jm = u.match(/^\/api\/jobs\/(\d+)(\/stream|\/stop)?$/);

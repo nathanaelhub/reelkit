@@ -16,6 +16,13 @@ try {
   r.noHeader = (await fetch(url + '/api/make', { method: 'POST', body: '{}' })).status;
   r.badAction = (await fetch(url + '/api/reels/sky-blue/run', { method: 'POST', headers: { 'X-Reelkit': '1' }, body: JSON.stringify({ action: 'rm' }) })).status;
   r.badReel = (await fetch(url + '/api/reels/nope-nope/run', { method: 'POST', headers: { 'X-Reelkit': '1' }, body: '{"action":"voice"}' })).status;
+  r.voices = Array.isArray(st.voices) && typeof st.paragraph === 'string' && st.paragraph.startsWith('This is my own voice');
+  const post = (q, type, bodyBytes, hdr = true) => fetch(url + '/api/voices' + q, { method: 'POST', headers: { ...(hdr ? { 'X-Reelkit': '1' } : {}), 'Content-Type': type }, body: bodyBytes }).then(x => x.status);
+  r.voiceNoHeader = await post('?name=t', 'audio/wav', new Uint8Array(10), false);
+  r.voiceBadType = await post('?name=t', 'text/plain', 'hello');
+  r.voiceTooBig = await post('?name=t', 'audio/wav', new Uint8Array((20 << 20) + 1024));
+  r.voiceMissing = (await fetch(url + '/api/voices/nobody-here', { method: 'DELETE', headers: { 'X-Reelkit': '1' } })).status;
+  r.reelVoiceBad = (await fetch(url + '/api/reels/sky-blue/voice', { method: 'PUT', headers: { 'X-Reelkit': '1' }, body: JSON.stringify({ provider: 'chatterbox', voice: 'nobody-here' }) })).status;
   // a foreign Host header (DNS rebinding) is refused; fetch won't set Host, so use http directly
   const http = await import('node:http');
   r.badHost = await new Promise(res => http.get(url + '/api/state', { headers: { Host: 'evil.example' } }, x => { x.resume(); res(x.statusCode); }));

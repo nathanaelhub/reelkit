@@ -164,7 +164,11 @@ For silent b-roll, `npm run clip` trims any part of a video; every rendered fram
 
 reelkit picks the best one available. Every voice except ElevenLabs gets Whisper word timing.
 
-**Your own voice.** Record 10 to 30 seconds of yourself talking (a phone voice memo is fine), save it as `voices/me.m4a`, and set `"voice": { "provider": "chatterbox", "chatterbox": { "reference": "voices/me.m4a" } }`. [Chatterbox](https://github.com/resemble-ai/chatterbox) runs locally through transformers.js (about 1.5 GB, downloaded the first time) and every line is still timed by Whisper. Recordings in `voices/` are never committed. See [voices/README.md](voices/README.md).
+**Your own voice.** In the studio, press **Record a voice…**, tick "this is my own voice" and read the short paragraph on screen (about 20 seconds). reelkit checks the take (loud enough, clear speech, and that you read the paragraph, which starts "This is my own voice"), cleans it up and keeps it on your computer. Pick it under **Voice** for a new reel, or switch an existing reel to it and press Re-voice. [Chatterbox](https://github.com/resemble-ai/chatterbox) (MIT) does the cloning locally (about 1.5 GB, downloaded the first time), and every line is still timed by Whisper.
+
+<img src="docs/recorder.webp" width="520" alt="The studio's Record a voice panel: a paragraph to read, a consent checkbox, Record and Stop, a level meter and a timer">
+
+From a terminal: `npm run my-voice -- add recording.m4a --name me --mine`, then `"voice": { "provider": "chatterbox", "chatterbox": { "reference": "voices/me.wav" } }`. Voices are never committed. Only clone your own voice, or have the other person record theirs themselves. See [voices/README.md](voices/README.md).
 
 ## How it works
 
@@ -199,6 +203,7 @@ npm run cutout -- my-reel            # subject cut-outs for data-cutout photos (
 npm run depth -- my-reel            # depth maps for data-depth photos (check/render do this for you)
 npm run footage -- my-reel talk.mp4 # shots, words and a contact sheet of a video (--talk: scenes from its speech)
 npm run faces -- my-reel            # face tracks for data-reframe="face" clips (check/render do this for you)
+npm run my-voice -- add rec.m4a --mine  # save your own voice (or record it in the studio); sample, list
 npm run styles                      # list the style packs (render/check/preview take --style <pack>)
 npm run check -- my-reel            # lint + design rules + motion + taste check, contact sheets in out/
 npm run preview -- my-reel          # watch in your browser with audio (space, ←/→)
@@ -233,7 +238,7 @@ Read their `reel.html` and `score.js` to see everything the kit can do.
 - [x] Your footage: shot detection, talk scenes with the pauses cut, reframing 16:9 → 9:16 around faces
 - [x] Tested on Linux, macOS and Windows
 - [x] reelkit studio: `npm start` opens a local app to make, preview, note and render reels without a terminal
-- [x] Your own voice, cloned locally (Chatterbox, MIT weights)
+- [x] Your own voice, cloned locally (Chatterbox, MIT weights), recorded in the studio with one button
 - [x] Subject cut-outs (BiRefNet)
 - [ ] Light upscaling for small photos (Swin2SR): see [open tools worth knowing](docs/open-tools.md)
 - [ ] An MCP server, so any agent or app can call voice / check / render as tools
