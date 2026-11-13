@@ -163,3 +163,12 @@ dialog#recorder::backdrop { background: rgba(20,24,30,.55); }
 .voice-list b { min-width: 7em; }
 .voice-list small { color: var(--soft); }
 .voice-list button { padding: 4px 10px; font-size: 14px; }
+
+/* ---------- ready to post ---------- */
+.ship-images { display: flex; gap: 14px; margin: 14px 0; flex-wrap: wrap; }
+.ship-images figure { margin: 0; }
+.ship-images img { height: 260px; border-radius: 4px; display: block; border: 1px solid var(--rule); }
+.ship-images figcaption { font-size: 13px; color: var(--soft); margin-top: 4px; }
+.ship-label { display: block; font-weight: 600; margin: 6px 0; }
+.ship-checks { background: var(--lightbox); border-radius: 6px; padding: 12px 14px; font: 13px/1.5 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; margin: 12px 0 0; }
+#ship-block a { color: var(--grease); font-weight: 500; }

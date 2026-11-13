@@ -1,5 +1,6 @@
 {
   "title": "The canyon is younger than its rocks",
+  "credits": ["Photos: U.S. National Park Service, public domain"],
   "theme": "ink",
   "voice": { "provider": "kokoro", "kokoro": { "voice": "bm_george" } },
   "speed": 1.0,

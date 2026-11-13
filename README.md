@@ -151,6 +151,8 @@ For silent b-roll, `npm run clip` trims any part of a video; every rendered fram
 
 **Formats.** 9:16 (default), 16:9 or 1:1, and every render ends at a consistent −14 LUFS.
 
+**Ready to post.** `npm run ship -- my-reel` (or **Get it ready** in the studio) turns the final render into everything an upload asks for: a cover frame, the same frame with the areas the apps cover with buttons and captions shaded, captions as .srt and .vtt, a draft post with your credits, and the video checked against Instagram Reels, TikTok and YouTube Shorts (size, frame rate, length, file size, loudness).
+
 ## Voices and licences
 
 | Voice | Cost | Quality | Publish or sell? |
@@ -204,6 +206,7 @@ npm run depth -- my-reel            # depth maps for data-depth photos (check/re
 npm run footage -- my-reel talk.mp4 # shots, words and a contact sheet of a video (--talk: scenes from its speech)
 npm run faces -- my-reel            # face tracks for data-reframe="face" clips (check/render do this for you)
 npm run my-voice -- add rec.m4a --mine  # save your own voice (or record it in the studio); sample, list
+npm run ship -- my-reel             # cover, safe-zone frame, captions .srt/.vtt, draft post, platform checks → out/my-reel.ship/
 npm run styles                      # list the style packs (render/check/preview take --style <pack>)
 npm run check -- my-reel            # lint + design rules + motion + taste check, contact sheets in out/
 npm run preview -- my-reel          # watch in your browser with audio (space, ←/→)
@@ -240,6 +243,8 @@ Read their `reel.html` and `score.js` to see everything the kit can do.
 - [x] reelkit studio: `npm start` opens a local app to make, preview, note and render reels without a terminal
 - [x] Your own voice, cloned locally (Chatterbox, MIT weights), recorded in the studio with one button
 - [x] Subject cut-outs (BiRefNet)
+- [x] Ready to post: cover, captions files, draft post and platform checks
+- [ ] Batches: several reels from one source, in one style and voice
 - [ ] Light upscaling for small photos (Swin2SR): see [open tools worth knowing](docs/open-tools.md)
 - [ ] An MCP server, so any agent or app can call voice / check / render as tools
 

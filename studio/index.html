@@ -94,6 +94,22 @@
       <label class="check"><input type="checkbox" id="talk" checked> Turn what's said into scenes, with the pauses cut</label>
     </details>
 
+    <details class="block" id="ship-block">
+      <summary>Ready to post</summary>
+      <p class="hint" id="ship-hint">Makes a cover, caption files and a draft post from the final render, and checks it against Instagram Reels, TikTok and YouTube Shorts.</p>
+      <div class="row"><button data-action="ship" type="button" class="grease" id="ship-go">Get it ready</button><a id="ship-video" download hidden>Download the video</a></div>
+      <div id="ship-out" hidden>
+        <div class="ship-images">
+          <figure><a id="ship-cover-a" target="_blank"><img id="ship-cover" alt="Cover frame"></a><figcaption>Cover</figcaption></figure>
+          <figure><a id="ship-safe-a" target="_blank"><img id="ship-safe" alt="Cover with the app's buttons and captions shaded"></a><figcaption>Where the app covers it</figcaption></figure>
+        </div>
+        <label for="ship-post" class="ship-label">Draft post</label>
+        <textarea id="ship-post" rows="6"></textarea>
+        <div class="row"><button id="ship-copy" type="button">Copy the post</button><a id="ship-srt" download>captions.srt</a><a id="ship-vtt" download>captions.vtt</a></div>
+        <pre id="ship-checks" class="ship-checks"></pre>
+      </div>
+    </details>
+
     <details class="block" id="sheets-block">
       <summary>Contact sheets from the last check</summary>
       <div id="sheets" class="sheets"></div>

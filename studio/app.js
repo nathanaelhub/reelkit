@@ -148,6 +148,7 @@ function renderBay() {
     ol.append(li);
   }
   renderReelVoice();
+  renderShip();
   const sh = $('#sheets'); sh.textContent = '';
   for (const f of r.sheets) { const a = document.createElement('a'); a.href = `/out/${f}`; a.target = '_blank'; const i = document.createElement('img'); i.src = `/out/${f}?v=${Date.now()}`; i.alt = `Contact sheet ${f}`; a.append(i); sh.append(a); }
   $('#sheets-block').hidden = !r.sheets.length;
@@ -189,6 +190,26 @@ $('#file').onchange = e => upload(e.target.files[0]);
 ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
 ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
 drop.addEventListener('drop', e => upload(e.dataTransfer.files[0]));
+
+// ---------- ready to post ----------
+function renderShip() {
+  const r = current, sp = r.ship, final = r.videos.includes(`${r.slug}.mp4`);
+  $('#ship-go').disabled = !final;
+  $('#ship-hint').textContent = final ? 'Makes a cover, caption files and a draft post from the final render, and checks it against Instagram Reels, TikTok and YouTube Shorts.'
+    : 'Render the final video first (Render, not Draft render); then this makes a cover, caption files and a draft post, and checks it for each platform.';
+  const dl = $('#ship-video'); dl.hidden = !final; if (final) { dl.href = `/out/${r.slug}.mp4`; dl.setAttribute('download', `${r.slug}.mp4`); }
+  $('#ship-out').hidden = !sp; if (!sp) return;
+  const v = `?v=${Math.round(sp.at)}`;
+  $('#ship-cover').src = $('#ship-cover-a').href = `/${sp.dir}/cover.jpg${v}`;
+  $('#ship-safe').src = $('#ship-safe-a').href = `/${sp.dir}/safe-zones.jpg${v}`;
+  $('#ship-post').value = sp.post;
+  $('#ship-srt').href = `/${sp.dir}/captions.srt`; $('#ship-vtt').href = `/${sp.dir}/captions.vtt`;
+  $('#ship-checks').textContent = sp.checks;
+}
+$('#ship-copy').onclick = async () => {
+  try { await navigator.clipboard.writeText($('#ship-post').value); log('✓ Copied the post.'); }
+  catch { $('#ship-post').select(); log('Select the post and copy it (the browser blocked automatic copying).'); }
+};
 
 // ---------- voices ----------
 const voiceExists = name => state.voices.some(v => v.name === name);

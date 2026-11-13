@@ -8,6 +8,7 @@ import { spawnSync } from 'node:child_process';
 import { ffmpegPath, ffprobePath } from '../scripts/lib.mjs';
 import { sentences, keepRanges, parseCuts } from '../scripts/footage.mjs';
 import { buildTrack } from '../scripts/faces.mjs';
+import { captionLines, toSRT, checkVideo } from '../scripts/ship.mjs';
 import { numberToWords, prepareForKokoro, alignTokens, cmuToKokoro, kokoroInstalled, sherpaInstalled, inflect } from '../scripts/speech.mjs';
 
 const node = (script, args) => {
@@ -104,6 +105,38 @@ const cases = [
     if (!j.voices) problems.push('state has no voices list or consent paragraph');
     if (j.voiceNoHeader !== 403 || j.voiceBadType !== 400 || j.voiceTooBig !== 413) problems.push(`voice upload guards: no header ${j.voiceNoHeader}, text/plain ${j.voiceBadType}, 20 MB+ ${j.voiceTooBig}`);
     if (j.voiceMissing !== 404 || j.reelVoiceBad !== 400) problems.push(`unknown voice: delete ${j.voiceMissing}, use in a reel ${j.reelVoiceBad}`);
+    return { ok: !problems.length, detail: problems.join('\n  ') };
+  }],
+  ['ship: short caption lines, platform checks, and a cover + post + captions from a render', () => {
+    const problems = [];
+    const W = (w, start, end) => ({ w, start, end });
+    const tl = { scenes: [{ words: [W('One', 0, .3), W('two', .3, .6), W('three', .6, .9), W('four', .9, 1.2), W('five', 1.2, 1.5), W('six', 1.5, 1.8), W('seven', 1.8, 2.1), W('eight.', 2.1, 2.4), W('Nine.', 2.6, 3)] }, { words: [W('Ten', 3.2, 3.4)] }] };
+    const lines = captionLines(tl);
+    if (lines.map(l => l.text).join(' | ') !== 'One two three four five six seven | eight. | Nine. | Ten') problems.push(`lines: ${lines.map(l => l.text).join(' | ')}`);
+    if (lines.some((l, i) => i && l.start < lines[i - 1].end)) problems.push('caption lines overlap');
+    if (!/^1\n00:00:00,000 --> 00:00:02,100\nOne two/.test(toSRT(lines))) problems.push(`srt: ${toSRT(lines).slice(0, 60)}`);
+    const base = { seconds: 30, mb: 20, width: 1080, height: 1920, fps: 30, vcodec: 'h264', pix: 'yuv420p', acodec: 'aac', lufs: -14 };
+    const fails = p => checkVideo({ ...base, ...p }).filter(c => c.level === 'fail').map(c => c.platform);
+    if (fails({}).length) problems.push(`a normal reel fails: ${fails({})}`);
+    if (!fails({ width: 540, height: 960 }).includes('Instagram Reels')) problems.push('540×960 should fail Instagram (720 px minimum)');
+    if (!fails({ seconds: 200 }).includes('YouTube Shorts')) problems.push('200 s should fail Shorts');
+    if (!fails({ width: 1920, height: 1080 }).includes('YouTube Shorts')) problems.push('16:9 should fail Shorts');
+    if (!checkVideo({ ...base, mb: 100 }).some(c => c.platform === 'TikTok' && /Android/.test(c.msg))) problems.push('100 MB should warn about the Android app cap');
+    // end to end on a 1-second draft: it is 540×960, so Instagram fails and ship exits 2, but everything is written
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'reelkit-ship-')), vid = path.join(tmp, 'v.mp4'), dir = path.join(tmp, 'ship');
+    const r = spawnSync(process.execPath, ['scripts/render.mjs', 'sky-blue', '--draft', '--from', '0', '--to', '1', '--out', vid], { encoding: 'utf8', timeout: 8 * 60e3, killSignal: 'SIGKILL' });
+    if (r.status !== 0) problems.push(`render failed: ${r.stderr}`);
+    else {
+      const sh = node('scripts/ship.mjs', ['sky-blue', '--video', vid, '--out', dir]);
+      if (sh.status !== 2) problems.push(`ship exit ${sh.status} (wanted 2 for a 540×960 file)\n${sh.out}`);
+      for (const f of ['cover.jpg', 'safe-zones.jpg', 'captions.srt', 'captions.vtt', 'post.txt', 'checks.txt']) if (!fs.existsSync(path.join(dir, f))) problems.push(`no ${f}`);
+      if (fs.existsSync(path.join(dir, 'cover.jpg'))) {
+        const size = spawnSync(ffprobePath(), ['-v', 'error', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', path.join(dir, 'cover.jpg')], { encoding: 'utf8' }).stdout.trim();
+        if (size !== '1080,1920') problems.push(`cover ${size}`);
+      }
+      if (fs.existsSync(path.join(dir, 'post.txt')) && !/sky is blue/.test(fs.readFileSync(path.join(dir, 'post.txt'), 'utf8'))) problems.push('post.txt lacks the hook');
+    }
+    fs.rmSync(tmp, { recursive: true, force: true });
     return { ok: !problems.length, detail: problems.join('\n  ') };
   }],
   ['footage: sentences, kept ranges and shot cuts from what Whisper and FFmpeg report', () => {

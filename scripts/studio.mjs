@@ -31,10 +31,19 @@ function reelInfo(slug) {
     slug, title: script.title || slug, style: script.style || null, theme: script.theme || null, format: script.format || '9:16',
     scenes: (script.scenes || []).length, duration: tl?.duration ?? null, voiced: !!tl,
     hasHtml: fs.existsSync(path.join(dir, 'reel.html')), videos: videos.map(v => v.file), sheets, mtime, footage: (script.scenes || []).some(s => s.footage),
+    ship: shipInfo(slug),
   };
 }
 const listReels = () => (fs.existsSync(REELS) ? fs.readdirSync(REELS) : [])
   .filter(d => SLUG.test(d) && !d.startsWith('_')).map(reelInfo).filter(Boolean).sort((a, b) => b.mtime - a.mtime);
+
+// what npm run ship made for this reel (out/<slug>.ship/)
+function shipInfo(slug) {
+  const d = path.join(OUT, `${slug}.ship`);
+  if (!fs.existsSync(path.join(d, 'checks.txt'))) return null;
+  const read = f => (fs.existsSync(path.join(d, f)) ? fs.readFileSync(path.join(d, f), 'utf8') : '');
+  return { dir: `out/${slug}.ship`, post: read('post.txt'), checks: read('checks.txt'), at: fs.statSync(path.join(d, 'checks.txt')).mtimeMs };
+}
 
 function slugFrom(text) {
   const stop = new Set(['a', 'an', 'the', 'about', 'make', 'reel', 'on', 'of', 'why', 'how', 'what', 'is', 'are', 'for', 'to', 'and', 'in', 'my', 'me', 'video', 'short']);
@@ -84,6 +93,7 @@ const ACTIONS = {
   draft: slug => node('render.mjs', [slug, '--draft']),
   render: slug => node('render.mjs', [slug]),
   score: slug => node('score.mjs', [slug]),
+  ship: slug => node('ship.mjs', [slug]),
 };
 
 // ---------- the agent (Claude Code, headless) ----------
