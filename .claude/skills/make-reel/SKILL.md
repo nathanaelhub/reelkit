@@ -95,7 +95,9 @@ Rules that matter most:
 
 After the render, extract 3–4 frames from the MP4 (`ffmpeg -ss <t> -i out/<slug>.mp4 -frames:v 1 f.jpg`) at transitions and word-synced hits and look at them, so you know the MP4 matches what the check showed.
 
-Hand over: the MP4 path, its length, the voice used, and one line on anything you'd still improve. If the user is on their own machine, mention `npm run preview -- <slug>` to watch it with audio in the browser.
+Then `npm run ship -- <slug>`: it writes `out/<slug>.ship/` with a cover (`--cover @word` to choose the frame), `safe-zones.jpg` (look at it: no headline, face or key number should sit in the shaded app areas; move it and re-render if one does), captions.srt/.vtt, a draft `post.txt` and platform checks. Put sources in script.json `"credits": ["Photo: …", "Facts: …"]` so the draft post credits them. Fix any ✗ in checks.txt.
+
+Hand over: the MP4 path, its length, the voice used, the ship folder, and one line on anything you'd still improve. If the user is on their own machine, mention `npm run preview -- <slug>` to watch it with audio in the browser.
 
 ## 7 · Feedback loop
 
