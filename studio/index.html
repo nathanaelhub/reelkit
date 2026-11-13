@@ -20,6 +20,10 @@
       <legend>Look</legend>
       <div id="styles" class="chips"></div>
     </fieldset>
+    <fieldset class="looks">
+      <legend>Voice</legend>
+      <div id="voice-chips" class="chips"></div>
+    </fieldset>
     <label class="format">Shape
       <select id="format"><option value="9:16">Vertical 9:16</option><option value="1:1">Square 1:1</option><option value="16:9">Wide 16:9</option></select>
     </label>
@@ -61,6 +65,20 @@
       <button id="send-note" type="button" class="grease">Send notes</button>
     </details>
 
+    <details class="block" id="voice-block">
+      <summary>Voice</summary>
+      <p id="voice-now" class="meta"></p>
+      <div class="row">
+        <label class="visually-hidden" for="voice-pick">Voice for this reel</label>
+        <select id="voice-pick"></select>
+        <button id="voice-use" type="button">Use it</button>
+        <button data-action="voice" type="button" class="grease">Re-voice</button>
+      </div>
+      <label class="slider" id="delivery-row">Delivery <span>calm</span>
+        <input id="delivery" type="range" min="0.25" max="1" step="0.05" value="0.5"> <span>lively</span></label>
+      <p class="hint">Changing the voice or delivery takes effect when you press Re-voice. <button type="button" class="link" id="voice-record-2">Record a voice…</button></p>
+    </details>
+
     <details class="block">
       <summary>What's said, scene by scene</summary>
       <ol id="scenes" class="scenes"></ol>
@@ -82,6 +100,30 @@
     </details>
   </div>
 </main>
+
+<dialog id="recorder" aria-labelledby="rec-title">
+  <form method="dialog" class="rec-close"><button class="quiet" aria-label="Close">Close</button></form>
+  <h2 id="rec-title">Record a voice</h2>
+  <p class="hint">Read this aloud at your normal pace, in a quiet room, about a hand's width from the microphone. It takes around 20 seconds. Reels can then speak in this voice.</p>
+  <blockquote id="paragraph"></blockquote>
+  <label class="check"><input type="checkbox" id="consent"> I'm the person reading, and this is my own voice.</label>
+  <div class="rec-bar">
+    <button id="rec-start" type="button" class="grease" disabled>Record</button>
+    <button id="rec-stop" type="button" disabled>Stop</button>
+    <div class="meter" aria-hidden="true"><i id="meter"></i></div>
+    <span id="rec-time" class="rec-time">0:00</span>
+  </div>
+  <audio id="rec-play" controls hidden></audio>
+  <div class="row rec-save" id="rec-save" hidden>
+    <label>Name <input id="rec-name" value="me" maxlength="30" autocomplete="off"></label>
+    <button id="rec-keep" type="button" class="primary">Save voice</button>
+    <button id="rec-again" type="button" class="quiet">Record again</button>
+  </div>
+  <p id="rec-status" class="rec-status" role="status"></p>
+  <h3>Saved voices</h3>
+  <ul id="voice-list" class="voice-list"></ul>
+  <p class="hint">Voices stay on this computer, in <code>voices/</code>, and are never committed. Only record your own voice; anyone else should record theirs themselves.</p>
+</dialog>
 
 <section class="log" aria-label="Log">
   <div class="log-head"><span id="log-title">Log</span><button id="stop" type="button" class="quiet" hidden>Stop</button></div>
