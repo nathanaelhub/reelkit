@@ -6,6 +6,7 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { spawnSync } from 'node:child_process';
 import { ROOT, run } from './lib.mjs';
+import { phonemize, languageOf, voiceLanguage, LANGUAGES } from './languages.mjs';
 
 const require = createRequire(import.meta.url);
 export const MODELS = path.join(ROOT, 'models');
@@ -13,10 +14,15 @@ export const KOKORO_DIR = path.join(MODELS, 'kokoro-int8-multi-lang-v1_0');
 export const KOKORO_URL = 'https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-multi-lang-v1_0.tar.bz2';
 export const WHISPER_MODEL = 'onnx-community/whisper-base_timestamped';
 
-// Kokoro v1.0 speaker ids (from the model's metadata). a = American, b = British; f/m = female/male.
+// Kokoro v1.0 speaker ids, in the model's order (its metadata). a = American, b = British, e = Spanish, f = French,
+// h = Hindi, i = Italian, j = Japanese, p = Brazilian Portuguese, z = Chinese; then f/m = female/male.
 export const KOKORO_VOICES = ('af_alloy af_aoede af_bella af_heart af_jessica af_kore af_nicole af_nova af_river af_sarah af_sky ' +
   'am_adam am_echo am_eric am_fenrir am_liam am_michael am_onyx am_puck am_santa bf_alice bf_emma bf_isabella bf_lily ' +
-  'bm_daniel bm_fable bm_george bm_lewis').split(' ');
+  'bm_daniel bm_fable bm_george bm_lewis ef_dora em_alex ff_siwis hf_alpha hf_beta hm_omega hm_psi if_sara im_nicola ' +
+  'jf_alpha jf_gongitsune jf_nezumi jf_tebukuro jm_kumo pf_dora pm_alex pm_santa zf_xiaobei zf_xiaoni zf_xiaoxiao zf_xiaoyi ' +
+  'zm_yunjian zm_yunxi zm_yunxia zm_yunyang em_santa').split(' ');
+// the default voice for a language: am_michael for English, the first listed in languages.mjs for the others
+export const kokoroVoiceFor = lang => (lang === 'en' ? KOKORO_DEFAULT : LANGUAGES[lang].voices[0]);
 export const KOKORO_DEFAULT = 'am_michael';
 // bump when the text front end changes what Kokoro is asked to say, so cached clips are re-voiced
 export const KOKORO_FRONTEND = 2;
@@ -181,11 +187,16 @@ export function ipaToKokoro(ipa) {
 
 // ---------- Kokoro synthesis ----------
 let tts = null, ttsKey = '';
-export function kokoro(text, wav, { voice = KOKORO_DEFAULT, speed = 1, extraLexicon = null } = {}) {
+// language: "en" (default) or a code from languages.mjs; voice defaults to that language's voice.
+export async function kokoro(text, wav, { voice = null, speed = 1, extraLexicon = null, language = 'en' } = {}) {
   if (!sherpaInstalled()) throw new Error('sherpa-onnx-node is not installed. Run: npm install');
   if (!kokoroInstalled()) throw new Error('Kokoro model not downloaded. Run: npm run doctor -- --fix');
+  const lang = languageOf(language);
+  voice ||= kokoroVoiceFor(lang);
   const sid = KOKORO_VOICES.indexOf(voice);
-  if (sid < 0) throw new Error(`unknown Kokoro voice "${voice}". English voices: ${KOKORO_VOICES.join(', ')}`);
+  if (sid < 0 || !voiceLanguage(voice)) throw new Error(`unknown Kokoro voice "${voice}". ${voicesHint(lang)}`);
+  if (voiceLanguage(voice) !== lang) throw new Error(`the Kokoro voice "${voice}" speaks ${LANGUAGES[voiceLanguage(voice)].name}, but this reel is in ${LANGUAGES[lang].name}. ${voicesHint(lang)}`);
+  if (lang !== 'en') return kokoroOther(text, wav, { sid, speed, lang, extraLexicon });
   const base = path.join(KOKORO_DIR, voice[0] === 'b' ? 'lexicon-gb-en.txt' : 'lexicon-us-en.txt');
   const base0 = loadLexicon(base), extra = extraLexicon && fs.existsSync(extraLexicon) ? loadLexicon(extraLexicon) : new Map();
   const { text: said, unknown, derived } = prepareForKokoro(text, w => base0.has(w) || extra.has(w), w => extra.get(w) || base0.get(w));
@@ -208,6 +219,26 @@ export function kokoro(text, wav, { voice = KOKORO_DEFAULT, speed = 1, extraLexi
   return said;
 }
 
+const voicesHint = lang => `${LANGUAGES[lang].name} voices: ${(lang === 'en' ? KOKORO_VOICES.filter(v => voiceLanguage(v) === 'en') : LANGUAGES[lang].voices).join(', ')}`;
+
+// Other languages: eSpeak NG turns the words into sounds (languages.mjs), written as a lexicon for this one clip.
+// "pronounce" phonemes ({ "ipa": … }) still win for the words they name.
+async function kokoroOther(text, wav, { sid, speed, lang, extraLexicon }) {
+  const own = extraLexicon && fs.existsSync(extraLexicon) ? loadLexicon(extraLexicon) : new Map();
+  const { text: said, lexicon } = await phonemize(text, lang, own);
+  const lex = wav.replace(/(\.[a-z0-9]+)?$/i, '.lexicon.txt');
+  fs.writeFileSync(lex, lexicon);
+  try {
+    const sherpa = require('sherpa-onnx-node'); kokoroLoaded = true;
+    const t = new sherpa.OfflineTts({ model: { kokoro: { model: path.join(KOKORO_DIR, 'model.int8.onnx'), voices: path.join(KOKORO_DIR, 'voices.bin'),
+      tokens: path.join(KOKORO_DIR, 'tokens.txt'), lexicon: lex }, numThreads: 4, debug: false }, maxNumSentences: 1 });
+    const a = t.generate({ text: said, sid, speed });
+    sherpa.writeWave(wav, { samples: a.samples, sampleRate: a.sampleRate });
+  } finally { fs.rmSync(lex, { force: true }); }
+  tts = null; ttsKey = ''; // the English voice reloads next time
+  return said;
+}
+
 // Write a per-reel lexicon for phoneme pronunciations, so Kokoro says "Saba" exactly as given.
 export function writeExtraLexicon(file, entries) {
   const lines = entries.map(([word, phon]) => `${word.toLowerCase()} ${[...phon].join(' ')}`);
@@ -217,7 +248,8 @@ export function writeExtraLexicon(file, entries) {
 // ---------- Whisper word alignment ----------
 // Whisper hears the clip and gives each heard word a time. The script's words (what captions show) are then
 // matched to the heard words, so captions keep the script's spelling and only the timing comes from Whisper.
-const norm = w => w.toLowerCase().replace(/[’]/g, "'").replace(/[^a-z0-9']/g, '');
+// accents are dropped on both sides (corazón = corazon), so other languages match the same way English does
+const norm = w => w.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '').replace(/[’]/g, "'").replace(/[^a-z0-9']/g, '');
 function expand(tok) { // a token as comparable words: "30,000" → ["thirty", "thousand"]
   const core = tok.replace(/^[^\p{L}\p{N}$€£]+|[^\p{L}\p{N}%]+$/gu, '');
   const n = numberToWords(core);
@@ -267,13 +299,13 @@ export function alignTokens(tokens, heard, clipStart = 0, clipEnd = null) {
 }
 
 let asr = null;
-export async function transcribeWords(wav16k) {
+export async function transcribeWords(wav16k, { language = 'en' } = {}) {
   if (!asr) {
     const { pipeline, env } = await import('@huggingface/transformers');
     env.cacheDir = path.join(MODELS, 'transformers');
     asr = await pipeline('automatic-speech-recognition', WHISPER_MODEL, { dtype: 'q8' });
   }
-  const out = await asr(wav16k, { return_timestamps: 'word', chunk_length_s: 30, language: 'en' });
+  const out = await asr(wav16k, { return_timestamps: 'word', chunk_length_s: 30, language: LANGUAGES[languageOf(language)].whisper, task: 'transcribe' });
   // Whisper splits "30,000" into "30" + ",000"; a chunk without a leading space belongs to the word before it
   const words = [];
   for (const c of out.chunks || []) {
@@ -284,15 +316,15 @@ export async function transcribeWords(wav16k) {
 }
 
 // Align a voiced clip (any sample rate) to its script text. Returns [{w,start,end}] or null if alignment can't run.
-export async function alignClip(wav, text, ff) {
+export async function alignClip(wav, text, ff, { language = 'en' } = {}) {
   const raw = wav.replace(/\.wav$/, '.16k.f32');
   run(ff, ['-y', '-loglevel', 'error', '-i', wav, '-ar', '16000', '-ac', '1', '-f', 'f32le', raw]);
   let heard, samples;
-  if (useWorker()) { samples = fs.statSync(raw).size / 4; heard = await workerTranscribe(raw); fs.rmSync(raw); }
+  if (useWorker()) { samples = fs.statSync(raw).size / 4; heard = await workerTranscribe(raw, language); fs.rmSync(raw); }
   else {
     const buf = fs.readFileSync(raw); fs.rmSync(raw);
     const audio = new Float32Array(buf.buffer, buf.byteOffset, buf.length / 4);
-    samples = audio.length; heard = await transcribeWords(audio);
+    samples = audio.length; heard = await transcribeWords(audio, { language });
   }
   const tokens = text.split(/\s+/).filter(Boolean);
   const { times, matched } = alignTokens(tokens, heard, 0, samples / 16000);
@@ -322,9 +354,9 @@ function startWorker() {
   child.on('exit', code => { worker = null; while (waiting.length) waiting.shift().reject(new Error(`Whisper worker exited (${code})`)); });
   return { child, waiting };
 }
-function workerTranscribe(raw) {
+function workerTranscribe(raw, language = 'en') {
   if (!worker) worker = startWorker();
-  return new Promise((resolve, reject) => { worker.waiting.push({ resolve, reject }); worker.child.stdin.write(raw + '\n'); });
+  return new Promise((resolve, reject) => { worker.waiting.push({ resolve, reject }); worker.child.stdin.write(JSON.stringify({ raw, language }) + '\n'); });
 }
 export function stopWhisperWorker() { if (worker) { worker.child.stdin.end(); worker = null; } }
 

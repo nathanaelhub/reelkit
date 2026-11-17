@@ -23,7 +23,8 @@
     "cutout": "node scripts/cutout.mjs",
     "my-voice": "node scripts/myvoice.mjs",
     "ship": "node scripts/ship.mjs",
-    "series": "node scripts/series.mjs"
+    "series": "node scripts/series.mjs",
+    "translate": "node scripts/translate.mjs"
   },
   "engines": {
     "node": ">=18"

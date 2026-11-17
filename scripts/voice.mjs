@@ -22,13 +22,16 @@ import { spawnSync } from 'node:child_process';
 import { parseArgs, reelDir, readJSON, writeJSON, ffmpegPath, mediaDuration, run, die, which, ROOT } from './lib.mjs';
 import { cutTalk, talkSource, talkClipPath, ensureFootage } from './footage.mjs';
 import { chatterbox as chatterboxSay, CHATTERBOX_DEFAULT_VOICE } from './speech.mjs';
-import { kokoro as kokoroSay, kokoroInstalled, sherpaInstalled, KOKORO_DEFAULT, cmuToKokoro, ipaToKokoro, writeExtraLexicon, alignClip, KOKORO_FRONTEND, stopWhisperWorker } from './speech.mjs';
+import { languageOf, LANGUAGES } from './languages.mjs';
+import { kokoro as kokoroSay, kokoroInstalled, sherpaInstalled, cmuToKokoro, ipaToKokoro, writeExtraLexicon, alignClip, KOKORO_FRONTEND, stopWhisperWorker } from './speech.mjs';
 
 const args = parseArgs();
 const dir = reelDir(args._[0]);
 const script = readJSON(path.join(dir, 'script.json'));
 const ff = ffmpegPath(); if (!ff) die('ffmpeg not found. Run: npm run doctor -- --fix');
 const vcfg = script.voice || {};
+// script.json "language": "es" | "fr" | "it" | "pt" (default English): the voice and Whisper use it
+let language; try { language = languageOf(script.language); } catch (e) { die(e.message); }
 await ensureFootage(dir); // footage listed under "sources" but not downloaded yet
 const cacheDir = path.join(dir, '.voice-cache'); fs.mkdirSync(cacheDir, { recursive: true });
 
@@ -94,13 +97,14 @@ async function say(text, wav) {
 async function kokoro(text, wav) {
   const c = vcfg.kokoro || {};
   const raw = wav.replace(/\.wav$/, '.raw.wav');
-  try { kokoroSay(text, raw, { voice: c.voice || KOKORO_DEFAULT, speed: vcfg.speed ?? 1, extraLexicon: lexiconFile }); }
+  try { await kokoroSay(text, raw, { voice: c.voice || null, speed: vcfg.speed ?? 1, extraLexicon: lexiconFile, language }); }
   catch (e) { die(e.message); }
   run(ff, ['-y', '-loglevel', 'error', '-i', raw, '-ar', '44100', '-ac', '1', wav]); fs.rmSync(raw);
   return { words: null };
 }
 
 async function chatterbox(text, wav) {
+  if (language !== 'en') die(`your own voice (Chatterbox) speaks English only for now; this reel is in ${LANGUAGES[language].name}. Use the free voice ("provider": "kokoro") or ElevenLabs`);
   const c = vcfg.chatterbox || {};
   const raw = wav.replace(/\.wav$/, '.raw.wav');
   try { await chatterboxSay(text, raw, { reference: chatterboxRef(), exaggeration: c.exaggeration ?? 0.5, ff, log: m => process.stdout.write(`\n${m}\n   `) }); }
@@ -215,7 +219,7 @@ if (!scenes.length) die('script.json has no scenes');
 const ids = new Set();
 for (const s of scenes) { if (!s.id || !s.say) die(`every scene needs "id" and "say" (problem: ${JSON.stringify(s).slice(0, 80)})`); if (ids.has(s.id)) die(`duplicate scene id "${s.id}"`); ids.add(s.id); }
 
-console.log(`\n▸ voicing ${scenes.length} scenes with ${provider}${provider === 'none' ? ' (silent draft, timing estimated)' : ''}`);
+console.log(`\n▸ voicing ${scenes.length} scenes with ${provider}${language !== 'en' ? ` in ${LANGUAGES[language].name}` : ''}${provider === 'none' ? ' (silent draft, timing estimated)' : ''}`);
 const wantAlign = !args['no-align'] && vcfg.align !== false && !['elevenlabs', 'none'].includes(provider);
 const clips = [];
 for (const s of scenes) {
@@ -226,7 +230,7 @@ for (const s of scenes) {
   const src = s.footage ? footageSrc(s) : null;
   const h = crypto.createHash('sha1').update(JSON.stringify(s.footage
     ? ['footage', s.footage, fs.statSync(src).size, Math.round(fs.statSync(src).mtimeMs)]
-    : [provider, vcfg[provider] || {}, vcfg.speed ?? 1, spoken, text, provider === 'kokoro' ? [lexiconEntries, KOKORO_FRONTEND] : provider === 'chatterbox' ? (f => [f, fs.existsSync(f) ? fs.statSync(f).size : 0])(chatterboxRef()) : 0])).digest('hex').slice(0, 12);
+    : [provider, vcfg[provider] || {}, vcfg.speed ?? 1, spoken, text, language === 'en' ? 0 : language, provider === 'kokoro' ? [lexiconEntries, KOKORO_FRONTEND] : provider === 'chatterbox' ? (f => [f, fs.existsSync(f) ? fs.statSync(f).size : 0])(chatterboxRef()) : 0])).digest('hex').slice(0, 12);
   const wav = path.join(cacheDir, `${s.id}-${h}.wav`), meta = wav.replace(/\.wav$/, '.json');
   let words, timing;
   let cached = fs.existsSync(wav) && fs.existsSync(meta) ? readJSON(meta) : null;
@@ -241,7 +245,7 @@ for (const s of scenes) {
     let spokenWords = r.words; timing = r.words ? 'voice' : 'estimated';
     if (!spokenWords && align) {
       try {
-        const a = await alignClip(wav, spoken, ff);
+        const a = await alignClip(wav, spoken, ff, { language });
         if (a.matched >= 0.6) { spokenWords = a.words; timing = 'aligned'; }
         else process.stdout.write(` (Whisper matched only ${Math.round(a.matched * 100)}% of the words; timing estimated)`);
       } catch (e) { process.stdout.write(` (alignment failed: ${e.message.split('\n')[0]}; timing estimated)`); }
@@ -277,7 +281,7 @@ else if (fs.existsSync(path.join(dir, 'voice.mp3'))) fs.rmSync(path.join(dir, 'v
 
 const FORMATS = { '9:16': [1080, 1920], '16:9': [1920, 1080], '1:1': [1080, 1080] };
 const [W, H] = FORMATS[script.format || '9:16'] || die(`unknown format "${script.format}". Use 9:16, 16:9 or 1:1`);
-const timeline = { title: script.title || path.basename(dir), fps: script.fps || 30, width: W, height: H, loudness: script.loudness ?? -14, theme: script.theme || 'paper', style: script.style || null, captions: script.captions !== false,
+const timeline = { title: script.title || path.basename(dir), language, fps: script.fps || 30, width: W, height: H, loudness: script.loudness ?? -14, theme: script.theme || 'paper', style: script.style || null, captions: script.captions !== false,
   voice: clips.every(c => c.prov === 'footage') ? 'footage' : provider, audio, music: script.music || null, musicVolume: script.musicVolume ?? 0.12, duration: +t.toFixed(3), scenes: tlScenes };
 writeJSON(path.join(dir, 'timeline.json'), timeline);
 console.log(`✓ timeline.json: ${tlScenes.length} scenes, ${t.toFixed(1)}s${audio ? ', voice.mp3' : ''}\n`);
