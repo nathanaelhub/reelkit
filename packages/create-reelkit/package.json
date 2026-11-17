@@ -1,0 +1,13 @@
+{
+  "name": "create-reelkit",
+  "version": "0.1.0",
+  "description": "Set up reelkit (open-source, local AI reel maker) in one command: npm create reelkit",
+  "type": "module",
+  "bin": { "create-reelkit": "index.mjs" },
+  "files": ["index.mjs", "README.md"],
+  "engines": { "node": ">=20" },
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/nathanaelhub/reelkit.git", "directory": "packages/create-reelkit" },
+  "homepage": "https://github.com/nathanaelhub/reelkit",
+  "keywords": ["reelkit", "create", "video", "reels", "tiktok", "shorts", "ai-video", "kokoro", "local"]
+}
