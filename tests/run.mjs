@@ -171,6 +171,19 @@ const cases = [
     if (fs.existsSync(S) && !fs.readdirSync(S).length) fs.rmdirSync(S);
     return { ok: !problems.length, detail: problems.join('\n  ') };
   }],
+  ['create-reelkit: downloads reelkit into a new folder without git, and refuses a folder that is in use', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'reelkit-create-')), bin = path.resolve('packages/create-reelkit/index.mjs');
+    const r = spawnSync(process.execPath, [bin, 'r', '--ref', 'main', '--skip-setup'], { cwd: tmp, encoding: 'utf8', timeout: 5 * 60e3 });
+    const out = (r.stdout || '') + (r.stderr || ''), problems = [];
+    if (/couldn't download/.test(out)) { fs.rmSync(tmp, { recursive: true, force: true }); return { ok: true, skip: 'GitHub not reachable' }; }
+    if (r.status !== 0) problems.push(`exit ${r.status}: ${out}`);
+    for (const f of ['package.json', 'scripts/studio.mjs', 'engine/kit.js']) if (!fs.existsSync(path.join(tmp, 'r', f))) problems.push(`no ${f}`);
+    if (fs.existsSync(path.join(tmp, 'r', '.git'))) problems.push('a .git folder came along');
+    const again = spawnSync(process.execPath, [bin, 'r', '--skip-setup'], { cwd: tmp, encoding: 'utf8' });
+    if (again.status === 0 || !/already exists/.test(again.stderr)) problems.push('a non-empty folder was not refused');
+    fs.rmSync(tmp, { recursive: true, force: true });
+    return { ok: !problems.length, detail: problems.join('\n  ') };
+  }],
   ['footage: sentences, kept ranges and shot cuts from what Whisper and FFmpeg report', () => {
     const W = (w, start, end) => ({ w, start, end });
     const words = [W('Hi.', 0.5, 0.8), W('This', 1.0, 1.2), W('is', 1.2, 1.3), W('the', 1.3, 1.4), W('first', 1.4, 1.8), W('sentence.', 3.5, 4.0), W('And', 4.2, 4.4), W('a', 4.4, 4.5), W('second', 4.5, 4.9), W('one.', 4.9, 6.0)];
