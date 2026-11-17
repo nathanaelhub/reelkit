@@ -1,0 +1,627 @@
+{
+  "title": "Por qué el pulpo tiene tres corazones",
+  "language": "es",
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "loudness": -14,
+  "theme": "paper",
+  "style": "blueprint",
+  "captions": true,
+  "voice": "kokoro",
+  "audio": "voice.mp3",
+  "music": null,
+  "musicVolume": 0.12,
+  "duration": 42.047,
+  "scenes": [
+    {
+      "id": "hook",
+      "start": 0,
+      "end": 4.558,
+      "say": "Un pulpo tiene tres corazones. Y necesita cada uno de ellos.",
+      "words": [
+        {
+          "w": "Un",
+          "start": 0.32,
+          "end": 0.54
+        },
+        {
+          "w": "pulpo",
+          "start": 0.54,
+          "end": 1
+        },
+        {
+          "w": "tiene",
+          "start": 1,
+          "end": 1.38
+        },
+        {
+          "w": "tres",
+          "start": 1.38,
+          "end": 1.58
+        },
+        {
+          "w": "corazones.",
+          "start": 1.58,
+          "end": 2.28
+        },
+        {
+          "w": "Y",
+          "start": 2.34,
+          "end": 2.78
+        },
+        {
+          "w": "necesita",
+          "start": 2.78,
+          "end": 3.2
+        },
+        {
+          "w": "cada",
+          "start": 3.2,
+          "end": 3.48
+        },
+        {
+          "w": "uno",
+          "start": 3.48,
+          "end": 3.7
+        },
+        {
+          "w": "de",
+          "start": 3.7,
+          "end": 4
+        },
+        {
+          "w": "ellos.",
+          "start": 4.04,
+          "end": 4.359
+        }
+      ]
+    },
+    {
+      "id": "blood",
+      "start": 4.558,
+      "end": 10.397,
+      "say": "La razón es su sangre. Es azul, porque transporta el oxígeno con cobre en lugar de hierro.",
+      "words": [
+        {
+          "w": "La",
+          "start": 4.858,
+          "end": 5.238
+        },
+        {
+          "w": "razón",
+          "start": 5.238,
+          "end": 5.578
+        },
+        {
+          "w": "es",
+          "start": 5.578,
+          "end": 5.698
+        },
+        {
+          "w": "su",
+          "start": 5.698,
+          "end": 6.098
+        },
+        {
+          "w": "sangre.",
+          "start": 6.098,
+          "end": 6.418
+        },
+        {
+          "w": "Es",
+          "start": 6.538,
+          "end": 6.778
+        },
+        {
+          "w": "azul,",
+          "start": 6.778,
+          "end": 7.178
+        },
+        {
+          "w": "porque",
+          "start": 7.178,
+          "end": 7.638
+        },
+        {
+          "w": "transporta",
+          "start": 7.638,
+          "end": 8.138
+        },
+        {
+          "w": "el",
+          "start": 8.138,
+          "end": 8.378
+        },
+        {
+          "w": "oxígeno",
+          "start": 8.378,
+          "end": 8.878
+        },
+        {
+          "w": "con",
+          "start": 8.878,
+          "end": 9.138
+        },
+        {
+          "w": "cobre",
+          "start": 9.138,
+          "end": 9.498
+        },
+        {
+          "w": "en",
+          "start": 9.498,
+          "end": 9.538
+        },
+        {
+          "w": "lugar",
+          "start": 9.498,
+          "end": 9.778
+        },
+        {
+          "w": "de",
+          "start": 9.778,
+          "end": 9.978
+        },
+        {
+          "w": "hierro.",
+          "start": 9.978,
+          "end": 10.197
+        }
+      ]
+    },
+    {
+      "id": "less",
+      "start": 10.397,
+      "end": 16.464,
+      "say": "La sangre de cobre lleva menos oxígeno que la nuestra, así que hay que bombearla con más fuerza.",
+      "words": [
+        {
+          "w": "La",
+          "start": 10.517,
+          "end": 10.857
+        },
+        {
+          "w": "sangre",
+          "start": 10.857,
+          "end": 11.057
+        },
+        {
+          "w": "de",
+          "start": 11.057,
+          "end": 11.297
+        },
+        {
+          "w": "cobre",
+          "start": 11.297,
+          "end": 11.797
+        },
+        {
+          "w": "lleva",
+          "start": 11.797,
+          "end": 12.177
+        },
+        {
+          "w": "menos",
+          "start": 12.177,
+          "end": 12.457
+        },
+        {
+          "w": "oxígeno",
+          "start": 12.457,
+          "end": 12.957
+        },
+        {
+          "w": "que",
+          "start": 12.957,
+          "end": 13.057
+        },
+        {
+          "w": "la",
+          "start": 13.057,
+          "end": 13.377
+        },
+        {
+          "w": "nuestra,",
+          "start": 13.377,
+          "end": 13.597
+        },
+        {
+          "w": "así",
+          "start": 13.957,
+          "end": 14.157
+        },
+        {
+          "w": "que",
+          "start": 14.157,
+          "end": 14.337
+        },
+        {
+          "w": "hay",
+          "start": 14.337,
+          "end": 14.517
+        },
+        {
+          "w": "que",
+          "start": 14.517,
+          "end": 14.717
+        },
+        {
+          "w": "bombearla",
+          "start": 14.717,
+          "end": 15.257
+        },
+        {
+          "w": "con",
+          "start": 15.257,
+          "end": 15.537
+        },
+        {
+          "w": "más",
+          "start": 15.537,
+          "end": 15.977
+        },
+        {
+          "w": "fuerza.",
+          "start": 15.977,
+          "end": 16.077
+        }
+      ]
+    },
+    {
+      "id": "gills",
+      "start": 16.464,
+      "end": 21.781,
+      "say": "Por eso, dos corazones tienen un solo trabajo: empujar la sangre por las branquias.",
+      "words": [
+        {
+          "w": "Por",
+          "start": 16.624,
+          "end": 16.864
+        },
+        {
+          "w": "eso,",
+          "start": 16.864,
+          "end": 17.184
+        },
+        {
+          "w": "dos",
+          "start": 17.184,
+          "end": 17.404
+        },
+        {
+          "w": "corazones",
+          "start": 17.404,
+          "end": 18.064
+        },
+        {
+          "w": "tienen",
+          "start": 18.064,
+          "end": 18.284
+        },
+        {
+          "w": "un",
+          "start": 18.284,
+          "end": 18.444
+        },
+        {
+          "w": "solo",
+          "start": 18.444,
+          "end": 18.984
+        },
+        {
+          "w": "trabajo:",
+          "start": 18.984,
+          "end": 19.324
+        },
+        {
+          "w": "empujar",
+          "start": 19.444,
+          "end": 19.924
+        },
+        {
+          "w": "la",
+          "start": 19.924,
+          "end": 20.284
+        },
+        {
+          "w": "sangre",
+          "start": 20.284,
+          "end": 20.524
+        },
+        {
+          "w": "por",
+          "start": 20.524,
+          "end": 20.724
+        },
+        {
+          "w": "las",
+          "start": 20.724,
+          "end": 21.004
+        },
+        {
+          "w": "branquias.",
+          "start": 21.004,
+          "end": 21.384
+        }
+      ]
+    },
+    {
+      "id": "body",
+      "start": 21.781,
+      "end": 27.39,
+      "say": "Eso deja la presión baja. Así que un tercer corazón la bombea a todo el cuerpo.",
+      "words": [
+        {
+          "w": "Eso",
+          "start": 22.201,
+          "end": 22.561
+        },
+        {
+          "w": "deja",
+          "start": 22.561,
+          "end": 22.761
+        },
+        {
+          "w": "la",
+          "start": 22.761,
+          "end": 23.021
+        },
+        {
+          "w": "presión",
+          "start": 23.021,
+          "end": 23.621
+        },
+        {
+          "w": "baja.",
+          "start": 23.621,
+          "end": 23.881
+        },
+        {
+          "w": "Así",
+          "start": 24.101,
+          "end": 24.241
+        },
+        {
+          "w": "que",
+          "start": 24.241,
+          "end": 24.381
+        },
+        {
+          "w": "un",
+          "start": 24.381,
+          "end": 24.661
+        },
+        {
+          "w": "tercer",
+          "start": 24.661,
+          "end": 25.121
+        },
+        {
+          "w": "corazón",
+          "start": 25.121,
+          "end": 25.461
+        },
+        {
+          "w": "la",
+          "start": 25.461,
+          "end": 25.701
+        },
+        {
+          "w": "bombea",
+          "start": 25.701,
+          "end": 26.121
+        },
+        {
+          "w": "a",
+          "start": 26.121,
+          "end": 26.281
+        },
+        {
+          "w": "todo",
+          "start": 26.281,
+          "end": 26.501
+        },
+        {
+          "w": "el",
+          "start": 26.501,
+          "end": 26.881
+        },
+        {
+          "w": "cuerpo.",
+          "start": 26.881,
+          "end": 27.021
+        }
+      ]
+    },
+    {
+      "id": "swim",
+      "start": 27.39,
+      "end": 32.88,
+      "say": "Y aquí viene lo raro. Cuando un pulpo nada, ese corazón principal se detiene.",
+      "words": [
+        {
+          "w": "Y",
+          "start": 27.65,
+          "end": 27.89
+        },
+        {
+          "w": "aquí",
+          "start": 27.89,
+          "end": 28.25
+        },
+        {
+          "w": "viene",
+          "start": 28.25,
+          "end": 28.49
+        },
+        {
+          "w": "lo",
+          "start": 28.49,
+          "end": 28.73
+        },
+        {
+          "w": "raro.",
+          "start": 28.73,
+          "end": 29.19
+        },
+        {
+          "w": "Cuando",
+          "start": 29.31,
+          "end": 29.47
+        },
+        {
+          "w": "un",
+          "start": 29.47,
+          "end": 29.63
+        },
+        {
+          "w": "pulpo",
+          "start": 29.63,
+          "end": 30.05
+        },
+        {
+          "w": "nada,",
+          "start": 30.05,
+          "end": 30.55
+        },
+        {
+          "w": "ese",
+          "start": 30.55,
+          "end": 30.93
+        },
+        {
+          "w": "corazón",
+          "start": 30.93,
+          "end": 31.53
+        },
+        {
+          "w": "principal",
+          "start": 31.53,
+          "end": 31.85
+        },
+        {
+          "w": "se",
+          "start": 31.85,
+          "end": 32.11
+        },
+        {
+          "w": "detiene.",
+          "start": 32.11,
+          "end": 32.38
+        }
+      ]
+    },
+    {
+      "id": "crawl",
+      "start": 32.88,
+      "end": 37.672,
+      "say": "Así que nadar lo agota rápido. Por eso un pulpo prefiere arrastrarse.",
+      "words": [
+        {
+          "w": "Así",
+          "start": 33.14,
+          "end": 33.3
+        },
+        {
+          "w": "que",
+          "start": 33.3,
+          "end": 33.54
+        },
+        {
+          "w": "nadar",
+          "start": 33.54,
+          "end": 34.12
+        },
+        {
+          "w": "lo",
+          "start": 34.12,
+          "end": 34.16
+        },
+        {
+          "w": "agota",
+          "start": 34.12,
+          "end": 34.74
+        },
+        {
+          "w": "rápido.",
+          "start": 34.74,
+          "end": 35
+        },
+        {
+          "w": "Por",
+          "start": 35.18,
+          "end": 35.38
+        },
+        {
+          "w": "eso",
+          "start": 35.38,
+          "end": 35.58
+        },
+        {
+          "w": "un",
+          "start": 35.58,
+          "end": 35.82
+        },
+        {
+          "w": "pulpo",
+          "start": 35.82,
+          "end": 36.3
+        },
+        {
+          "w": "prefiere",
+          "start": 36.3,
+          "end": 36.7
+        },
+        {
+          "w": "arrastrarse.",
+          "start": 36.7,
+          "end": 37.28
+        }
+      ]
+    },
+    {
+      "id": "outro",
+      "start": 37.672,
+      "end": 42.047,
+      "say": "Tres corazones. Sangre azul. Síguenos para más.",
+      "words": [
+        {
+          "w": "Tres",
+          "start": 37.722,
+          "end": 38.292
+        },
+        {
+          "w": "corazones.",
+          "start": 38.292,
+          "end": 39.112
+        },
+        {
+          "w": "Sangre",
+          "start": 39.112,
+          "end": 39.472
+        },
+        {
+          "w": "azul.",
+          "start": 39.472,
+          "end": 39.672
+        },
+        {
+          "w": "Síguenos",
+          "start": 40.052,
+          "end": 40.312
+        },
+        {
+          "w": "para",
+          "start": 40.592,
+          "end": 41.032
+        },
+        {
+          "w": "más.",
+          "start": 41.032,
+          "end": 41.247
+        }
+      ]
+    }
+  ]
+}

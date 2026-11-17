@@ -25,6 +25,10 @@ try {
   r.reelVoiceBad = (await fetch(url + '/api/reels/sky-blue/voice', { method: 'PUT', headers: { 'X-Reelkit': '1' }, body: JSON.stringify({ provider: 'chatterbox', voice: 'nobody-here' }) })).status;
   r.seriesList = Array.isArray(st.series);
   r.seriesNoAgent = (await fetch(url + '/api/series', { method: 'POST', headers: { 'X-Reelkit': '1' }, body: JSON.stringify({ source: 'Some notes.', count: 3 }) })).status;
+  r.languages = (st.languages || []).map(l => l.code).join(',');
+  r.reelLanguage = st.reels.find(x => x.slug === 'sky-blue')?.language;
+  r.makeBadLanguage = (await fetch(url + '/api/make', { method: 'POST', headers: { 'X-Reelkit': '1' }, body: JSON.stringify({ idea: 'x', language: 'klingon' }) })).status;
+  r.translateNoAgent = (await fetch(url + '/api/reels/sky-blue/translate', { method: 'POST', headers: { 'X-Reelkit': '1' }, body: JSON.stringify({ to: 'es' }) })).status;
   // a foreign Host header (DNS rebinding) is refused; fetch won't set Host, so use http directly
   const http = await import('node:http');
   r.badHost = await new Promise(res => http.get(url + '/api/state', { headers: { Host: 'evil.example' } }, x => { x.resume(); res(x.statusCode); }));

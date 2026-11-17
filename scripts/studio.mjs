@@ -12,6 +12,8 @@ import { spawn } from 'node:child_process';
 import { serve, ROOT, REELS, OUT, readJSON, writeJSON, listStyles, which, parseArgs } from './lib.mjs';
 import { listVoices, voiceName, PARAGRAPH, VOICES } from './myvoice.mjs';
 import { createSeries, listSeries, seriesName, SERIES } from './series.mjs';
+import { LANGUAGES, languageOf } from './languages.mjs';
+import { translateCopy } from './translate.mjs';
 
 const args = parseArgs();
 const PORT = +(args.port || process.env.REELKIT_PORT || 4242);
@@ -32,7 +34,7 @@ function reelInfo(slug) {
     slug, title: script.title || slug, style: script.style || null, theme: script.theme || null, format: script.format || '9:16',
     scenes: (script.scenes || []).length, duration: tl?.duration ?? null, voiced: !!tl,
     hasHtml: fs.existsSync(path.join(dir, 'reel.html')), videos: videos.map(v => v.file), sheets, mtime, footage: (script.scenes || []).some(s => s.footage),
-    ship: shipInfo(slug), series: script.series || null,
+    ship: shipInfo(slug), series: script.series || null, language: script.language || 'en', translated: script.translated ?? null,
   };
 }
 const listReels = () => (fs.existsSync(REELS) ? fs.readdirSync(REELS) : [])
@@ -152,7 +154,7 @@ async function api(req, res, u) {
   const m = u.match(/^\/api\/reels\/([^/]+)(\/[a-z]+)?$/);
   if (u === '/api/state' && req.method === 'GET') {
     return json(res, 200, { reels: listReels(), styles: listStyles().map(({ name, title, description, swatch }) => ({ name, title, description, swatch })),
-      agent: !!claudeBin(), voices: listVoices(), series: listSeries().map(({ name, title, count, parts }) => ({ name, title, count, parts: parts.length })), paragraph: PARAGRAPH,
+      agent: !!claudeBin(), languages: Object.entries(LANGUAGES).map(([code, l]) => ({ code, name: l.name })), voices: listVoices(), series: listSeries().map(({ name, title, count, parts }) => ({ name, title, count, parts: parts.length })), paragraph: PARAGRAPH,
       chatterbox: fs.existsSync(path.join(ROOT, 'models/transformers/onnx-community/chatterbox-ONNX/onnx/language_model_q4.onnx_data')), jobs: [...jobs.values()].map(j => ({ id: j.id, label: j.label, reel: j.reel, running: j.running, code: j.code })) });
   }
   if (m) {
@@ -191,6 +193,15 @@ async function api(req, res, u) {
       const [cmd, a] = node('footage.mjs', [slug, path.relative(ROOT, file), ...(q.get('talk') === '1' ? ['--talk'] : [])]);
       const job = startJob(`footage ${slug}`, cmd, a, { reel: slug });
       return json(res, 200, { job: job.id });
+    }
+    if (sub === '/translate' && req.method === 'POST') {
+      // a copy in another language; the agent translates the lines, the on-screen text and the word cues, then renders
+      const { to } = await jsonBody(req);
+      if (!claudeBin()) return json(res, 400, { error: 'Translating needs the agent (Claude Code). Without it: npm run translate -- ' + slug + ' --to <language>, then ask another coding agent to "translate" the copy.' });
+      let r; try { r = translateCopy(slug, to); } catch (e) { return json(res, 400, { error: e.message }); }
+      const name = LANGUAGES[r.lang].name;
+      const job = runAgent(`translate ${r.name}`, `Translate reels/${r.name} into ${name}. It is a copy of reels/${slug} (${LANGUAGES[r.from].name}), already set up with "language": "${r.lang}" and a ${name} voice. Follow "Another language" in .claude/skills/make-reel/SKILL.md: translate every "say", all on-screen text in reel.html and every @word cue, set "translated": true, then voice, check (look at the contact sheets), score if the reel has a score.js, and render.${r.talk.length ? ` Scenes ${r.talk.join(', ')} are filmed speech: leave their "say" as it is.` : ''} The user is waiting in the reelkit studio and can't answer questions: make sensible choices and finish.`, r.name);
+      return json(res, 200, { job: job.id, slug: r.name, agent: true });
     }
     if (sub === '/voice' && req.method === 'PUT') {
       const { provider, voice, exaggeration } = await jsonBody(req);
@@ -260,22 +271,30 @@ async function api(req, res, u) {
   }
 
   if (u === '/api/make' && req.method === 'POST') {
-    const { idea, style, format, blank, voice } = await jsonBody(req);
+    const { idea, style, format, blank, voice, language: lang } = await jsonBody(req);
+    let language; try { language = languageOf(lang); } catch (e) { return json(res, 400, { error: e.message }); }
     const text = String(idea || '').trim();
     if (!text) return json(res, 400, { error: 'say what the reel is about first' });
     if (style && !listStyles().some(s => s.name === style)) return json(res, 400, { error: `unknown style "${style}"` });
     const mine = voice && voice !== 'free' ? voiceName(String(voice).replace(/^mine:/, '')) : null;
     if (mine && !fs.existsSync(path.join(VOICES, `${mine}.wav`))) return json(res, 400, { error: `no voice called "${mine}": record it first` });
+    if (mine && language !== 'en') return json(res, 400, { error: `your own voice speaks English only for now: pick the free voice for a reel in ${LANGUAGES[language].name}` });
     const slug = slugFrom(text);
     // the scaffold gets the chosen voice as soon as it exists
-    const giveVoice = () => { const sp = path.join(REELS, slug, 'script.json'); if (mine && fs.existsSync(sp)) { const sc = readJSON(sp); sc.voice = setVoice(sc.voice, { provider: 'chatterbox', voice: mine }); writeJSON(sp, sc); } };
+    const giveVoice = () => {
+      const sp = path.join(REELS, slug, 'script.json'); if (!fs.existsSync(sp) || (!mine && language === 'en')) return;
+      const sc = readJSON(sp);
+      if (mine) sc.voice = setVoice(sc.voice, { provider: 'chatterbox', voice: mine });
+      if (language !== 'en') { sc.language = language; sc.voice = { ...sc.voice, provider: 'kokoro', kokoro: { voice: LANGUAGES[language].voices[0] } }; }
+      writeJSON(sp, sc);
+    };
     if (blank || !claudeBin()) {
       // no agent: scaffold, so the scenes can be written here and the HTML by hand or another agent
       const [cmd, a] = node('new.mjs', [slug, text.slice(0, 80), ...(style ? ['--style', style] : [])]);
       const job = startJob(`new ${slug}`, cmd, a, { reel: slug, onEnd: giveVoice });
       return json(res, 200, { job: job.id, slug, agent: false });
     }
-    const job = runAgent(`make ${slug}`, `Make a reel: ${text}\nUse the folder name "${slug}" (npm run new -- ${slug} "<title>"${style ? ` --style ${style}` : ''}).${style ? ` Use the "${style}" style pack (read styles/${style}/rules.md).` : ''}${format && format !== '9:16' ? ` Format ${format}.` : ''} Follow .claude/skills/make-reel/SKILL.md from start to finish, including the check (look at the contact sheets) and the final render. ${mine ? ` Voice it in the user's own recorded voice: set "voice": { "provider": "chatterbox", "chatterbox": { "reference": "voices/${mine}.wav", "exaggeration": 0.5 } } in script.json (it's their voice, recorded with consent in the studio).` : ''} The user is waiting in the reelkit studio and can't answer questions: make sensible choices and finish.`, slug);
+    const job = runAgent(`make ${slug}`, `Make a reel: ${text}\nUse the folder name "${slug}" (npm run new -- ${slug} "<title>"${style ? ` --style ${style}` : ''}).${style ? ` Use the "${style}" style pack (read styles/${style}/rules.md).` : ''}${format && format !== '9:16' ? ` Format ${format}.` : ''} Follow .claude/skills/make-reel/SKILL.md from start to finish, including the check (look at the contact sheets) and the final render. ${mine ? ` Voice it in the user's own recorded voice: set "voice": { "provider": "chatterbox", "chatterbox": { "reference": "voices/${mine}.wav", "exaggeration": 0.5 } } in script.json (it's their voice, recorded with consent in the studio).` : ''}${language !== 'en' ? ` Write and voice it in ${LANGUAGES[language].name}: set "language": "${language}" in script.json and use the free voice ("voice": { "provider": "kokoro" }); every "say", the on-screen text and the @word cues are in ${LANGUAGES[language].name}.` : ''} The user is waiting in the reelkit studio and can't answer questions: make sensible choices and finish.`, slug);
     return json(res, 200, { job: job.id, slug, agent: true });
   }
   const jm = u.match(/^\/api\/jobs\/(\d+)(\/stream|\/stop)?$/);

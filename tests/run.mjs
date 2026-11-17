@@ -92,7 +92,7 @@ const cases = [
     if (bad.status === 0 || !bad.out.includes('unknown style "vaporwave"')) problems.push(`unknown style not refused:\n${bad.out}`);
     return { ok: !problems.length, detail: problems.join('\n  ') };
   }],
-  ['studio: npm start serves the app and its API, and refuses dotfiles, other sites, unknown actions and bad voice uploads', () => {
+  ['studio: npm start serves the app and its API, and refuses dotfiles, other sites, unknown actions, bad voice uploads and unknown languages', () => {
     const r = node('tests/studio-check.mjs', []);
     let j; try { j = JSON.parse(r.out.trim().split('\n').pop()); } catch { return { ok: false, detail: r.out }; }
     const problems = [];
@@ -105,6 +105,9 @@ const cases = [
     if (!j.voices) problems.push('state has no voices list or consent paragraph');
     if (j.voiceNoHeader !== 403 || j.voiceBadType !== 400 || j.voiceTooBig !== 413) problems.push(`voice upload guards: no header ${j.voiceNoHeader}, text/plain ${j.voiceBadType}, 20 MB+ ${j.voiceTooBig}`);
     if (!j.seriesList || j.seriesNoAgent !== 400) problems.push(`series: list ${j.seriesList}, without an agent ${j.seriesNoAgent} (wanted 400)`);
+    if (j.languages !== 'en,es,fr,it,pt' || j.reelLanguage !== 'en') problems.push(`languages: ${j.languages}, sky-blue is ${j.reelLanguage}`);
+    if (j.makeBadLanguage !== 400 || j.translateNoAgent !== 400) problems.push(`make in an unknown language ${j.makeBadLanguage}, translate without an agent ${j.translateNoAgent} (wanted 400 and 400)`);
+    if (fs.existsSync(path.resolve('reels/sky-blue-es'))) problems.push('translate without an agent left a copy behind');
     if (j.voiceMissing !== 404 || j.reelVoiceBad !== 400) problems.push(`unknown voice: delete ${j.voiceMissing}, use in a reel ${j.reelVoiceBad}`);
     return { ok: !problems.length, detail: problems.join('\n  ') };
   }],
@@ -280,11 +283,59 @@ const cases = [
     return { ok: !problems.length, detail: problems.join('\n  ') + '\n' + v.out };
   }],
 
+  ['languages: a Spanish reel is voiced in Spanish and timed by Whisper; a voice in the wrong language is refused', () => {
+    if (!sherpaInstalled() || !kokoroInstalled()) return { ok: true, skip: 'Kokoro model not downloaded (npm run doctor -- --fix)' };
+    const fx = path.resolve('tests/fixtures/kokoro-es'), sp = path.join(fx, 'script.json'), orig = fs.readFileSync(sp, 'utf8');
+    fs.rmSync(path.join(fx, '.voice-cache'), { recursive: true, force: true });
+    const v = node('scripts/voice.mjs', [fx]), problems = [];   // downloads eSpeak NG the first time
+    if (v.status !== 0) return { ok: false, detail: v.out };
+    const tl = JSON.parse(fs.readFileSync(path.join(fx, 'timeline.json'), 'utf8')), words = tl.scenes.flatMap(s => s.words);
+    if (tl.language !== 'es') problems.push(`timeline language ${tl.language}`);
+    if (!/in Spanish/.test(v.out)) problems.push('did not say it voiced in Spanish');
+    if ((v.out.match(/aligned timing/g) || []).length !== 2) problems.push('both scenes should be aligned by Whisper (it heard Spanish)');
+    if (words.map(w => w.w).join(' ') !== 'Un pulpo tiene tres corazones y la sangre azul. En 1776, nadie lo sabía. ¿Increíble?') problems.push(`captions "${words.map(w => w.w).join(' ')}"`);
+    // "1776" is said as four Spanish words (mil setecientos setenta y seis)
+    const yr = words.find(w => w.w === '1776,'), en = words.find(w => w.w === 'En');
+    if (!yr || !(yr.end - yr.start > 2 * (en.end - en.start))) problems.push('1776 was not spoken in full');
+    try {
+      fs.writeFileSync(sp, JSON.stringify({ ...JSON.parse(orig), voice: { provider: 'kokoro', kokoro: { voice: 'am_michael' } } }));
+      const bad = node('scripts/voice.mjs', [fx]);
+      if (bad.status === 0 || !/speaks English, but this reel is in Spanish/.test(bad.out)) problems.push(`English voice on a Spanish reel: ${bad.out.slice(-300)}`);
+      fs.writeFileSync(sp, JSON.stringify({ ...JSON.parse(orig), language: 'klingon' }));
+      const unk = node('scripts/voice.mjs', [fx]);
+      if (unk.status === 0 || !/can't voice "klingon"/.test(unk.out)) problems.push(`unknown language: ${unk.out.slice(-300)}`);
+    } finally { fs.writeFileSync(sp, orig); }
+    return { ok: !problems.length, detail: problems.join('\n  ') + '\n' + v.out };
+  }],
+
+  ['translate: copies a reel for another language without its voice, switches to that language\'s free voice, refuses repeats', () => {
+    const problems = [], R = path.resolve('reels'), src = path.join(R, 'zz-test-tr'), dst = path.join(R, 'zz-test-tr-fr');
+    const clean = () => [src, dst].forEach(d => fs.rmSync(d, { recursive: true, force: true }));
+    clean();
+    try {
+      fs.mkdirSync(path.join(src, 'assets'), { recursive: true });
+      fs.writeFileSync(path.join(src, 'script.json'), JSON.stringify({ title: 'T', voice: { provider: 'chatterbox', chatterbox: { reference: 'voices/me.wav' } }, scenes: [{ id: 'a', say: 'Hello.' }] }));
+      for (const f of ['reel.html', 'assets/pic.png', 'voice.mp3', 'timeline.json']) fs.writeFileSync(path.join(src, f), 'x');
+      const r = node('scripts/translate.mjs', ['zz-test-tr', '--to', 'french']);
+      if (r.status !== 0) return { ok: false, detail: r.out };
+      const j = JSON.parse(fs.readFileSync(path.join(dst, 'script.json'), 'utf8'));
+      if (j.language !== 'fr' || j.voice.provider !== 'kokoro' || j.voice.kokoro?.voice !== 'ff_siwis' || j.voice.chatterbox) problems.push(`script.json ${JSON.stringify(j)}`);
+      if (j.translatedFrom?.reel !== 'zz-test-tr' || j.translated !== false) problems.push('translatedFrom / translated not set');
+      if (!fs.existsSync(path.join(dst, 'reel.html')) || !fs.existsSync(path.join(dst, 'assets/pic.png'))) problems.push('reel.html or assets not copied');
+      if (fs.existsSync(path.join(dst, 'voice.mp3')) || fs.existsSync(path.join(dst, 'timeline.json'))) problems.push('copied the old voice');
+      for (const [args, want] of [[['zz-test-tr', '--to', 'fr'], /already exists/], [['zz-test-tr', '--to', 'en'], /already in English/], [['zz-test-tr', '--to', 'xx'], /can't voice/]]) {
+        const b = node('scripts/translate.mjs', args);
+        if (b.status === 0 || !want.test(b.out)) problems.push(`${args.join(' ')} → ${b.out.trim()}`);
+      }
+    } finally { clean(); }
+    return { ok: !problems.length, detail: problems.join('\n  ') };
+  }],
+
   ['my-voice: keeps a clean 24 kHz take of the consent paragraph, refuses other words, silence-like tones and no --mine', () => {
     if (!sherpaInstalled() || !kokoroInstalled()) return { ok: true, skip: 'Kokoro model not downloaded (npm run doctor -- --fix)' };
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'reelkit-voice-')), para = path.join(tmp, 'para.wav'), tone = path.join(tmp, 'tone.wav');
     // a stand-in speaker: Kokoro reads the paragraph the studio shows
-    const k = spawnSync(process.execPath, ['--input-type=module', '-e', `import { kokoro } from './scripts/speech.mjs'; import { PARAGRAPH } from './scripts/myvoice.mjs'; kokoro(PARAGRAPH, ${JSON.stringify(para)}, { voice: 'bf_emma' });`], { encoding: 'utf8' });
+    const k = spawnSync(process.execPath, ['--input-type=module', '-e', `import { kokoro } from './scripts/speech.mjs'; import { PARAGRAPH } from './scripts/myvoice.mjs'; await kokoro(PARAGRAPH, ${JSON.stringify(para)}, { voice: 'bf_emma' });`], { encoding: 'utf8' });
     if (k.status !== 0) return { ok: false, detail: k.stderr };
     spawnSync(ffmpegPath(), ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'sine=f=220:d=12', tone]);
     const problems = [], V = path.resolve('voices');

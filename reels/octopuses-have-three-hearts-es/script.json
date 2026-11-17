@@ -1,0 +1,63 @@
+{
+  "title": "Por qué el pulpo tiene tres corazones",
+  "theme": "paper",
+  "style": "blueprint",
+  "fps": 30,
+  "voice": {
+    "provider": "kokoro",
+    "kokoro": {
+      "voice": "em_alex"
+    },
+    "speed": 1.05
+  },
+  "captions": true,
+  "scenes": [
+    {
+      "id": "hook",
+      "say": "Un pulpo tiene tres corazones. Y necesita cada uno de ellos.",
+      "visual": "Octopus outline draws on; three yellow hearts appear inside the mantle on @tres, numbered 1-2-3, then beat."
+    },
+    {
+      "id": "blood",
+      "say": "La razón es su sangre. Es azul, porque transporta el oxígeno con cobre en lugar de hierro.",
+      "visual": "Two drops side by side: octopus drop (yellow) lands on @azul, Cu label on @cobre; our drop with Fe label on @hierro."
+    },
+    {
+      "id": "less",
+      "say": "La sangre de cobre lleva menos oxígeno que la nuestra, así que hay que bombearla con más fuerza.",
+      "visual": "Two bars, oxygen per drop: ours long, octopus short on @menos. Pressure gauge needle swings up on @fuerza."
+    },
+    {
+      "id": "gills",
+      "say": "Por eso, dos corazones tienen un solo trabajo: empujar la sangre por las branquias.",
+      "visual": "Two feathery gills, a small heart at the base of each on @dos; flow arrows run up through the gills on @branquias."
+    },
+    {
+      "id": "body",
+      "say": "Eso deja la presión baja. Así que un tercer corazón la bombea a todo el cuerpo.",
+      "visual": "Circuit: gills at the sides feed a large yellow heart in the middle on @tercer; dashed flow down to a BODY box on @cuerpo."
+    },
+    {
+      "id": "swim",
+      "say": "Y aquí viene lo raro. Cuando un pulpo nada, ese corazón principal se detiene.",
+      "visual": "Octopus drawn swimming sideways, heart beating, pulse trace running; on @detiene the heart freezes and the trace goes flat.",
+      "pause": 0.5
+    },
+    {
+      "id": "crawl",
+      "say": "Así que nadar lo agota rápido. Por eso un pulpo prefiere arrastrarse.",
+      "visual": "Sea floor line; octopus crawling along it, all three hearts beating. SWIM 2 OF 3 on @rapido, CRAWL 3 OF 3 on @arrastrarse."
+    },
+    {
+      "id": "outro",
+      "say": "Tres corazones. Sangre azul. Síguenos para más.",
+      "visual": "Three hearts in a row drawn on one by one, beating; FOLLOW typed underneath."
+    }
+  ],
+  "language": "es",
+  "translatedFrom": {
+    "reel": "octopuses-have-three-hearts",
+    "language": "en"
+  },
+  "translated": true
+}

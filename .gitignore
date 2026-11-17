@@ -44,3 +44,6 @@ tests/fixtures/chatterbox/voice.mp3
 tests/fixtures/chatterbox/.voice-cache/
 reels/*/assets/*.cutout.png
 tests/fixtures/cutout/assets/
+tests/fixtures/kokoro-es/timeline.json
+tests/fixtures/kokoro-es/voice.mp3
+tests/fixtures/kokoro-es/.voice-cache/

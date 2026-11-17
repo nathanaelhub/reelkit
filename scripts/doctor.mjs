@@ -2,6 +2,7 @@
 // Check (and with --fix, install) everything reelkit needs.
 //   npm run doctor            report
 //   npm run doctor -- --fix   install what's missing (npm deps, Chromium)
+import { espeakInstalled } from './languages.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -61,6 +62,8 @@ if (speech.kokoroInstalled()) ok('Kokoro (free voice)', 'local, Apache-2.0, safe
 else meh('Kokoro (free voice)', 'not downloaded; npm run doctor -- --fix gets it (~130 MB)');
 if (voices[0] === 'say (macOS)') meh('Voice licence', "Apple licenses the macOS voices for personal, non-commercial use: don't publish or sell reels voiced with say");
 if (voices.includes('piper')) meh('Voice licence', "many Piper voices (all Lessac-based ones) are non-commercial: check your voice's MODEL_CARD before publishing");
+if (espeakInstalled()) ok('Other languages', 'eSpeak NG downloaded; the free voice speaks Spanish, French, Italian and Portuguese');
+else meh('Other languages', 'optional: eSpeak NG (GPL-3.0, ~12 MB) downloads the first time a reel is in Spanish, French, Italian or Portuguese');
 if (fs.existsSync(path.join(ROOT, 'models/transformers/onnx-community/chatterbox-ONNX/onnx/language_model_q4.onnx_data'))) ok('Chatterbox (cloning)', 'downloaded; clone your own voice from a sample in voices/');
 else meh('Chatterbox (cloning)', 'optional: clones a voice from a 10-30 s sample; downloads on first use (~1.5 GB). See voices/README.md');
 let whisper = false; try { await import('@huggingface/transformers'); whisper = true; } catch {}

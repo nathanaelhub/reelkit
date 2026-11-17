@@ -1,0 +1,9 @@
+{
+  "title": "Kokoro en español",
+  "language": "es",
+  "voice": { "provider": "kokoro" },
+  "scenes": [
+    { "id": "uno", "say": "Un pulpo tiene tres corazones y la sangre azul." },
+    { "id": "dos", "say": "En 1776, nadie lo sabía. ¿Increíble?" }
+  ]
+}
