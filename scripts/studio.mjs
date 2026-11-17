@@ -11,6 +11,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { serve, ROOT, REELS, OUT, readJSON, writeJSON, listStyles, which, parseArgs } from './lib.mjs';
 import { listVoices, voiceName, PARAGRAPH, VOICES } from './myvoice.mjs';
+import { createSeries, listSeries, seriesName, SERIES } from './series.mjs';
 
 const args = parseArgs();
 const PORT = +(args.port || process.env.REELKIT_PORT || 4242);
@@ -31,7 +32,7 @@ function reelInfo(slug) {
     slug, title: script.title || slug, style: script.style || null, theme: script.theme || null, format: script.format || '9:16',
     scenes: (script.scenes || []).length, duration: tl?.duration ?? null, voiced: !!tl,
     hasHtml: fs.existsSync(path.join(dir, 'reel.html')), videos: videos.map(v => v.file), sheets, mtime, footage: (script.scenes || []).some(s => s.footage),
-    ship: shipInfo(slug),
+    ship: shipInfo(slug), series: script.series || null,
   };
 }
 const listReels = () => (fs.existsSync(REELS) ? fs.readdirSync(REELS) : [])
@@ -97,7 +98,7 @@ const ACTIONS = {
 };
 
 // ---------- the agent (Claude Code, headless) ----------
-const claudeBin = () => which('claude');
+const claudeBin = () => (process.env.REELKIT_NO_AGENT ? null : which('claude')); // REELKIT_NO_AGENT=1: tests
 // stream-json events → readable log lines
 function agentLine(raw) {
   let ev; try { ev = JSON.parse(raw); } catch { return raw; }
@@ -151,7 +152,7 @@ async function api(req, res, u) {
   const m = u.match(/^\/api\/reels\/([^/]+)(\/[a-z]+)?$/);
   if (u === '/api/state' && req.method === 'GET') {
     return json(res, 200, { reels: listReels(), styles: listStyles().map(({ name, title, description, swatch }) => ({ name, title, description, swatch })),
-      agent: !!claudeBin(), voices: listVoices(), paragraph: PARAGRAPH,
+      agent: !!claudeBin(), voices: listVoices(), series: listSeries().map(({ name, title, count, parts }) => ({ name, title, count, parts: parts.length })), paragraph: PARAGRAPH,
       chatterbox: fs.existsSync(path.join(ROOT, 'models/transformers/onnx-community/chatterbox-ONNX/onnx/language_model_q4.onnx_data')), jobs: [...jobs.values()].map(j => ({ id: j.id, label: j.label, reel: j.reel, running: j.running, code: j.code })) });
   }
   if (m) {
@@ -240,6 +241,22 @@ async function api(req, res, u) {
       return json(res, 200, { ok: true, stillUsedBy: users });
     }
     return json(res, 404, { error: 'unknown voice action' });
+  }
+
+  if (u === '/api/series' && req.method === 'POST') {
+    // several reels from one source: set the series up, then the agent plans and makes every part
+    const { source, count, style, voice } = await jsonBody(req);
+    const src = String(source || '').trim();
+    if (!src) return json(res, 400, { error: 'paste the source first: an article, notes, or a link' });
+    if (!claudeBin()) return json(res, 400, { error: 'A series needs the agent (Claude Code) to plan and write the parts. Install it, or set one up with npm run series -- new and ask another coding agent to make it.' });
+    const link = src.match(/^https?:\/\/\S+$/i);
+    let base = seriesName(link ? new URL(src).pathname.split('/').filter(Boolean).pop() || new URL(src).hostname : src.split(/\s+/).slice(0, 4).join(' ')) || 'series';
+    let name = base, n = 2; while (fs.existsSync(path.join(SERIES, name))) name = `${base}-${n++}`;
+    const mine = voice && voice !== 'free' ? voiceName(String(voice).replace(/^mine:/, '')) : null;
+    try { createSeries(name, { from: src, count: count ?? 5, style: style || null, voice: mine }); }
+    catch (e) { return json(res, 400, { error: e.message }); }
+    const job = runAgent(`series ${name}`, `Make the series in series/${name}: series.json has the count, style and voice; source.txt has the source. Follow "Making a series" in .claude/skills/make-reel/SKILL.md, taking every part through the check (look at the contact sheets), the final render and npm run ship. The user is waiting in the reelkit studio and can't answer questions: make sensible choices and finish every part.`, `series:${name}`);
+    return json(res, 200, { job: job.id, name, agent: true });
   }
 
   if (u === '/api/make' && req.method === 'POST') {

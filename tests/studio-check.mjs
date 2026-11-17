@@ -1,6 +1,6 @@
 // Used by tests/run.mjs: starts the studio on a free port, probes its API and guards, prints a JSON report.
 import { spawn } from 'node:child_process';
-const child = spawn(process.execPath, ['scripts/studio.mjs', '--no-open', '--port', '0'], { stdio: ['ignore', 'pipe', 'pipe'] });
+const child = spawn(process.execPath, ['scripts/studio.mjs', '--no-open', '--port', '0'], { stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, REELKIT_NO_AGENT: '1' } }); // never start a real agent run
 const url = await new Promise((res, rej) => {
   let out = ''; const t = setTimeout(() => rej(new Error('studio did not start: ' + out)), 20000);
   child.stdout.on('data', d => { out += d; const m = out.match(/http:\/\/127\.0\.0\.1:(\d+)/); if (m) { clearTimeout(t); res(`http://127.0.0.1:${m[1]}`); } });
@@ -23,6 +23,8 @@ try {
   r.voiceTooBig = await post('?name=t', 'audio/wav', new Uint8Array((20 << 20) + 1024));
   r.voiceMissing = (await fetch(url + '/api/voices/nobody-here', { method: 'DELETE', headers: { 'X-Reelkit': '1' } })).status;
   r.reelVoiceBad = (await fetch(url + '/api/reels/sky-blue/voice', { method: 'PUT', headers: { 'X-Reelkit': '1' }, body: JSON.stringify({ provider: 'chatterbox', voice: 'nobody-here' }) })).status;
+  r.seriesList = Array.isArray(st.series);
+  r.seriesNoAgent = (await fetch(url + '/api/series', { method: 'POST', headers: { 'X-Reelkit': '1' }, body: JSON.stringify({ source: 'Some notes.', count: 3 }) })).status;
   // a foreign Host header (DNS rebinding) is refused; fetch won't set Host, so use http directly
   const http = await import('node:http');
   r.badHost = await new Promise(res => http.get(url + '/api/state', { headers: { Host: 'evil.example' } }, x => { x.resume(); res(x.statusCode); }));

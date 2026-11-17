@@ -13,6 +13,10 @@
 </header>
 
 <section class="composer" aria-label="Make a reel">
+  <div class="mode" role="radiogroup" aria-label="What to make">
+    <label><input type="radio" name="mode" value="one" checked> One reel</label>
+    <label><input type="radio" name="mode" value="series"> A series</label>
+  </div>
   <label for="idea" class="visually-hidden">What's the reel about?</label>
   <textarea id="idea" rows="2" placeholder="What's the reel about?"></textarea>
   <div class="options">
@@ -24,6 +28,9 @@
       <legend>Voice</legend>
       <div id="voice-chips" class="chips"></div>
     </fieldset>
+    <label class="format" id="count-row" hidden>Reels
+      <select id="count"><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select>
+    </label>
     <label class="format">Shape
       <select id="format"><option value="9:16">Vertical 9:16</option><option value="1:1">Square 1:1</option><option value="16:9">Wide 16:9</option></select>
     </label>
