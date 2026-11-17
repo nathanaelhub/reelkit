@@ -130,7 +130,8 @@
     issues: [], duration: 0, fps: 30, width: 1080, height: 1920, captions: true, t: 0, clips: [], depths: [], pending: null, playing: false,
   };
 
-  const norm = s => String(s).toLowerCase().replace(/[’']/g, "'").replace(/[^a-z0-9'%$.-]/g, '').replace(/^[.'-]+|[.'-]+$/g, '');
+  // accents fold away ("@corazón" and "@corazon" both find "corazón"), so cues work the same in every language
+  const norm = s => String(s).toLowerCase().normalize('NFD').replace(/\p{M}/gu, '').replace(/[’']/g, "'").replace(/[^a-z0-9'%$.-]/g, '').replace(/^[.'-]+|[.'-]+$/g, '');
 
   // resolve a time spec relative to a scene. Returns scene-local seconds.
   //   "0.4"  "@bland"  "@bland+0.2"  "@bland#2"  "@bland:end"  "end-0.5"  "50%"

@@ -79,7 +79,7 @@ function renderAgent() {
 let mode = 'one';
 document.querySelectorAll('input[name=mode]').forEach(r => { r.onchange = () => {
   mode = r.value; document.body.classList.toggle('series-mode', mode === 'series');
-  $('#count-row').hidden = mode !== 'series'; $('#format').closest('label').hidden = mode === 'series';
+  $('#count-row').hidden = mode !== 'series'; $('#format').closest('label').hidden = mode === 'series'; $('#language-row').hidden = mode === 'series';
   $('#idea').placeholder = mode === 'series' ? 'Paste an article, your notes, or a link. The agent plans a set of reels from it, each with its own idea.' : "What's the reel about?";
   $('#idea').rows = mode === 'series' ? 6 : 2; renderAgent();
 }; });
@@ -98,7 +98,7 @@ async function make(blank) {
   if (!idea) { $('#idea').focus(); log('✗ Write what the reel is about first.'); return; }
   busy(true);
   try {
-    const r = await api('/api/make', { method: 'POST', json: { idea, style, format: $('#format').value, blank, voice: voiceChoice } });
+    const r = await api('/api/make', { method: 'POST', json: { idea, style, format: $('#format').value, blank, voice: voiceChoice, language: $('#language').value } });
     follow(r.job, r.agent ? `Making ${r.slug}` : `New reel ${r.slug}`, () => open(r.slug));
   } catch (e) { fail(e); }
 }
@@ -170,6 +170,7 @@ function renderBay() {
     ol.append(li);
   }
   renderReelVoice();
+  renderLanguage();
   renderShip();
   const sh = $('#sheets'); sh.textContent = '';
   for (const f of r.sheets) { const a = document.createElement('a'); a.href = `/out/${f}`; a.target = '_blank'; const i = document.createElement('img'); i.src = `/out/${f}?v=${Date.now()}`; i.alt = `Contact sheet ${f}`; a.append(i); sh.append(a); }
@@ -231,6 +232,33 @@ function renderShip() {
 $('#ship-copy').onclick = async () => {
   try { await navigator.clipboard.writeText($('#ship-post').value); log('✓ Copied the post.'); }
   catch { $('#ship-post').select(); log('Select the post and copy it (the browser blocked automatic copying).'); }
+};
+
+// ---------- languages ----------
+const langName = code => (state.languages || []).find(l => l.code === code)?.name || code;
+function renderLanguages() {
+  const sel = $('#language'), keep = sel.value || store.get('reelkit.language') || 'en'; sel.textContent = '';
+  for (const l of state.languages || []) { const o = document.createElement('option'); o.value = l.code; o.textContent = l.name; sel.append(o); }
+  sel.value = (state.languages || []).some(l => l.code === keep) ? keep : 'en';
+}
+$('#language').onchange = () => store.set('reelkit.language', $('#language').value);
+function renderLanguage() {
+  const r = current; if (!r) return;
+  const from = r.script.translatedFrom;
+  $('#language-now').textContent = `In ${langName(r.language)}` + (from ? `, translated from ${from.reel}${r.translated === false ? ' (not translated yet)' : ''}.` : '.');
+  const sel = $('#translate-to'), keep = sel.value; sel.textContent = '';
+  for (const l of state.languages || []) if (l.code !== r.language) { const o = document.createElement('option'); o.value = l.code; o.textContent = l.name; sel.append(o); }
+  if ([...sel.options].some(o => o.value === keep)) sel.value = keep;
+  $('#translate').disabled = !state.agent;
+  if (!state.agent) $('#translate-hint').textContent = `Translating needs the agent (Claude Code). Without it: npm run translate -- ${r.slug} --to ${sel.value || 'es'}, then ask another coding agent to translate the copy.`;
+}
+$('#translate').onclick = async () => {
+  const r = current; if (!r) return;
+  busy(true);
+  try {
+    const j = await api(`/api/reels/${r.slug}/translate`, { method: 'POST', json: { to: $('#translate-to').value } });
+    follow(j.job, `Translating into ${langName($('#translate-to').value)}: ${j.slug}`, () => open(j.slug));
+  } catch (e) { fail(e); }
 };
 
 // ---------- voices ----------
@@ -400,7 +428,7 @@ async function hearSample(name) {
 // ---------- boot ----------
 async function refresh() {
   try { state = await api('/api/state'); } catch (e) { log('✗ ' + e.message); return; }
-  renderAgent(); renderStyles(); renderVoiceChips(); renderShelf();
+  renderAgent(); renderStyles(); renderVoiceChips(); renderLanguages(); renderShelf();
   if ($('#recorder').open) renderVoiceList();
   if (current) { const fresh = state.reels.find(r => r.slug === current.slug); if (fresh) { Object.assign(current, fresh); renderBay(); } }
 }

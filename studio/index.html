@@ -34,6 +34,9 @@
     <label class="format">Shape
       <select id="format"><option value="9:16">Vertical 9:16</option><option value="1:1">Square 1:1</option><option value="16:9">Wide 16:9</option></select>
     </label>
+    <label class="format" id="language-row">Language
+      <select id="language"></select>
+    </label>
     <div class="go">
       <button id="blank" class="quiet" type="button">Start blank</button>
       <button id="make" class="primary" type="button">Make it</button>
@@ -84,6 +87,17 @@
       <label class="slider" id="delivery-row">Delivery <span>calm</span>
         <input id="delivery" type="range" min="0.25" max="1" step="0.05" value="0.5"> <span>lively</span></label>
       <p class="hint">Changing the voice or delivery takes effect when you press Re-voice. <button type="button" class="link" id="voice-record-2">Record a voice…</button></p>
+    </details>
+
+    <details class="block" id="translate-block">
+      <summary>Another language</summary>
+      <p id="language-now" class="meta"></p>
+      <div class="row">
+        <label class="visually-hidden" for="translate-to">Language for the new version</label>
+        <select id="translate-to"></select>
+        <button id="translate" type="button">Make a version</button>
+      </div>
+      <p class="hint" id="translate-hint">The agent makes a copy of this reel, translates what's said, the words on screen and the timing cues, then voices it with the free voice in that language and renders it. It runs on your Claude Code account.</p>
     </details>
 
     <details class="block">

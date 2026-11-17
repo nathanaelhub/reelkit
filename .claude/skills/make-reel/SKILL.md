@@ -99,6 +99,14 @@ Then `npm run ship -- <slug>`: it writes `out/<slug>.ship/` with a cover (`--cov
 
 Hand over: the MP4 path, its length, the voice used, the ship folder, and one line on anything you'd still improve. If the user is on their own machine, mention `npm run preview -- <slug>` to watch it with audio in the browser.
 
+## Another language
+
+`npm run translate -- <reel> --to es` (es, fr, it, pt) copies a reel to `reels/<reel>-es` with `"language": "es"` and the free voice for that language. To translate it ("translate reels/<reel>-es"):
+1. Translate every scene's `say` naturally, for speaking, not word for word. Keep it about as long.
+2. In reel.html, translate all on-screen text, and move every `@word` cue to the translated word that carries the same moment (`@three` → `@tres`). Accents are optional in cues.
+3. Set `"translated": true` in script.json, then voice, check (it lists any cue still on an English word), score and render as usual.
+Your own voice (Chatterbox) speaks English only; filmed speech stays in its language.
+
 ## Making a series
 
 When asked to "make the series in series/<name>" (or the studio says so), `series/<name>/series.json` has the count, style and voice, and `source.txt` has the source (or a link to fetch and read).

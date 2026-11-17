@@ -37,7 +37,7 @@ agent:   tightens scene 1, re-voices only that scene, lowers the bed, re-checks,
 | Craft | Tool | Licence | What it does here |
 |---|---|---|---|
 | Direction | [Claude Code](https://claude.com/claude-code) (or any coding agent, see below) | n/a | writes the script, builds the scenes, looks at its own frames, takes your notes |
-| Voice | [Kokoro-82M](https://github.com/hexgrad/kokoro) via [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx); [Chatterbox](https://github.com/resemble-ai/chatterbox) for your own voice | Apache-2.0 · MIT | a natural narrator, 28 English voices, on your CPU; or clone your voice from a short sample |
+| Voice | [Kokoro-82M](https://github.com/hexgrad/kokoro) via [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx); [Chatterbox](https://github.com/resemble-ai/chatterbox) for your own voice | Apache-2.0 · MIT | a natural narrator on your CPU, 28 English voices plus Spanish, French, Italian and Portuguese; or clone your voice from a short sample |
 | Word timing | [Whisper](https://github.com/openai/whisper) via [transformers.js](https://github.com/huggingface/transformers.js) | MIT / Apache-2.0 | hears the voiceover so captions and animation land on the exact word |
 | Picture | [Chromium](https://www.chromium.org) via [Playwright](https://playwright.dev) | BSD / Apache-2.0 | every scene is a web page, rendered frame by frame |
 | Motion | `engine/kit.js` (this repo) | MIT | spring physics, word-synced entrances, counters, drawn SVG |
@@ -101,6 +101,8 @@ Then give notes like you would to a human editor: *"the hook is weak"*, *"scene 
 ## What it can do
 
 **Voice, timed to the word.** Kokoro runs locally and is fine for reels you publish or sell. It speaks numbers, money and years ("$1,200", "1776", "9:16") and handles compound words, plurals and possessives; any name it still can't say goes into a pronunciation map as a respelling or phonemes. Whisper then times every word for every voice, so a stamp can slam down the instant the narrator says "bland".
+
+**Other languages.** Set `"language": "es"` (or `fr`, `it`, `pt`) and the free voice speaks Spanish, French, Italian or Brazilian Portuguese, with captions timed by Whisper listening in that language. To make a version of a finished reel, press **Make a version** in the studio (or `npm run translate -- my-reel --to es` and ask your agent to translate it): the agent translates what's said, the words on screen and every word cue, and the check flags any cue still tied to the old language. For these languages the words become sounds through [eSpeak NG](https://github.com/espeak-ng/espeak-ng), downloaded once (about 12 MB) the first time it's needed. Your own cloned voice speaks English only for now.
 
 **Photos that move in 3D.** A still photo gets a camera move through its depth map: push, pull, pan, rise, orbit, float or vertigo. Near things move more than far things, so it feels filmed instead of slid.
 ```html
@@ -212,6 +214,7 @@ npm run faces -- my-reel            # face tracks for data-reframe="face" clips 
 npm run my-voice -- add rec.m4a --mine  # save your own voice (or record it in the studio); sample, list
 npm run ship -- my-reel             # cover, safe-zone frame, captions .srt/.vtt, draft post, platform checks → out/my-reel.ship/
 npm run series -- new coffee --from notes.md --count 5   # set up a series; status / ship / list
+npm run translate -- my-reel --to es  # a copy for another language (es, fr, it, pt), for your agent to translate
 npm run styles                      # list the style packs (render/check/preview take --style <pack>)
 npm run check -- my-reel            # lint + design rules + motion + taste check, contact sheets in out/
 npm run preview -- my-reel          # watch in your browser with audio (space, ←/→)
@@ -229,6 +232,7 @@ The workflow lives in plain Markdown (`.claude/skills/make-reel/`), and [AGENTS.
 
 - [`reels/grand-canyon/`](reels/grand-canyon): a 33-second photo story. Six public-domain NPS photos with depth moves, five shader transitions, counters on spoken numbers, a cinematic score with hits on the numbers.
 - [`reels/octopuses-have-three-hearts/`](reels/octopuses-have-three-hearts): made with one press of **Make it** in the studio ("why octopuses have three hearts", blueprint): the agent wrote, drew, checked and rendered it unattended. Re-voiced with Kokoro afterwards so anyone can render it.
+- [`reels/octopuses-have-three-hearts-es/`](reels/octopuses-have-three-hearts-es): the same reel in Spanish, made by one press of **Make a version** in the studio. The agent translated the lines, the labels and every word cue, then voiced it with Kokoro's Spanish voice and rendered it ($1.85 of agent time).
 - [`reels/moon-photo/`](reels/moon-photo): a 17-second photo story about one public-domain Apollo 11 photo: "MOON" and "BUZZ ALDRIN" set behind Aldrin with cut-outs, and a close-up of Armstrong reflected in the visor.
 - [`reels/sky-blue/`](reels/sky-blue): a 22-second explainer drawn entirely with style-neutral SVG, so every style pack can restyle it. Its default is risograph.
 - [`reels/space-dangers/`](reels/space-dangers): a 38-second talk cut from an 88-second NASA interview. Eight sentences picked from the transcript, reframed to 9:16 around the speaker, chapter stamps on her words. The footage is downloaded on first use (it's listed under `sources` in its script.json).
@@ -250,6 +254,7 @@ Read their `reel.html` and `score.js` to see everything the kit can do.
 - [x] Subject cut-outs (BiRefNet)
 - [x] Ready to post: cover, captions files, draft post and platform checks
 - [x] Series: several reels from one source, in one look and voice
+- [x] Other languages: Spanish, French, Italian and Portuguese, and a translated version of any reel
 - [ ] Light upscaling for small photos (Swin2SR): see [open tools worth knowing](docs/open-tools.md)
 - [ ] An MCP server, so any agent or app can call voice / check / render as tools
 
@@ -281,7 +286,7 @@ This is a joke. Please be one of the humans: make things you'd watch yourself, p
 
 ## Credits and licences
 
-reelkit's own code is MIT. It installs, and does not bundle, the tools in the table above; each keeps its own licence. Model weights used by default: Kokoro-82M (Apache-2.0), Whisper base (MIT), Depth Anything V2 Small (Apache-2.0). The larger Depth Anything V2 models are non-commercial, so reelkit doesn't use them. Face tracking: MediaPipe BlazeFace short-range (Apache-2.0). Grand Canyon photos: U.S. National Park Service, public domain. Apollo 11 photo AS11-40-5903: Neil Armstrong / NASA, public domain. Space interview: NASA, public domain ("What Are the Dangers of Going to Space? We Asked a NASA Expert", via Wikimedia Commons).
+reelkit's own code is MIT. It installs, and does not bundle, the tools in the table above; each keeps its own licence. Model weights used by default: Kokoro-82M (Apache-2.0), Whisper base (MIT), Depth Anything V2 Small (Apache-2.0). The larger Depth Anything V2 models are non-commercial, so reelkit doesn't use them. Face tracking: MediaPipe BlazeFace short-range (Apache-2.0). For voices in other languages, reelkit downloads eSpeak NG (GPL-3.0, the [Echogarden WebAssembly build](https://github.com/echogarden-project/espeak-ng-emscripten)) into `models/` on first use and runs it as a separate program; it is not part of reelkit's code. Grand Canyon photos: U.S. National Park Service, public domain. Apollo 11 photo AS11-40-5903: Neil Armstrong / NASA, public domain. Space interview: NASA, public domain ("What Are the Dangers of Going to Space? We Asked a NASA Expert", via Wikimedia Commons).
 
 ## License
 

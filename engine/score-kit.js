@@ -22,7 +22,9 @@ const DEG = { I: 0, ii: 2, iii: 4, IV: 5, V: 7, vi: 9, vii: 11 };
 const KEYS = { C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3, E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8, Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11 };
 
 export function createScore(Tone, tl) {
-  const words = tl.scenes.flatMap(s => s.words.map(w => ({ ...w, scene: s.id, n: w.w.toLowerCase().replace(/[^a-z0-9'%$.-]/g, '').replace(/^[.'-]+|[.'-]+$/g, '') })));
+  // accents fold away, the same as the cues in reel.html (kit.js)
+  const norm = x => String(x).toLowerCase().normalize('NFD').replace(/\p{M}/gu, '').replace(/[’']/g, "'").replace(/[^a-z0-9'%$.-]/g, '').replace(/^[.'-]+|[.'-]+$/g, '');
+  const words = tl.scenes.flatMap(s => s.words.map(w => ({ ...w, scene: s.id, n: norm(w.w) })));
   const end = tl.duration;
 
   // Time from a spec: 4.2 · "intro" (scene start) · "@bland" · "@bland:end" · "@bland#2" (2nd time it's said) · "intro@bland" · "intro+0.5"
@@ -33,7 +35,7 @@ export function createScore(Tone, tl) {
     const [, scene, word, nth, isEnd, off] = m;
     let t;
     if (word) {
-      const hits = words.filter(w => w.n === word.toLowerCase() && (!scene || w.scene === scene));
+      const hits = words.filter(w => w.n === norm(word) && (!scene || w.scene === scene));
       const w = hits[(+nth || 1) - 1]; if (!w) throw new Error(`score: "${word}" is never said${scene ? ` in scene ${scene}` : ''}`);
       t = isEnd ? w.end : w.start;
     } else if (scene) {
