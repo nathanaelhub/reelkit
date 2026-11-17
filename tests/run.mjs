@@ -104,6 +104,7 @@ const cases = [
     if (j.badAction !== 400 || j.badReel !== 404) problems.push(`bad action ${j.badAction}, bad reel ${j.badReel}`);
     if (!j.voices) problems.push('state has no voices list or consent paragraph');
     if (j.voiceNoHeader !== 403 || j.voiceBadType !== 400 || j.voiceTooBig !== 413) problems.push(`voice upload guards: no header ${j.voiceNoHeader}, text/plain ${j.voiceBadType}, 20 MB+ ${j.voiceTooBig}`);
+    if (!j.seriesList || j.seriesNoAgent !== 400) problems.push(`series: list ${j.seriesList}, without an agent ${j.seriesNoAgent} (wanted 400)`);
     if (j.voiceMissing !== 404 || j.reelVoiceBad !== 400) problems.push(`unknown voice: delete ${j.voiceMissing}, use in a reel ${j.reelVoiceBad}`);
     return { ok: !problems.length, detail: problems.join('\n  ') };
   }],
@@ -137,6 +138,37 @@ const cases = [
       if (fs.existsSync(path.join(dir, 'post.txt')) && !/sky is blue/.test(fs.readFileSync(path.join(dir, 'post.txt'), 'utf8'))) problems.push('post.txt lacks the hook');
     }
     fs.rmSync(tmp, { recursive: true, force: true });
+    return { ok: !problems.length, detail: problems.join('\n  ') };
+  }],
+  ['series: new sets one up from text, a file or a link; status finds its parts; bad input is refused', () => {
+    const problems = [], S = path.resolve('series'), names = ['zz-test-text', 'zz-test-link', 'zz-test-file'];
+    const clean = () => names.forEach(n => fs.rmSync(path.join(S, n), { recursive: true, force: true }));
+    clean();
+    const a = node('scripts/series.mjs', ['new', 'zz-test-text', '--from', 'Coffee was first drunk in Yemen.', '--count', '3', '--style', 'riso']);
+    if (a.status !== 0) problems.push(`text: ${a.out}`);
+    else {
+      const j = JSON.parse(fs.readFileSync(path.join(S, 'zz-test-text', 'series.json'), 'utf8'));
+      if (j.count !== 3 || j.style !== 'riso' || j.source !== 'pasted text') problems.push(`series.json ${JSON.stringify(j)}`);
+      if (!/Yemen/.test(fs.readFileSync(path.join(S, 'zz-test-text', 'source.txt'), 'utf8'))) problems.push('source.txt lacks the text');
+    }
+    const l = node('scripts/series.mjs', ['new', 'zz-test-link', '--from', 'https://example.com/article', '--count', '2']);
+    if (l.status !== 0 || !/fetch and read it/.test(fs.readFileSync(path.join(S, 'zz-test-link', 'source.txt'), 'utf8'))) problems.push(`link: ${l.out}`);
+    const f = node('scripts/series.mjs', ['new', 'zz-test-file', '--from', 'voices/README.md', '--count', '2']);
+    if (f.status !== 0 || !/Chatterbox/.test(fs.readFileSync(path.join(S, 'zz-test-file', 'source.txt'), 'utf8'))) problems.push(`file: ${f.out}`);
+    // a reel that says it's part 1 of zz-test-text shows up in status
+    const reel = path.resolve('reels/zz-test-text-1');
+    fs.mkdirSync(reel, { recursive: true });
+    fs.writeFileSync(path.join(reel, 'script.json'), JSON.stringify({ title: 'Part one', series: { name: 'zz-test-text', part: 1, of: 3 }, scenes: [] }));
+    const st = node('scripts/series.mjs', ['status', 'zz-test-text']);
+    if (!/1 of 3 parts/.test(st.out) || !/zz-test-text-1/.test(st.out)) problems.push(`status: ${st.out}`);
+    fs.rmSync(reel, { recursive: true, force: true });
+    for (const [args, want] of [[['new', 'zz-test-text', '--from', 'x'], /already exists/], [['new', 'zz-test-x', '--from', 'x', '--count', '1'], /2 to 10/],
+      [['new', 'zz-test-x', '--from', 'x', '--style', 'vapor'], /unknown style/], [['new', 'zz-test-x'], /give it a source/]]) {
+      const r = node('scripts/series.mjs', args);
+      if (r.status === 0 || !want.test(r.out)) problems.push(`${args.join(' ')} → ${r.out.trim()}`);
+    }
+    clean(); fs.rmSync(path.join(S, 'zz-test-x'), { recursive: true, force: true });
+    if (fs.existsSync(S) && !fs.readdirSync(S).length) fs.rmdirSync(S);
     return { ok: !problems.length, detail: problems.join('\n  ') };
   }],
   ['footage: sentences, kept ranges and shot cuts from what Whisper and FFmpeg report', () => {

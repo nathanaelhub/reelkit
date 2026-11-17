@@ -99,6 +99,17 @@ Then `npm run ship -- <slug>`: it writes `out/<slug>.ship/` with a cover (`--cov
 
 Hand over: the MP4 path, its length, the voice used, the ship folder, and one line on anything you'd still improve. If the user is on their own machine, mention `npm run preview -- <slug>` to watch it with audio in the browser.
 
+## Making a series
+
+When asked to "make the series in series/<name>" (or the studio says so), `series/<name>/series.json` has the count, style and voice, and `source.txt` has the source (or a link to fetch and read).
+
+1. **Read the whole source.** If it's a link, fetch it. Note what it actually says; a series can only claim what the source (or a source you check) supports.
+2. **Plan before building**, in `series/<name>/plan.md`: one line per part with its single idea, its hook (under 2 seconds, and different in kind across parts: a number, a question, a surprise, a contrast), and the source passage it rests on. No fact appears in two parts. Order them so part 1 is the strongest standalone, not "part 1 of a lecture"; every part must make sense to someone who never sees the others.
+3. **One look and one voice.** Every part uses the series' style pack (or the same theme), the same voice (`"voice"` from series.json: a saved voice → `chatterbox` with `voices/<voice>.wav`; none → Kokoro, one narrator for all), the same score mood and the same end card layout. Vary the scene layouts, not the identity.
+4. **Each part:** `npm run new -- <name>-<n> "<title>"` (with `--style` when set), then in its script.json add `"series": { "name": "<name>", "part": n, "of": count }` and `"credits"` naming the source. Then the normal steps 3–6 (voice, score, scenes, check, render, ship). Don't put "Part 2" in the hook; a small "2/5" kicker is fine.
+5. **Status as you go:** `npm run series -- status <name>`. Finish every part before handing over; if something blocks one part, finish the others and say which and why.
+6. **Hand over:** the list from `npm run series -- status`, the ship folders, and a suggested posting order and spacing (for example one a day).
+
 ## 7 · Feedback loop
 
 Read `.claude/skills/make-reel/guides/feedback.md`. The user will say things like "feels off", "hook is weak", "scene 4 drags", "make the stamp bigger". Map each note to the smallest change:

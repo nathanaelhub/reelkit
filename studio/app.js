@@ -70,10 +70,30 @@ function renderAgent() {
   $('#make-hint').textContent = state.agent
     ? 'Make it writes the script, voices it, draws the scenes, checks its own frames and renders. It runs Claude Code on your account and takes a few minutes; every step shows in the log below.'
     : 'Claude Code isn\'t installed, so Make it starts a blank reel: you can edit what\'s said and voice it here, and build the scenes in reel.html by hand or with another coding agent. Install Claude Code (claude.com/claude-code) to have the agent build whole reels.';
-  $('#make').textContent = state.agent ? 'Make it' : 'Start it';
-  $('#blank').hidden = !state.agent;
+  $('#make').textContent = mode === 'series' ? `Make ${$('#count').value} reels` : state.agent ? 'Make it' : 'Start it';
+  $('#blank').hidden = !state.agent || mode === 'series';
+  if (mode === 'series') $('#make-hint').textContent = state.agent
+    ? 'The agent reads the source, plans one distinct idea per reel, and makes each one in the same look and voice, through to Ready to post. Each reel takes several minutes and runs on your Claude Code account.'
+    : 'A series needs Claude Code to plan and write the parts. You can still set one up with npm run series -- new and ask another coding agent.';
+}
+let mode = 'one';
+document.querySelectorAll('input[name=mode]').forEach(r => { r.onchange = () => {
+  mode = r.value; document.body.classList.toggle('series-mode', mode === 'series');
+  $('#count-row').hidden = mode !== 'series'; $('#format').closest('label').hidden = mode === 'series';
+  $('#idea').placeholder = mode === 'series' ? 'Paste an article, your notes, or a link. The agent plans a set of reels from it, each with its own idea.' : "What's the reel about?";
+  $('#idea').rows = mode === 'series' ? 6 : 2; renderAgent();
+}; });
+async function makeSeries() {
+  const source = $('#idea').value.trim();
+  if (!source) { $('#idea').focus(); log('✗ Paste the source first: an article, notes, or a link.'); return; }
+  busy(true);
+  try {
+    const r = await api('/api/series', { method: 'POST', json: { source, count: +$('#count').value, style, voice: voiceChoice } });
+    follow(r.job, `Making the series ${r.name}`, () => refresh());
+  } catch (e) { fail(e); }
 }
 async function make(blank) {
+  if (mode === 'series' && !blank) return makeSeries();
   const idea = $('#idea').value.trim();
   if (!idea) { $('#idea').focus(); log('✗ Write what the reel is about first.'); return; }
   busy(true);
@@ -84,6 +104,7 @@ async function make(blank) {
 }
 $('#make').onclick = () => make(false);
 $('#blank').onclick = () => make(true);
+$('#count').onchange = () => renderAgent();
 $('#idea').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) make(false); });
 
 // ---------- shelf ----------
@@ -100,6 +121,7 @@ function renderShelf() {
     const title = document.createElement('b'); title.textContent = r.title;
     const small = document.createElement('small'); small.textContent = [r.duration ? `${Math.round(r.duration)} s` : null, r.style].filter(Boolean).join(', ') || r.slug;
     b.append(t, title, small);
+    if (r.series) { const part = document.createElement('span'); part.className = 'part'; part.textContent = `${r.series.name} · ${r.series.part}/${r.series.of}`; b.append(part); }
     b.onclick = () => open(r.slug);
     box.append(b);
   }
