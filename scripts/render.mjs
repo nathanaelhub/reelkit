@@ -133,6 +133,7 @@ const music = ['music.mp3', 'music.m4a', 'music.wav'].map(f => path.join(dir, f)
 // score.js (music + sound effects in code) renders to score.wav; refresh it when the script or timeline changed
 if (scoreIsStale(dir)) { console.log('  scoring score.js'); await renderScore(dir, { quiet: true }); }
 const score = fs.existsSync(path.join(dir, 'score.js')) && fs.existsSync(path.join(dir, 'score.wav')) ? path.join(dir, 'score.wav') : null;
+console.log('  mixing the sound');
 const a = ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', list];
 const maps = ['-map', '0:v'];
 const len = to - from, fadeOut = `afade=t=out:st=${Math.max(0, len - 1.5)}:d=1.5`;
