@@ -396,7 +396,8 @@ const cases = [
     const fx = path.resolve('tests/fixtures/duck'), tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'reelkit-test-'));
     const v = node('scripts/voice.mjs', [fx]); if (v.status !== 0) return { ok: false, detail: v.out };
     const out = path.join(tmp, 'd.mp4');
-    const r = spawnSync(process.execPath, ['scripts/render.mjs', fx, '--draft', '--out', out], { encoding: 'utf8', timeout: 8 * 60e3, killSignal: 'SIGKILL' });
+    // tools get 2 minutes each here, so a stuck step fails with its own name before the test's limit
+    const r = spawnSync(process.execPath, ['scripts/render.mjs', fx, '--draft', '--out', out], { encoding: 'utf8', timeout: 8 * 60e3, killSignal: 'SIGKILL', env: { ...process.env, REELKIT_TOOL_TIMEOUT: '120', REELKIT_STALL_SECONDS: '90' } });
     if (r.status !== 0) { fs.rmSync(tmp, { recursive: true, force: true }); return { ok: false, detail: r.stdout + r.stderr }; }
     const tl = JSON.parse(fs.readFileSync(path.join(fx, 'timeline.json'), 'utf8'));
     const level = (t0, t1) => { const e = spawnSync(ffmpegPath(), ['-hide_banner', '-ss', String(t0), '-t', String(t1 - t0), '-i', out, '-af', 'bandpass=f=6000:w=60,volumedetect', '-f', 'null', '-'], { encoding: 'utf8' }).stderr; return +(e.match(/mean_volume: (-?[\d.]+) dB/) || [])[1]; };

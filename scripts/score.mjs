@@ -14,27 +14,33 @@ export async function renderScore(dir, { quiet = false } = {}) {
   if (!fs.existsSync(tlFile)) die(`No timeline.json in ${path.relative(ROOT, dir)}. Run: npm run voice -- ${path.basename(dir)}`);
   const tl = readJSON(tlFile);
   const { chromium } = await import('playwright');
-  // Rendering audio in headless Chromium occasionally never finishes (seen on macOS CI). Each try gets a time limit
-  // (REELKIT_STALL_SECONDS, default 120), and a stuck one is retried once in a fresh browser.
+  // Scoring in headless Chromium occasionally never finishes (seen on macOS CI): sometimes the render, sometimes the
+  // browser itself. Each try, from starting the browser to the finished wav, gets a time limit (REELKIT_STALL_SECONDS,
+  // default 120); a stuck try is abandoned (its browser killed) and retried once in a fresh one.
   const LIMIT = +(process.env.REELKIT_STALL_SECONDS || 120) * 1000;
+  const rel = path.relative(ROOT, src).split(path.sep).join('/');
   for (let attempt = 1; ; attempt++) {
-    const server = await serve();
-    const browser = await chromium.launch();
-    let timer, gaveUp = false;
-    try {
-      const page = await browser.newPage();
+    const t0 = Date.now(), st = { step: 'starting the page server', gaveUp: false, server: null, browser: null };
+    let timer;
+    const once = (async () => {
+      st.server = await serve();
+      st.step = 'starting the browser'; st.browser = await chromium.launch({ timeout: LIMIT });
+      if (st.gaveUp) { await st.browser.close().catch(() => {}); return null; }
+      const page = await st.browser.newPage();
       const errors = []; page.on('pageerror', e => errors.push(e.message)); page.on('console', m => m.type() === 'error' && errors.push(m.text()));
-      await page.goto(server.url('engine/score.html'));
+      st.step = 'loading the score page'; await page.goto(st.server.url('engine/score.html'));
       await page.waitForFunction(() => window.scoreReady, null, { timeout: 15000 });
-      const rel = path.relative(ROOT, src).split(path.sep).join('/');
-      const t0 = Date.now();
-      const stuck = new Promise(res => { timer = setTimeout(() => res('stuck'), LIMIT); });
-      const r = await Promise.race([page.evaluate(([u, tl]) => window.renderScore(u, tl), [server.url(rel) + '?v=' + fs.statSync(src).mtimeMs, tl])
-        .catch(e => gaveUp ? null : die(`score.js failed: ${e.message.split('\n')[0]}${errors.length ? '\n' + errors.join('\n') : ''}`)), stuck]);
+      st.step = 'rendering the audio';
+      return page.evaluate(([u, tl]) => window.renderScore(u, tl), [st.server.url(rel) + '?v=' + fs.statSync(src).mtimeMs, tl])
+        .catch(e => { if (!st.gaveUp) throw new Error(`score.js failed: ${e.message.split('\n')[0]}${errors.length ? '\n' + errors.join('\n') : ''}`); });
+    })().catch(e => { if (st.gaveUp) return null; die(e.message); });
+    const stuck = new Promise(res => { timer = setTimeout(() => res('stuck'), LIMIT); });
+    try {
+      const r = await Promise.race([once, stuck]);
       if (r === 'stuck') {
-        gaveUp = true; // closing this browser rejects the abandoned render: not an error in score.js
-        if (attempt < 2) { console.error(`  ⚠ scoring score.js stalled for ${LIMIT / 1000} s; trying once more`); continue; }
-        die(`scoring score.js stalled twice (${LIMIT / 1000} s each). Run npm run score -- ${path.basename(dir)} to try again`);
+        st.gaveUp = true; // closing this browser rejects the abandoned work: not an error in score.js
+        if (attempt < 2) { console.error(`  ⚠ scoring score.js stalled for ${LIMIT / 1000} s while ${st.step}; trying once more`); continue; }
+        die(`scoring score.js stalled twice (${LIMIT / 1000} s each, last while ${st.step}). Run npm run score -- ${path.basename(dir)} to try again`);
       }
       fs.writeFileSync(out, Buffer.from(r.wav, 'base64'));
       const db = 20 * Math.log10(r.peak || 1e-9);
@@ -42,7 +48,8 @@ export async function renderScore(dir, { quiet = false } = {}) {
       return out;
     } finally {
       clearTimeout(timer);
-      await Promise.race([browser.close(), new Promise(r => setTimeout(r, 5000))]); server.srv.close();
+      if (st.browser) await Promise.race([st.browser.close().catch(() => {}), new Promise(r => setTimeout(r, 5000))]);
+      st.server?.srv.close(); st.server?.srv.closeAllConnections?.();
     }
   }
 }
