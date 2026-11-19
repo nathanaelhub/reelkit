@@ -134,35 +134,41 @@ const music = ['music.mp3', 'music.m4a', 'music.wav'].map(f => path.join(dir, f)
 if (scoreIsStale(dir)) { console.log('  scoring score.js'); await renderScore(dir, { quiet: true }); }
 const score = fs.existsSync(path.join(dir, 'score.js')) && fs.existsSync(path.join(dir, 'score.wav')) ? path.join(dir, 'score.wav') : null;
 console.log('  mixing the sound');
-const a = ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', list];
-const maps = ['-map', '0:v'];
 const len = to - from, fadeOut = `afade=t=out:st=${Math.max(0, len - 1.5)}:d=1.5`;
-let n = 1; const inputs = {};
-if (audio && fs.existsSync(audio)) { a.push('-ss', String(from), '-t', String(len), '-i', audio); inputs.voice = n++; }
-if (music && fs.existsSync(music)) { a.push('-stream_loop', '-1', '-t', String(len), '-i', music); inputs.music = n++; }
-if (score) { a.push('-ss', String(from), '-t', String(len), '-i', score); inputs.score = n++; }
+const ain = []; let n = 0; const inputs = {};
+if (audio && fs.existsSync(audio)) { ain.push('-ss', String(from), '-t', String(len), '-i', audio); inputs.voice = n++; }
+if (music && fs.existsSync(music)) { ain.push('-stream_loop', '-1', '-t', String(len), '-i', music); inputs.music = n++; }
+if (score) { ain.push('-ss', String(from), '-t', String(len), '-i', score); inputs.score = n++; }
 // Background layers (music file, score) are summed, then ducked under the voice with a sidechain compressor:
 // the bed dips while someone is talking and comes back up in the gaps.
 const bg = [];
-if (inputs.music) bg.push(`[${inputs.music}:a]aformat=channel_layouts=stereo,volume=${mix.musicVolume ?? tl.musicVolume ?? 0.12}[mu]`);
-if (inputs.score) bg.push(`[${inputs.score}:a]aformat=channel_layouts=stereo,volume=${mix.scoreVolume ?? 1}[sc]`);
-const bgLabels = [inputs.music && '[mu]', inputs.score && '[sc]'].filter(Boolean);
+if (inputs.music !== undefined) bg.push(`[${inputs.music}:a]aformat=channel_layouts=stereo,volume=${mix.musicVolume ?? tl.musicVolume ?? 0.12}[mu]`);
+if (inputs.score !== undefined) bg.push(`[${inputs.score}:a]aformat=channel_layouts=stereo,volume=${mix.scoreVolume ?? 1}[sc]`);
+const bgLabels = [inputs.music !== undefined && '[mu]', inputs.score !== undefined && '[sc]'].filter(Boolean);
 let filter = null;
 if (bgLabels.length) {
   const sum = bgLabels.length > 1 ? `${bgLabels.join('')}amix=inputs=${bgLabels.length}:duration=longest:normalize=0[bg0]` : `${bgLabels[0]}anull[bg0]`;
-  if (inputs.voice) {
+  if (inputs.voice !== undefined) {
     const voiceChain = mix.duck === false
       ? [`[${inputs.voice}:a]aformat=channel_layouts=stereo[v]`, `[bg0]anull[bg]`]
       : [`[${inputs.voice}:a]aformat=channel_layouts=stereo,asplit=2[v][vsc]`, `[bg0][vsc]sidechaincompress=threshold=0.02:ratio=6:attack=15:release=350:makeup=1[bg]`];
     filter = [...bg, sum, ...voiceChain, `[bg]${fadeOut}[bgf]`, `[v][bgf]amix=inputs=2:duration=first:normalize=0[a]`].join(';');
   } else filter = [...bg, sum, `[bg0]${fadeOut}[a]`].join(';');
 }
-const ai = !!inputs.voice;
-if (filter) { a.push('-filter_complex', filter); maps.push('-map', '[a]'); }
-else if (ai) maps.push('-map', `${inputs.voice}:a`);
-a.push(...maps, '-c:v', 'copy');
-if (ai || filter) a.push('-c:a', 'aac', '-b:a', '192k');
-a.push('-t', String(to - from), '-movflags', '+faststart', outFile);
+// The sound is mixed on its own first, then joined to the video. (Mixing in the same FFmpeg call that copies the
+// video could stall forever on macOS: the two streams wait on each other.)
+let sound = null;
+if (filter) {
+  sound = path.join(tmp, 'sound.wav');
+  run(ff, ['-y', '-loglevel', 'error', ...ain, '-filter_complex', filter, '-map', '[a]', '-t', String(len), '-c:a', 'pcm_s16le', sound]);
+} else if (inputs.voice !== undefined) sound = audio;
+const a = ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', list];
+if (sound === audio && sound) a.push('-ss', String(from), '-t', String(len), '-i', audio);
+else if (sound) a.push('-i', sound);
+a.push('-map', '0:v', ...(sound ? ['-map', '1:a'] : []), '-c:v', 'copy');
+if (sound) a.push('-c:a', 'aac', '-b:a', '192k');
+a.push('-t', String(len), '-movflags', '+faststart', outFile);
+const ai = !!sound;
 run(ff, a);
 
 // Final loudness pass (two-pass loudnorm): the voice is normalised alone, so music, pauses and the end
