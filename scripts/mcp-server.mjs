@@ -409,7 +409,7 @@ reg('add_asset', 'Add a picture or sound', 'Copy a picture or sound into a reel,
   const dir = reelPath(reel);
   let buf, from;
   if (isLink(source)) { buf = await download(source.trim(), MAX_MEDIA); from = source.trim(); }
-  else if (/^\w+:/.test(String(source).trim()) && !/^file:\/\//.test(String(source).trim())) throw new Error('links must start with https://');
+  else if (/^[a-zA-Z][a-zA-Z0-9+.-]+:/.test(String(source).trim()) && !/^file:\/\//.test(String(source).trim())) throw new Error('links must start with https://');
   else {
     const f = localFile(source);
     if (fs.statSync(f).size > MAX_MEDIA) throw new Error('that file is over 50 MB');
