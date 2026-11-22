@@ -13,3 +13,4 @@ Ground rules:
 - Reels live in `reels/<slug>/`; finished videos go to `out/`.
 - Keep the engine deterministic: every frame is a pure function of time. No CSS animations or transitions.
 - Never print or commit `.env`.
+- No terminal? The same steps are MCP tools: `npm run mcp -- install` adds them to Claude Desktop, Cursor and other AI apps ([docs/mcp.md](docs/mcp.md)).

@@ -1,0 +1,153 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Why Honey Never Spoils</title>
+<link rel="stylesheet" href="../../engine/kit.css">
+<style>
+  .big-num { font-size: 190px; line-height: 1; }
+  .sub { font-size: 44px; font-style: italic; }
+  .bar-label { font-size: 46px; }
+  .h2o2 { font-size: 150px; line-height: 1; }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- 1 · hook -->
+  <section class="scene bg-paper" data-scene="hook">
+    <div class="pad kicker" style="top:170px" data-anim="fade">Fig. 1 · Honey from an Egyptian tomb</div>
+    <h1 class="pad headline" style="top:230px" data-anim="rise" data-at="0.1">Tomb honey is <span class="hl" data-anim="mark" data-at="@edible" data-dur="0.6"><em>still edible</em></span>.</h1>
+    <svg class="abs" style="left:80px;top:470px;width:460px;height:680px" viewBox="0 0 460 680" data-loop="sway" data-amp="0.25">
+      <g data-anim="draw" data-at="@honey" data-dur="1.2">
+        <path class="line" d="M150 60 h160 v50 q90 40 100 160 v300 q0 70 -70 70 h-220 q-70 0 -70 -70 v-300 q10 -120 100 -160 z" fill="none" stroke-width="5"/>
+        <path class="line" d="M130 40 h200 v30 h-200 z" fill="none" stroke-width="5"/>
+        <path class="line" d="M60 330 h340" fill="none" stroke-width="3"/>
+      </g>
+      <g data-anim="fade" data-at="@tombs" data-dur="0.9">
+        <path class="fill-a" d="M60 330 h340 v240 q0 70 -70 70 h-200 q-70 0 -70 -70 z"/>
+        <path class="fill-c" d="M150 110 q-80 40 -90 160 v60 h340 v-60 q-10 -120 -90 -160 z"/>
+      </g>
+      <g data-anim="fade" data-at="@egyptian">
+        <text class="label" x="230" y="672" text-anchor="middle" font-size="34">a. amphora, sealed</text>
+      </g>
+    </svg>
+    <div class="abs" style="left:580px;top:640px;width:430px">
+      <div class="big-num accent" data-anim="count" data-from="0" data-to="3000" data-at="@three" data-dur="1.2">3000</div>
+      <div class="sub" data-anim="fade" data-at="@years">years old</div>
+    </div>
+  </section>
+
+  <!-- 2 · water -->
+  <section class="scene bg-paper" data-scene="water" data-transition="fade">
+    <div class="pad kicker" style="top:170px" data-anim="fade">Fig. 2 · What honey is made of</div>
+    <h1 class="pad headline" style="top:230px" data-anim="rise">Too little <em>water</em> for germs.</h1>
+    <div class="pad" style="top:470px">
+      <div class="bar-label" data-anim="fade" data-at="@sugar">Sugar · about 80%</div>
+      <div class="bar-track" style="margin-top:14px;height:56px"><div class="bar-fill" style="width:80%" data-anim="mark" data-at="@sugar" data-dur="0.9"></div></div>
+      <div class="bar-label" style="margin-top:34px" data-anim="fade" data-at="@water">Water · about 17%</div>
+      <div class="bar-track" style="margin-top:14px;height:56px"><div class="bar-fill" style="width:17%" data-anim="mark" data-at="@water" data-dur="0.7"></div></div>
+    </div>
+    <svg class="abs" style="left:190px;top:790px;width:700px;height:400px" viewBox="0 0 700 400">
+      <g data-anim="draw" data-at="@pulls" data-dur="0.8">
+        <ellipse class="line" cx="350" cy="200" rx="150" ry="95" fill="none" stroke-width="5"/>
+        <path class="line" d="M200 200 q-30 -40 -60 -20 M500 200 q30 40 60 20 M300 108 q-10 -40 -40 -50 M400 292 q10 40 40 50" fill="none" stroke-width="4"/>
+      </g>
+      <g data-anim="fade" data-at="@pulls+0.2"><ellipse class="fill-b" cx="350" cy="200" rx="145" ry="90"/></g>
+      <g data-anim="draw" data-at="@out" data-dur="0.6">
+        <path class="line alt" d="M480 150 l110 -70 M220 250 l-110 70 M350 300 l0 80" fill="none" stroke-width="6"/>
+      </g>
+      <g data-anim="fade" data-at="@germs" data-loop="drift" data-amp="0.6">
+        <path class="fill-a" d="M610 40 q20 30 0 50 q-20 -20 0 -50 z"/>
+        <path class="fill-a" d="M90 330 q20 30 0 50 q-20 -20 0 -50 z"/>
+        <path class="fill-a" d="M350 345 q14 22 0 36 q-14 -14 0 -36 z"/>
+      </g>
+      <g data-anim="fade" data-at="@germs"><text class="label" x="350" y="40" text-anchor="middle" font-size="32">b. a microbe, drying out</text></g>
+    </svg>
+  </section>
+
+  <!-- 3 · acid -->
+  <section class="scene bg-paper" data-scene="acid">
+    <div class="pad kicker" style="top:170px" data-anim="fade">Fig. 3 · The pH scale</div>
+    <h1 class="pad headline" style="top:230px" data-anim="rise">Sour enough to <em>stop</em> them.</h1>
+    <svg class="abs" style="left:72px;top:560px;width:936px;height:560px" viewBox="0 0 936 560">
+      <g data-anim="draw" data-at="0.1" data-dur="0.8">
+        <path class="line" d="M40 160 h856" fill="none" stroke-width="5"/>
+        <path class="line" d="M40 140 v40 M162 145 v30 M284 145 v30 M406 145 v30 M528 145 v30 M650 145 v30 M772 145 v30 M896 140 v40" fill="none" stroke-width="4"/>
+      </g>
+      <g data-anim="fade" data-at="0.3">
+        <text class="label" x="40" y="230" text-anchor="middle" font-size="34">0</text>
+        <text class="label" x="468" y="230" text-anchor="middle" font-size="34">7</text>
+        <text class="label" x="896" y="230" text-anchor="middle" font-size="34">14</text>
+        <text class="label" x="40" y="100" font-size="32">acid</text>
+        <text class="label" x="896" y="100" text-anchor="end" font-size="32">alkaline</text>
+      </g>
+      <g id="phmark">
+        <path class="line alt" d="M0 130 l-22 -40 h44 z" fill="none" stroke-width="5"/>
+        <text class="label" x="0" y="60" text-anchor="middle" font-size="36">honey ≈ 3.9</text>
+      </g>
+      <g data-anim="draw" data-at="@orange" data-dur="0.8">
+        <circle class="line" cx="254" cy="400" r="110" fill="none" stroke-width="5"/>
+        <path class="line" d="M254 290 v220 M144 400 h220 M176 322 l156 156 M332 322 l-156 156" fill="none" stroke-width="3"/>
+      </g>
+      <g data-anim="fade" data-at="@orange+0.2"><circle class="fill-b" cx="254" cy="400" r="104"/></g>
+      <g data-anim="fade" data-at="@juice"><text class="label" x="400" y="410" font-size="36">c. orange juice ≈ 3.5</text></g>
+    </svg>
+  </section>
+
+  <!-- 4 · peroxide -->
+  <section class="scene bg-paper" data-scene="peroxide" data-transition="gl:InkBleed">
+    <div class="pad kicker" style="top:170px" data-anim="fade">Fig. 4 · The bee's own disinfectant</div>
+    <h1 class="pad headline" style="top:230px" data-anim="rise">Bees add a <em>germ killer</em>.</h1>
+    <svg class="abs" style="left:90px;top:500px;width:420px;height:420px" viewBox="0 0 420 420" data-loop="bob" data-amp="0.6">
+      <g data-anim="draw" data-at="@bees" data-dur="1">
+        <ellipse class="line" cx="210" cy="250" rx="120" ry="80" fill="none" stroke-width="5"/>
+        <circle class="line" cx="80" cy="235" r="45" fill="none" stroke-width="5"/>
+        <path class="line" d="M170 175 q-60 -140 40 -150 q60 20 -10 150 M240 175 q40 -150 130 -110 q30 60 -110 115" fill="none" stroke-width="4"/>
+        <path class="line" d="M330 250 l45 0" fill="none" stroke-width="5"/>
+      </g>
+      <g data-anim="fade" data-at="@add">
+        <path class="fill-a" d="M170 174 q-14 76 0 152 h40 q-14 -76 0 -152 z"/>
+        <path class="fill-a" d="M250 178 q-14 72 0 144 h34 q-12 -72 0 -144 z"/>
+        <path class="fill-c" d="M175 50 q40 0 30 120 q-40 -40 -30 -120 z"/>
+      </g>
+    </svg>
+    <div class="abs" style="left:540px;top:560px;width:470px">
+      <div class="sub" data-anim="fade" data-at="@enzyme">glucose oxidase</div>
+      <div class="sub" style="margin-top:10px" data-anim="fade" data-at="@makes">↓ makes</div>
+      <div class="h2o2 accent" style="margin-top:20px" data-anim="fade" data-at="@hydrogen" data-dur="0.8">H<sub>2</sub>O<sub>2</sub></div>
+      <div class="sub" style="margin-top:12px" data-anim="fade" data-at="@peroxide">hydrogen peroxide</div>
+    </div>
+  </section>
+
+  <!-- 5 · payoff -->
+  <section class="scene bg-paper" data-scene="payoff" data-transition="fade">
+    <div class="pad kicker" style="top:1470px" data-anim="fade" data-at="0.4">Source: Smithsonian Magazine, 2013</div>
+    <h1 class="pad headline" style="top:230px" data-anim="rise">Sealed honey <em>never spoils</em>.</h1>
+    <svg class="abs" style="left:90px;top:470px;width:460px;height:680px" viewBox="0 0 460 680" data-loop="sway" data-amp="0.3">
+      <g data-anim="fade" data-at="0" data-dur="0.6">
+        <path class="line" d="M150 110 q-90 40 -100 160 v300 q0 70 70 70 h220 q70 0 70 -70 v-300 q-10 -120 -100 -160 z" fill="none" stroke-width="5"/>
+        <path class="fill-a" d="M60 330 h340 v240 q0 70 -70 70 h-200 q-70 0 -70 -70 z"/>
+        <path class="line" d="M60 330 h340" fill="none" stroke-width="3"/>
+      </g>
+      <g data-anim="drop" data-at="@sealed" data-ease="spring-snappy" data-dur="0.6">
+        <path class="line" d="M120 40 h220 v70 h-220 z" fill="none" stroke-width="6"/>
+        <path class="fill-b" d="M124 44 h212 v62 h-212 z"/>
+      </g>
+    </svg>
+    <div class="abs stamp" style="left:570px;top:780px;width:340px;height:340px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:52px;line-height:1.05;rotate:-10deg" data-anim="stamp" data-at="@nothing" data-loop="pulse" data-amp="0.4">Never<br>spoils</div>
+  </section>
+
+</div>
+<script src="../../engine/kit.js"></script>
+<script>
+  Reel.init();
+  // pH marker slides from neutral (7) to honey (3.9) on "acidic"
+  Reel.on('acid', ({ $, word, prog, lerp }) => {
+    const k = prog(word('acidic'), 1.0, 'spring-snappy');
+    const x = lerp(468, 40 + 3.9 * (856 / 14), k);
+    $('#phmark').setAttribute('transform', `translate(${x} 0)`);
+  });
+</script>
+</body>
+</html>

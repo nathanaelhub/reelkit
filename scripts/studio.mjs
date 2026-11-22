@@ -9,6 +9,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
+import { SLUG, reelInfo, listReels, jobs, startJob, stopAllJobs, node, ACTIONS } from './jobs.mjs';
 import { serve, ROOT, REELS, OUT, readJSON, writeJSON, listStyles, which, parseArgs } from './lib.mjs';
 import { listVoices, voiceName, PARAGRAPH, VOICES } from './myvoice.mjs';
 import { createSeries, listSeries, seriesName, SERIES } from './series.mjs';
@@ -17,37 +18,9 @@ import { translateCopy } from './translate.mjs';
 
 const args = parseArgs();
 const PORT = +(args.port || process.env.REELKIT_PORT || 4242);
-const SLUG = /^[a-z0-9][a-z0-9-]{0,60}$/;
+process.env.REELKIT_JOB_FROM = 'reelkit studio';
 
 // ---------- reels ----------
-function reelInfo(slug) {
-  const dir = path.join(REELS, slug);
-  const sp = path.join(dir, 'script.json'), tp = path.join(dir, 'timeline.json');
-  if (!fs.existsSync(sp)) return null;
-  let script = {}; try { script = readJSON(sp); } catch { script = { title: slug, broken: true }; }
-  const tl = fs.existsSync(tp) ? (() => { try { return readJSON(tp); } catch { return null; } })() : null;
-  const outs = fs.existsSync(OUT) ? fs.readdirSync(OUT).filter(f => f.startsWith(slug + '.') || f === slug + '.mp4') : [];
-  const videos = outs.filter(f => f.endsWith('.mp4')).map(f => ({ file: f, mtime: fs.statSync(path.join(OUT, f)).mtimeMs })).sort((a, b) => b.mtime - a.mtime);
-  const sheets = outs.filter(f => /\.check-\d+\.png$/.test(f) && f.startsWith(slug + '.check-')).sort();
-  const mtime = Math.max(fs.statSync(sp).mtimeMs, ...videos.map(v => v.mtime));
-  return {
-    slug, title: script.title || slug, style: script.style || null, theme: script.theme || null, format: script.format || '9:16',
-    scenes: (script.scenes || []).length, duration: tl?.duration ?? null, voiced: !!tl,
-    hasHtml: fs.existsSync(path.join(dir, 'reel.html')), videos: videos.map(v => v.file), sheets, mtime, footage: (script.scenes || []).some(s => s.footage),
-    ship: shipInfo(slug), series: script.series || null, language: script.language || 'en', translated: script.translated ?? null,
-  };
-}
-const listReels = () => (fs.existsSync(REELS) ? fs.readdirSync(REELS) : [])
-  .filter(d => SLUG.test(d) && !d.startsWith('_')).map(reelInfo).filter(Boolean).sort((a, b) => b.mtime - a.mtime);
-
-// what npm run ship made for this reel (out/<slug>.ship/)
-function shipInfo(slug) {
-  const d = path.join(OUT, `${slug}.ship`);
-  if (!fs.existsSync(path.join(d, 'checks.txt'))) return null;
-  const read = f => (fs.existsSync(path.join(d, f)) ? fs.readFileSync(path.join(d, f), 'utf8') : '');
-  return { dir: `out/${slug}.ship`, post: read('post.txt'), checks: read('checks.txt'), at: fs.statSync(path.join(d, 'checks.txt')).mtimeMs };
-}
-
 function slugFrom(text) {
   const stop = new Set(['a', 'an', 'the', 'about', 'make', 'reel', 'on', 'of', 'why', 'how', 'what', 'is', 'are', 'for', 'to', 'and', 'in', 'my', 'me', 'video', 'short']);
   const words = String(text).toLowerCase().replace(/[^a-z0-9\s-]/g, ' ').split(/\s+/).filter(w => w && !stop.has(w)).slice(0, 4);
@@ -68,36 +41,6 @@ function setVoice(v = {}, { provider, voice, exaggeration } = {}) {
   if (provider === 'kokoro') return { ...v, provider: 'kokoro', kokoro: v.kokoro || { voice: 'am_michael' } };
   throw new Error('provider must be "kokoro" or "chatterbox"');
 }
-
-// ---------- jobs: one process each, output kept and streamed ----------
-const jobs = new Map(); let jobSeq = 0;
-function startJob(label, cmd, cmdArgs, { reel = null, parse = null, onEnd = null } = {}) {
-  const busy = reel && [...jobs.values()].find(j => j.reel === reel && j.running);
-  if (busy) throw new Error(`"${busy.label}" is still running for ${reel}`);
-  const id = String(++jobSeq);
-  const job = { id, label, reel, lines: [], running: true, code: null, listeners: new Set(), started: Date.now() };
-  const push = line => { job.lines.push(line); if (job.lines.length > 4000) job.lines.shift(); for (const l of job.listeners) l('line', line); };
-  const child = spawn(cmd, cmdArgs, { cwd: ROOT, env: { ...process.env, FORCE_COLOR: '0' }, shell: process.platform === 'win32' && cmd !== process.execPath });
-  job.kill = () => { try { child.kill(); } catch {} };
-  const onData = stream => { let buf = ''; stream.setEncoding('utf8'); stream.on('data', d => {
-    buf += d; const parts = buf.split(/\r?\n|\r/); buf = parts.pop();
-    for (const p of parts) { const out = parse ? parse(p) : p; if (out != null && out !== '') String(out).split('\n').forEach(push); }
-  }); stream.on('end', () => { if (buf) { const out = parse ? parse(buf) : buf; if (out) push(String(out)); } }); };
-  onData(child.stdout); onData(child.stderr);
-  child.on('error', e => push(`✗ ${e.message}`));
-  child.on('close', code => { try { onEnd?.(code); } catch (e) { job.lines.push(`✗ ${e.message}`); } job.running = false; job.code = code; push(code === 0 ? '✓ done' : `✗ stopped (exit ${code})`); for (const l of job.listeners) l('end', code); });
-  jobs.set(id, job);
-  return job;
-}
-const node = (script, a) => [process.execPath, [path.join('scripts', script), ...a]];
-const ACTIONS = {
-  voice: slug => node('voice.mjs', [slug]),
-  check: slug => node('check.mjs', [slug]),
-  draft: slug => node('render.mjs', [slug, '--draft']),
-  render: slug => node('render.mjs', [slug]),
-  score: slug => node('score.mjs', [slug]),
-  ship: slug => node('ship.mjs', [slug]),
-};
 
 // ---------- the agent (Claude Code, headless) ----------
 const claudeBin = () => (process.env.REELKIT_NO_AGENT ? null : which('claude')); // REELKIT_NO_AGENT=1: tests
@@ -322,4 +265,4 @@ if (!args['no-open']) {
   const opener = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
   try { spawn(opener, process.platform === 'win32' ? ['""', url] : [url], { stdio: 'ignore', detached: true, shell: process.platform === 'win32' }).unref(); } catch {}
 }
-process.on('SIGINT', () => { for (const j of jobs.values()) if (j.running) j.kill(); process.exit(0); });
+process.on('SIGINT', () => { stopAllJobs(); process.exit(0); });

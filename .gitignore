@@ -3,6 +3,7 @@ out/
 .env
 .DS_Store
 reels/*/.voice-cache/
+reels/*/.job
 taste/*
 !taste/README.md
 tests/fixtures/clip/assets/

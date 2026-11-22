@@ -111,6 +111,20 @@ const cases = [
     if (j.voiceMissing !== 404 || j.reelVoiceBad !== 400) problems.push(`unknown voice: delete ${j.voiceMissing}, use in a reel ${j.reelVoiceBad}`);
     return { ok: !problems.length, detail: problems.join('\n  ') };
   }],
+  ['mcp: an AI app can make a reel through the tools, only inside reel folders, one job per reel, offline renders, and install merges configs', () => {
+    const r = node('tests/mcp-check.mjs', []);
+    let j; try { j = JSON.parse(r.out.trim().split('\n').pop()); } catch { return { ok: false, detail: r.out }; }
+    if (j.error) return { ok: false, detail: `${j.error}\n${JSON.stringify(j)}` };
+    const want = { instructions: true, guide: true, guideRiso: true, guideBad: true, newReel: true, newAgain: true, newBadSlug: true, edit: true, editBadJson: true,
+      crlf: true, read: true, del: true, refused: 10, readOutside: true, delScript: true, assetPng: true, assetText: true, assetEnvAsPng: true, assetHttp: true,
+      seriesPath: true, voice: true, check: true, blocked: true, lock: true, busy: true, stop: true, unlocked: true, list: true, options: true,
+      install: true, installAgain: true, backup: true, uninstall: true, badJson: true };
+    const problems = Object.entries(want).filter(([k, v]) => j[k] !== v).map(([k, v]) => `${k}: ${j[k]} (wanted ${v})`);
+    if (j.tools.split(',').length !== 18) problems.push(`tools: ${j.tools}`);
+    if (!(j.checkImages >= 1)) problems.push(`check returned ${j.checkImages} contact sheets as pictures`);
+    if (fs.readdirSync(path.resolve('reels')).some(d => d.startsWith('zz-mcp-test-'))) problems.push('the test reel was left behind');
+    return { ok: !problems.length, detail: problems.join('\n  ') };
+  }],
   ['ship: short caption lines, platform checks, and a cover + post + captions from a render', () => {
     const problems = [];
     const W = (w, start, end) => ({ w, start, end });

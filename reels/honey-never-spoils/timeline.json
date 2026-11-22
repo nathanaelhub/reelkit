@@ -1,0 +1,333 @@
+{
+  "title": "Why Honey Never Spoils",
+  "language": "en",
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "loudness": -14,
+  "theme": "paper",
+  "style": "engraving",
+  "captions": true,
+  "voice": "kokoro",
+  "audio": "voice.mp3",
+  "music": null,
+  "musicVolume": 0.12,
+  "duration": 20.913,
+  "scenes": [
+    {
+      "id": "hook",
+      "start": 0,
+      "end": 5.589,
+      "say": "Archaeologists found honey in Egyptian tombs. Three thousand years old, and still edible.",
+      "words": [
+        {
+          "w": "Archaeologists",
+          "start": 0.3,
+          "end": 1.04
+        },
+        {
+          "w": "found",
+          "start": 1.04,
+          "end": 1.38
+        },
+        {
+          "w": "honey",
+          "start": 1.38,
+          "end": 1.72
+        },
+        {
+          "w": "in",
+          "start": 1.72,
+          "end": 2.06
+        },
+        {
+          "w": "Egyptian",
+          "start": 2.06,
+          "end": 2.4
+        },
+        {
+          "w": "tombs.",
+          "start": 2.4,
+          "end": 2.74
+        },
+        {
+          "w": "Three",
+          "start": 3.04,
+          "end": 3.39
+        },
+        {
+          "w": "thousand",
+          "start": 3.39,
+          "end": 3.74
+        },
+        {
+          "w": "years",
+          "start": 3.74,
+          "end": 4.12
+        },
+        {
+          "w": "old,",
+          "start": 4.12,
+          "end": 4.4
+        },
+        {
+          "w": "and",
+          "start": 4.4,
+          "end": 4.74
+        },
+        {
+          "w": "still",
+          "start": 4.74,
+          "end": 5.12
+        },
+        {
+          "w": "edible.",
+          "start": 5.12,
+          "end": 5.389
+        }
+      ]
+    },
+    {
+      "id": "water",
+      "start": 5.589,
+      "end": 10.969,
+      "say": "Honey is mostly sugar with barely any water, so it pulls the water out of germs.",
+      "words": [
+        {
+          "w": "Honey",
+          "start": 5.829,
+          "end": 6.089
+        },
+        {
+          "w": "is",
+          "start": 6.089,
+          "end": 6.489
+        },
+        {
+          "w": "mostly",
+          "start": 6.489,
+          "end": 6.849
+        },
+        {
+          "w": "sugar",
+          "start": 6.849,
+          "end": 7.129
+        },
+        {
+          "w": "with",
+          "start": 7.129,
+          "end": 7.469
+        },
+        {
+          "w": "barely",
+          "start": 7.469,
+          "end": 7.769
+        },
+        {
+          "w": "any",
+          "start": 7.769,
+          "end": 8.129
+        },
+        {
+          "w": "water,",
+          "start": 8.129,
+          "end": 8.429
+        },
+        {
+          "w": "so",
+          "start": 8.549,
+          "end": 8.669
+        },
+        {
+          "w": "it",
+          "start": 8.669,
+          "end": 8.829
+        },
+        {
+          "w": "pulls",
+          "start": 8.829,
+          "end": 9.109
+        },
+        {
+          "w": "the",
+          "start": 9.109,
+          "end": 9.449
+        },
+        {
+          "w": "water",
+          "start": 9.449,
+          "end": 9.909
+        },
+        {
+          "w": "out",
+          "start": 9.909,
+          "end": 10.049
+        },
+        {
+          "w": "of",
+          "start": 10.049,
+          "end": 10.369
+        },
+        {
+          "w": "germs.",
+          "start": 10.369,
+          "end": 10.629
+        }
+      ]
+    },
+    {
+      "id": "acid",
+      "start": 10.969,
+      "end": 13.751,
+      "say": "It's acidic too, close to orange juice.",
+      "words": [
+        {
+          "w": "It's",
+          "start": 11.129,
+          "end": 11.449
+        },
+        {
+          "w": "acidic",
+          "start": 11.449,
+          "end": 11.809
+        },
+        {
+          "w": "too,",
+          "start": 11.809,
+          "end": 12.149
+        },
+        {
+          "w": "close",
+          "start": 12.309,
+          "end": 12.549
+        },
+        {
+          "w": "to",
+          "start": 12.549,
+          "end": 12.829
+        },
+        {
+          "w": "orange",
+          "start": 12.829,
+          "end": 13.209
+        },
+        {
+          "w": "juice.",
+          "start": 13.209,
+          "end": 13.469
+        }
+      ]
+    },
+    {
+      "id": "peroxide",
+      "start": 13.751,
+      "end": 17.289,
+      "say": "And bees add an enzyme that makes hydrogen peroxide.",
+      "words": [
+        {
+          "w": "And",
+          "start": 13.891,
+          "end": 14.171
+        },
+        {
+          "w": "bees",
+          "start": 14.171,
+          "end": 14.611
+        },
+        {
+          "w": "add",
+          "start": 14.611,
+          "end": 14.811
+        },
+        {
+          "w": "an",
+          "start": 14.811,
+          "end": 15.111
+        },
+        {
+          "w": "enzyme",
+          "start": 15.111,
+          "end": 15.431
+        },
+        {
+          "w": "that",
+          "start": 15.431,
+          "end": 15.611
+        },
+        {
+          "w": "makes",
+          "start": 15.611,
+          "end": 16.131
+        },
+        {
+          "w": "hydrogen",
+          "start": 16.131,
+          "end": 16.511
+        },
+        {
+          "w": "peroxide.",
+          "start": 16.511,
+          "end": 17.09
+        }
+      ]
+    },
+    {
+      "id": "payoff",
+      "start": 17.289,
+      "end": 20.913,
+      "say": "Keep it sealed, and almost nothing can grow in it.",
+      "words": [
+        {
+          "w": "Keep",
+          "start": 17.489,
+          "end": 17.669
+        },
+        {
+          "w": "it",
+          "start": 17.669,
+          "end": 18.009
+        },
+        {
+          "w": "sealed,",
+          "start": 18.009,
+          "end": 18.289
+        },
+        {
+          "w": "and",
+          "start": 18.289,
+          "end": 18.529
+        },
+        {
+          "w": "almost",
+          "start": 18.529,
+          "end": 18.969
+        },
+        {
+          "w": "nothing",
+          "start": 18.969,
+          "end": 19.249
+        },
+        {
+          "w": "can",
+          "start": 19.249,
+          "end": 19.489
+        },
+        {
+          "w": "grow",
+          "start": 19.489,
+          "end": 19.729
+        },
+        {
+          "w": "in",
+          "start": 19.729,
+          "end": 19.969
+        },
+        {
+          "w": "it.",
+          "start": 19.969,
+          "end": 20.089
+        }
+      ]
+    }
+  ]
+}
