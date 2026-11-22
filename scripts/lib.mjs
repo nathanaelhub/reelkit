@@ -96,7 +96,7 @@ export const TOOL_TIMEOUT = +(process.env.REELKIT_TOOL_TIMEOUT || 600) * 1000;
 export function run(bin, args, opts = {}) {
   if (/^ffmpeg/i.test(path.basename(bin)) && !args.includes('-nostdin')) args = ['-nostdin', ...args];
   const r = spawnSync(bin, args, { encoding: 'utf8', maxBuffer: 1 << 28, timeout: TOOL_TIMEOUT, killSignal: 'SIGKILL', ...opts });
-  if (r.error && r.error.code === 'ETIMEDOUT') throw new Error(`${path.basename(bin)} took longer than ${TOOL_TIMEOUT / 1000} s and was stopped: ${path.basename(bin)} ${args.join(' ').slice(0, 600)}`);
+  if (r.error && r.error.code === 'ETIMEDOUT') throw new Error(`${path.basename(bin)} took longer than ${(opts.timeout ?? TOOL_TIMEOUT) / 1000} s and was stopped: ${path.basename(bin)} ${args.join(' ').slice(0, 600)}`);
   if (r.status !== 0) throw new Error(`${path.basename(bin)} ${args.slice(0, 6).join(' ')} … failed:\n${(r.stderr || '').slice(-1500)}`);
   return r.stdout;
 }
