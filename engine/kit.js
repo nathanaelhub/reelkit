@@ -464,14 +464,16 @@
     const py = rh > bh + 1 ? Math.min(1, Math.max(0, (rh * f[2] - bh * 0.4) / (rh - bh))) : 0.5;
     v.style.objectPosition = `${(px * 100).toFixed(3)}% ${(py * 100).toFixed(3)}%`;
   }
-  // Resolves once the frame at `target` is actually on screen: 'seeked' alone can come before the decoded frame is
-  // presented (a blank first frame on slow machines), so where Chromium offers it, also wait for that frame.
+  // Resolves when the seek to `target` has finished. A 'seeked' can belong to an earlier seek that was still running
+  // (seen on macOS CI: the first rendered frame showed where the clip sat at scene time 0), so it only counts once
+  // the video has really arrived at `target`.
   function seekVideo(v, target) {
     return new Promise(res => {
-      let seeked = false, shown = !v.requestVideoFrameCallback, over = false;
-      const finish = () => { if (!over && seeked && shown) { over = true; requestAnimationFrame(() => res()); } };
-      if (!shown) v.requestVideoFrameCallback(() => { shown = true; finish(); });
-      v.addEventListener('seeked', () => { seeked = true; finish(); setTimeout(() => { shown = true; finish(); }, 1000); }, { once: true });
+      let timer = 0;
+      const done = () => { clearTimeout(timer); v.removeEventListener('seeked', onSeeked); requestAnimationFrame(() => res()); };
+      const onSeeked = () => { if (!v.seeking && Math.abs(v.currentTime - target) <= 0.002) done(); }; // else: an earlier seek finishing
+      timer = setTimeout(done, 2000); // never hang a render on a video that won't report the exact time
+      v.addEventListener('seeked', onSeeked);
       v.currentTime = target;
     });
   }
