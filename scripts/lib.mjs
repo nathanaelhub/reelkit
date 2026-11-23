@@ -141,6 +141,18 @@ export function reelURL(server, dir, query = '') {
   return server.url(rel) + query;
 }
 
+// REELKIT_OFFLINE=1 (set for renders started from an AI app over MCP): the page may only load from the local reel
+// server, so a reel.html written by a model can't send anything off this computer. Fonts and libraries are bundled.
+export async function offlineGuard(page, errors = null) {
+  if (!process.env.REELKIT_OFFLINE) return;
+  await page.route(/^(https?|wss?):\/\//, r => {
+    const u = r.request().url();
+    if (/^(https?|wss?):\/\/(127\.0\.0\.1|localhost)(:\d+)?\//.test(u)) return r.continue();
+    errors?.push(`blocked ${u.slice(0, 120)}: reels made from an AI app can't load anything from the internet (put files in assets/)`);
+    return r.abort('blockedbyclient');
+  });
+}
+
 // Open the reel page in headless Chromium, wait for kit.js to be ready.
 export async function openReel(dir, { scale = 1, style = null } = {}) {
   if (!fs.existsSync(path.join(dir, 'timeline.json'))) die(`No timeline.json in ${path.relative(ROOT, dir)}. Run: npm run voice -- ${path.basename(dir)}`);
@@ -155,7 +167,9 @@ export async function openReel(dir, { scale = 1, style = null } = {}) {
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+  await offlineGuard(page, errors);
   page.on('requestfailed', r => {
+    if (r.failure()?.errorText === 'net::ERR_BLOCKED_BY_CLIENT') return; // reported by offlineGuard
     // Chromium cancels its first request for a <video> and re-requests it in byte ranges; that cancel is normal.
     // A missing clip is a 404 response instead, reported by kit.js through the video's error event.
     if (r.resourceType() === 'media' && r.failure()?.errorText === 'net::ERR_ABORTED') return;

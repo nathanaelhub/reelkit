@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseArgs, reelDir, readJSON, serve, die, ROOT } from './lib.mjs';
+import { parseArgs, reelDir, readJSON, serve, die, ROOT, offlineGuard } from './lib.mjs';
 
 export async function renderScore(dir, { quiet = false } = {}) {
   const src = path.join(dir, 'score.js'), out = path.join(dir, 'score.wav');
@@ -27,7 +27,7 @@ export async function renderScore(dir, { quiet = false } = {}) {
       st.step = 'starting the browser'; st.browser = await chromium.launch({ timeout: LIMIT });
       if (st.gaveUp) { await st.browser.close().catch(() => {}); return null; }
       const page = await st.browser.newPage();
-      const errors = []; page.on('pageerror', e => errors.push(e.message)); page.on('console', m => m.type() === 'error' && errors.push(m.text()));
+      const errors = []; await offlineGuard(page, errors); page.on('pageerror', e => errors.push(e.message)); page.on('console', m => m.type() === 'error' && errors.push(m.text()));
       st.step = 'loading the score page'; await page.goto(st.server.url('engine/score.html'));
       await page.waitForFunction(() => window.scoreReady, null, { timeout: 15000 });
       st.step = 'rendering the audio';

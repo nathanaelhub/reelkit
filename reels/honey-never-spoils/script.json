@@ -1,0 +1,41 @@
+{
+  "title": "Why Honey Never Spoils",
+  "theme": "paper",
+  "style": "engraving",
+  "fps": 30,
+  "voice": {
+    "provider": "kokoro",
+    "speed": 1.12,
+    "kokoro": { "voice": "bm_george" }
+  },
+  "captions": true,
+  "credits": ["Facts: Smithsonian Magazine, \"The Science Behind Honey's Eternal Shelf Life\" (2013)"],
+  "scenes": [
+    {
+      "id": "hook",
+      "say": "Archaeologists found honey in Egyptian tombs. Three thousand years old, and still edible.",
+      "visual": "Fig. 1 honey jar drawn on; 3,000 years counter on 'thousand'; 'edible' underlined in red"
+    },
+    {
+      "id": "water",
+      "say": "Honey is mostly sugar with barely any water, so it pulls the water out of germs.",
+      "visual": "bar: sugar ~80% vs water ~17%; arrows pull drops out of a microbe on 'germs'"
+    },
+    {
+      "id": "acid",
+      "say": "It's acidic too, close to orange juice.",
+      "visual": "pH scale, marker slides to about 3.9 on 'acidic'; orange slice drawn beside on 'orange'"
+    },
+    {
+      "id": "peroxide",
+      "say": "And bees add an enzyme that makes hydrogen peroxide.",
+      "visual": "bee drawn on 'bees'; H2O2 label fades in on 'peroxide'"
+    },
+    {
+      "id": "payoff",
+      "say": "Keep it sealed, and almost nothing can grow in it.",
+      "visual": "jar lid drawn on 'sealed'; round seal 'Never spoils' on 'nothing'",
+      "pause": 0.8
+    }
+  ]
+}

@@ -64,6 +64,15 @@ if (voices[0] === 'say (macOS)') meh('Voice licence', "Apple licenses the macOS 
 if (voices.includes('piper')) meh('Voice licence', "many Piper voices (all Lessac-based ones) are non-commercial: check your voice's MODEL_CARD before publishing");
 if (espeakInstalled()) ok('Other languages', 'eSpeak NG downloaded; the free voice speaks Spanish, French, Italian and Portuguese');
 else meh('Other languages', 'optional: eSpeak NG (GPL-3.0, ~12 MB) downloads the first time a reel is in Spanish, French, Italian or Portuguese');
+
+// AI apps (MCP): Claude Desktop, Cursor
+{
+  const { mcpStatus } = await import('./mcp-install.mjs');
+  const apps = mcpStatus();
+  if (!apps.length) meh('AI apps (MCP)', 'optional: npm run mcp -- install lets Claude Desktop, Cursor or Claude Code make reels');
+  else if (apps.every(a => a.ok)) ok('AI apps (MCP)', `added to ${apps.map(a => a.name).join(', ')}`);
+  else bad('AI apps (MCP)', `${apps.filter(a => !a.ok).map(a => a.name).join(', ')} would start reelkit with a node or folder that no longer exists`, 'npm run mcp -- install');
+}
 if (fs.existsSync(path.join(ROOT, 'models/transformers/onnx-community/chatterbox-ONNX/onnx/language_model_q4.onnx_data'))) ok('Chatterbox (cloning)', 'downloaded; clone your own voice from a sample in voices/');
 else meh('Chatterbox (cloning)', 'optional: clones a voice from a 10-30 s sample; downloads on first use (~1.5 GB). See voices/README.md');
 let whisper = false; try { await import('@huggingface/transformers'); whisper = true; } catch {}

@@ -84,6 +84,15 @@ It opens reelkit studio in your browser: write the idea, pick a look, press **Ma
 
 Choose **A series** in the studio, paste an article, your notes or a link, pick how many reels (2 to 7), a look and a voice, and press **Make**. The agent reads the source, plans one distinct idea per reel (no fact used twice, every part makes sense on its own), and makes each one in the same look and voice through to *Ready to post*. From a terminal: `npm run series -- new coffee --from article.md --count 5 --style riso`, then ask your agent to "make the series in series/coffee"; `npm run series -- status coffee` shows how far it got.
 
+### From Claude Desktop or another AI app
+
+```bash
+npm run doctor -- --fix   # once: installs everything
+npm run mcp -- install    # adds reelkit to Claude Desktop, Cursor and Claude Code
+```
+
+Restart the app, then ask it in the chat: *"make a 20-second reel about why octopuses have three hearts, riso style"*. The app's own model writes the script and the scenes, runs voice, check and render through reelkit's tools, looks at the contact sheets, and opens the finished video for you. Nothing to type in a terminal after setup, and no second bill: the chat you already use does the work. Any app that runs local MCP servers works (`npm run mcp -- --print` shows the settings to paste). What the tools can do, and what they can't reach on your computer, is in [docs/mcp.md](docs/mcp.md).
+
 ### By talking to the agent
 
 Say what you want, in plain words:
@@ -203,6 +212,7 @@ reel.html (scenes + data-anim) ────────────────�
 
 ```bash
 npm start                           # reelkit studio in your browser
+npm run mcp -- install              # make reels from Claude Desktop, Cursor or Claude Code (docs/mcp.md)
 npm run doctor [-- --fix]           # check / install everything
 npm run new -- my-reel "Title"      # scaffold reels/my-reel/
 npm run voice -- my-reel            # voiceover + timeline.json
@@ -233,6 +243,7 @@ The workflow lives in plain Markdown (`.claude/skills/make-reel/`), and [AGENTS.
 - [`reels/grand-canyon/`](reels/grand-canyon): a 33-second photo story. Six public-domain NPS photos with depth moves, five shader transitions, counters on spoken numbers, a cinematic score with hits on the numbers.
 - [`reels/octopuses-have-three-hearts/`](reels/octopuses-have-three-hearts): made with one press of **Make it** in the studio ("why octopuses have three hearts", blueprint): the agent wrote, drew, checked and rendered it unattended. Re-voiced with Kokoro afterwards so anyone can render it.
 - [`reels/octopuses-have-three-hearts-es/`](reels/octopuses-have-three-hearts-es): the same reel in Spanish, made by one press of **Make a version** in the studio. The agent translated the lines, the labels and every word cue, then voiced it with Kokoro's Spanish voice and rendered it ($1.85 of agent time).
+- [`reels/honey-never-spoils/`](reels/honey-never-spoils): made entirely through the MCP tools from one sentence ("make a 20-second reel about why honey never spoils"). The model had no terminal and no file access beyond the tools; it checked the sheets three times, moved the stamp out of the app buttons after seeing the safe zones, and shipped it: 34 tool calls, 4 minutes, $1.23.
 - [`reels/moon-photo/`](reels/moon-photo): a 17-second photo story about one public-domain Apollo 11 photo: "MOON" and "BUZZ ALDRIN" set behind Aldrin with cut-outs, and a close-up of Armstrong reflected in the visor.
 - [`reels/sky-blue/`](reels/sky-blue): a 22-second explainer drawn entirely with style-neutral SVG, so every style pack can restyle it. Its default is risograph.
 - [`reels/space-dangers/`](reels/space-dangers): a 38-second talk cut from an 88-second NASA interview. Eight sentences picked from the transcript, reframed to 9:16 around the speaker, chapter stamps on her words. The footage is downloaded on first use (it's listed under `sources` in its script.json).
@@ -256,7 +267,8 @@ Read their `reel.html` and `score.js` to see everything the kit can do.
 - [x] Series: several reels from one source, in one look and voice
 - [x] Other languages: Spanish, French, Italian and Portuguese, and a translated version of any reel
 - [ ] Light upscaling for small photos (Swin2SR): see [open tools worth knowing](docs/open-tools.md)
-- [ ] An MCP server, so any agent or app can call voice / check / render as tools
+- [x] An MCP server: make reels from Claude Desktop, Cursor and other AI apps
+- [ ] A video player inside the chat (MCP Apps) and a one-click Claude Desktop extension
 
 Ideas and PRs welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).
 

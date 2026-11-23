@@ -10,7 +10,7 @@ import { parseArgs, die, REELS, readJSON, writeJSON } from './lib.mjs';
 import { LANGUAGES, languageOf } from './languages.mjs';
 
 // made from the words: voiced again in the new language
-const GENERATED = new Set(['voice.mp3', 'timeline.json', 'score.wav', '.voice-cache']);
+const GENERATED = new Set(['voice.mp3', 'timeline.json', 'score.wav', '.voice-cache', '.job']);
 
 export function translateCopy(slug, to, { as = null } = {}) {
   const src = path.join(REELS, slug);
