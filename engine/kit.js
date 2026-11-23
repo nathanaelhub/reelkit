@@ -464,10 +464,16 @@
     const py = rh > bh + 1 ? Math.min(1, Math.max(0, (rh * f[2] - bh * 0.4) / (rh - bh))) : 0.5;
     v.style.objectPosition = `${(px * 100).toFixed(3)}% ${(py * 100).toFixed(3)}%`;
   }
+  // Resolves when the seek to `target` has finished. A 'seeked' can belong to an earlier seek that was still running
+  // (seen on macOS CI: the first rendered frame showed where the clip sat at scene time 0), so it only counts once
+  // the video has really arrived at `target`.
   function seekVideo(v, target) {
     return new Promise(res => {
-      const done = () => requestAnimationFrame(() => res());
-      v.addEventListener('seeked', done, { once: true });
+      let timer = 0;
+      const done = () => { clearTimeout(timer); v.removeEventListener('seeked', onSeeked); requestAnimationFrame(() => res()); };
+      const onSeeked = () => { if (!v.seeking && Math.abs(v.currentTime - target) <= 0.002) done(); }; // else: an earlier seek finishing
+      timer = setTimeout(done, 2000); // never hang a render on a video that won't report the exact time
+      v.addEventListener('seeked', onSeeked);
       v.currentTime = target;
     });
   }

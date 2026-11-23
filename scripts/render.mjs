@@ -139,6 +139,8 @@ const ain = []; let n = 0; const inputs = {};
 if (audio && fs.existsSync(audio)) { ain.push('-ss', String(from), '-t', String(len), '-i', audio); inputs.voice = n++; }
 if (music && fs.existsSync(music)) { ain.push('-stream_loop', '-1', '-t', String(len), '-i', music); inputs.music = n++; }
 if (score) { ain.push('-ss', String(from), '-t', String(len), '-i', score); inputs.score = n++; }
+// the voice a second time, as the compressor's key: an asplit of one input could deadlock FFmpeg on macOS
+if (inputs.voice !== undefined && mix.duck !== false && (inputs.music !== undefined || inputs.score !== undefined)) { ain.push('-ss', String(from), '-t', String(len), '-i', audio); inputs.key = n++; }
 // Background layers (music file, score) are summed, then ducked under the voice with a sidechain compressor:
 // the bed dips while someone is talking and comes back up in the gaps.
 const bg = [];
@@ -151,7 +153,7 @@ if (bgLabels.length) {
   if (inputs.voice !== undefined) {
     const voiceChain = mix.duck === false
       ? [`[${inputs.voice}:a]aformat=channel_layouts=stereo[v]`, `[bg0]anull[bg]`]
-      : [`[${inputs.voice}:a]aformat=channel_layouts=stereo,asplit=2[v][vsc]`, `[bg0][vsc]sidechaincompress=threshold=0.02:ratio=6:attack=15:release=350:makeup=1[bg]`];
+      : [`[${inputs.voice}:a]aformat=channel_layouts=stereo[v]`, `[${inputs.key}:a]aformat=channel_layouts=stereo[vsc]`, `[bg0][vsc]sidechaincompress=threshold=0.02:ratio=6:attack=15:release=350:makeup=1[bg]`];
     filter = [...bg, sum, ...voiceChain, `[bg]${fadeOut}[bgf]`, `[v][bgf]amix=inputs=2:duration=first:normalize=0[a]`].join(';');
   } else filter = [...bg, sum, `[bg0]${fadeOut}[a]`].join(';');
 }
@@ -160,7 +162,10 @@ if (bgLabels.length) {
 let sound = null;
 if (filter) {
   sound = path.join(tmp, 'sound.wav');
-  run(ff, ['-y', '-loglevel', 'error', ...ain, '-filter_complex', filter, '-map', '[a]', '-t', String(len), '-c:a', 'pcm_s16le', sound]);
+  // a few seconds of audio: if FFmpeg hasn't finished in a minute it is stuck, so stop it and try once more
+  const mixArgs = ['-y', '-loglevel', 'error', ...ain, '-filter_complex', filter, '-map', '[a]', '-t', String(len), '-c:a', 'pcm_s16le', sound];
+  try { run(ff, mixArgs, { timeout: 60000 }); }
+  catch (e) { if (!/took longer/.test(e.message) && !/ETIMEDOUT/.test(e.message)) throw e; console.log('  mixing stalled; trying once more'); run(ff, mixArgs, { timeout: 120000 }); }
 } else if (inputs.voice !== undefined) sound = audio;
 const a = ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', list];
 if (sound === audio && sound) a.push('-ss', String(from), '-t', String(len), '-i', audio);
