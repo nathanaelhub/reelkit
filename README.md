@@ -91,7 +91,7 @@ npm run doctor -- --fix   # once: installs everything
 npm run mcp -- install    # adds reelkit to Claude Desktop, Cursor and Claude Code
 ```
 
-Restart the app, then ask it in the chat: *"make a 20-second reel about why octopuses have three hearts, riso style"*. The app's own model writes the script and the scenes, runs voice, check and render through reelkit's tools, looks at the contact sheets, and opens the finished video for you. Nothing to type in a terminal after setup, and no second bill: the chat you already use does the work. Any app that runs local MCP servers works (`npm run mcp -- --print` shows the settings to paste). What the tools can do, and what they can't reach on your computer, is in [docs/mcp.md](docs/mcp.md).
+Restart the app, then ask it in the chat: *"make a 20-second reel about why octopuses have three hearts, riso style"*. The app's own model writes the script and the scenes, runs voice, check and render through reelkit's tools, looks at the contact sheets, and plays the finished video right in the chat (in apps that support it; otherwise it opens in your video player). Nothing to type in a terminal after setup, and no second bill: the chat you already use does the work. Any app that runs local MCP servers works (`npm run mcp -- --print` shows the settings to paste). What the tools can do, and what they can't reach on your computer, is in [docs/mcp.md](docs/mcp.md).
 
 ### By talking to the agent
 
@@ -268,7 +268,8 @@ Read their `reel.html` and `score.js` to see everything the kit can do.
 - [x] Other languages: Spanish, French, Italian and Portuguese, and a translated version of any reel
 - [ ] Light upscaling for small photos (Swin2SR): see [open tools worth knowing](docs/open-tools.md)
 - [x] An MCP server: make reels from Claude Desktop, Cursor and other AI apps
-- [ ] A video player inside the chat (MCP Apps) and a one-click Claude Desktop extension
+- [x] A video player inside the chat (MCP Apps)
+- [ ] A one-click Claude Desktop extension (.mcpb)
 
 Ideas and PRs welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).
 

@@ -111,18 +111,35 @@ const cases = [
     if (j.voiceMissing !== 404 || j.reelVoiceBad !== 400) problems.push(`unknown voice: delete ${j.voiceMissing}, use in a reel ${j.reelVoiceBad}`);
     return { ok: !problems.length, detail: problems.join('\n  ') };
   }],
-  ['mcp: an AI app can make a reel through the tools, only inside reel folders, one job per reel, offline renders, and install merges configs', () => {
+  ['mcp: an AI app can make a reel through the tools, only inside reel folders, one job per reel, offline renders, the in-chat player\'s video, and install merges configs', () => {
     const r = node('tests/mcp-check.mjs', []);
     let j; try { j = JSON.parse(r.out.trim().split('\n').pop()); } catch { return { ok: false, detail: r.out }; }
     if (j.error) return { ok: false, detail: `${j.error}\n${JSON.stringify(j)}` };
     const want = { instructions: true, guide: true, guideRiso: true, guideBad: true, newReel: true, newAgain: true, newBadSlug: true, edit: true, editBadJson: true,
       crlf: true, read: true, del: true, refused: 10, readOutside: true, delScript: true, assetPng: true, assetText: true, assetEnvAsPng: true, assetHttp: true,
       seriesPath: true, voice: true, check: true, blocked: true, lock: true, busy: true, stop: true, unlocked: true, list: true, options: true,
+      showUi: true, noVideo: true, showPlayer: true, view: true, parts: true, videoRefused: 5, frames: true,
       install: true, installAgain: true, backup: true, uninstall: true, badJson: true };
     const problems = Object.entries(want).filter(([k, v]) => j[k] !== v).map(([k, v]) => `${k}: ${j[k]} (wanted ${v})`);
     if (j.tools.split(',').length !== 18) problems.push(`tools: ${j.tools}`);
     if (!(j.checkImages >= 1)) problems.push(`check returned ${j.checkImages} contact sheets as pictures`);
     if (fs.readdirSync(path.resolve('reels')).some(d => d.startsWith('zz-mcp-test-'))) problems.push('the test reel was left behind');
+    return { ok: !problems.length, detail: problems.join('\n  ') };
+  }],
+  ['mcp player: the reel plays in the chat in a sandboxed view, under the strict default policy (data:) and without it (blob:), with safe zones and open full quality', () => {
+    const r = node('tests/player-check.mjs', []);
+    let j; try { j = JSON.parse(r.out.trim().split('\n').pop()); } catch { return { ok: false, detail: r.out }; }
+    if (j.error) return { ok: false, detail: `${j.error}\n${JSON.stringify(j)}` };
+    const problems = [];
+    if (!(j.parts > 1)) problems.push(`the video came in ${j.parts} parts (wanted several)`);
+    for (const [name, source] of [['csp', 'data'], ['open', 'blob']]) {
+      const v = j[name] || {};
+      const want = { source, ready: true, parts: j.parts, title: true, zonesHidden: true, zones: true, resized: true, open: true };
+      problems.push(...Object.entries(want).filter(([k, w]) => v[k] !== w).map(([k, w]) => `${name}: ${k} ${v[k]} (wanted ${w})`));
+      if (v.error) problems.push(`${name}: ${v.error}`);
+      if (v.errors?.length) problems.push(`${name}: page errors: ${v.errors.join('; ')}`);
+    }
+    if (fs.readdirSync(path.resolve('reels')).some(d => d.startsWith('zz-player-test-'))) problems.push('the test reel was left behind');
     return { ok: !problems.length, detail: problems.join('\n  ') };
   }],
   ['ship: short caption lines, platform checks, and a cover + post + captions from a render', () => {

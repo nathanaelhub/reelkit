@@ -8,7 +8,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { registerAppTool, registerAppResource, getUiCapability, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import { ROOT, REELS, OUT, readJSON, writeJSON, listStyles, ffmpegPath, ffprobePath } from './lib.mjs';
@@ -17,6 +18,7 @@ import { listVoices } from './myvoice.mjs';
 import { createSeries, seriesStatus, seriesName, SERIES } from './series.mjs';
 import { LANGUAGES } from './languages.mjs';
 import { translateCopy } from './translate.mjs';
+import { UI_ZONES } from './ship.mjs';
 
 const VERSION = readJSON(path.join(ROOT, 'package.json')).version;
 const FIRST_WAIT = +(process.env.REELKIT_MCP_FIRST_WAIT || 20) * 1000; // run: wait this long before handing back a job
@@ -149,6 +151,44 @@ const duration = f => { const r = spawnSync(ffprobePath(), ['-v', 'error', '-sho
 const newest = (files, since = 0) => files.filter(f => fs.existsSync(f) && fs.statSync(f).mtimeMs >= since - 1500).sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs)[0] || null;
 const mb = n => `${(n / 1048576).toFixed(1)} MB`;
 
+// ---------- the chat copy: what the in-chat player plays ----------
+// A 720p H.264 copy of a render in out/.chat/ (a dot-folder, so reelInfo never lists it), made in the background when
+// a render finishes and read by the player in parts of PART bytes: a multiple of 3, so the parts' base64 joins up.
+const CHAT_DIR = path.join(OUT, '.chat');
+const PART = Math.max(3, Math.floor(+(process.env.REELKIT_MCP_PART || 1048575) / 3) * 3); // a smaller size in tests
+const encoders = new Map(); // render file → { promise, child }
+const fresh = (copy, file) => fs.existsSync(copy) && fs.statSync(copy).mtimeMs >= fs.statSync(file).mtimeMs;
+function chatCopy(file) {
+  const out = path.join(CHAT_DIR, path.basename(file));
+  if (fresh(out, file)) return Promise.resolve(out);
+  if (encoders.has(file)) return encoders.get(file).promise;
+  fs.mkdirSync(CHAT_DIR, { recursive: true });
+  const tmp = out.replace(/\.mp4$/, '.making.mp4');
+  let child;
+  const promise = new Promise((resolve, reject) => {
+    child = spawn(ffmpegPath(), ['-nostdin', '-y', '-loglevel', 'error', '-i', file, '-vf', "scale='min(720,iw)':-2",
+      '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '27', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '128k',
+      '-movflags', '+faststart', tmp], { stdio: ['ignore', 'ignore', 'pipe'], windowsHide: true });
+    let err = ''; child.stderr.on('data', d => { err = (err + d).slice(-2000); });
+    const limit = setTimeout(() => child.kill('SIGKILL'), 180000);
+    const end = e => { clearTimeout(limit); encoders.delete(file); if (e) { fs.rmSync(tmp, { force: true }); reject(e); } };
+    child.on('error', e => end(new Error(`couldn't make the chat copy: ${e.message}`)));
+    child.on('close', code => {
+      if (code !== 0) return end(new Error(`couldn't make the chat copy: ${err.trim().split('\n').pop() || `ffmpeg exit ${code}`}`));
+      try { fs.renameSync(tmp, out); end(); resolve(out); } catch (e) { end(e); }
+    });
+  });
+  promise.catch(() => {});
+  encoders.set(file, { promise, child });
+  return promise;
+}
+const within = (p, ms) => Promise.race([p, sleep(ms).then(() => null)]);
+const newestVideo = reel => { const v = (reelInfo(reel)?.videos || [])[0]; return v ? path.join(OUT, v) : null; };
+function probeSize(f) {
+  const r = spawnSync(ffprobePath(), ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0:s=x', f], { encoding: 'utf8', timeout: 15000 });
+  const [w, h] = String(r.stdout).trim().split('x').map(Number); return { width: w || 0, height: h || 0 };
+}
+
 // ---------- the guide: the make-reel skill, with what changes in an AI app ----------
 const SKILL_DIR = path.join(ROOT, '.claude', 'skills', 'make-reel');
 const PREAMBLE = `# Making reels with reelkit's tools
@@ -158,7 +198,7 @@ You are working through reelkit's MCP tools, not a terminal. The guide below was
 - \`npm run doctor\` → setup (setup with fix: true installs what's missing). \`npm run new\` → new_reel. \`npm run styles\`, \`npm run my-voice -- list\` and the voice lists → options.
 - \`npm run voice / check / render / score / ship / depth / cutout / clip -- <slug>\` → run with that step (options: style, from, to, cover). Long steps return a job: call wait with it until it's done.
 - "Open every contact sheet with the Read tool" → run check returns the sheets as pictures. Look at every one, fix, check again.
-- After a render, run render returns a strip of frames; show with at: [seconds…] gives single frames from the video; show without at opens the video for the person.
+- After a render, run render returns a strip of frames; show with at: [seconds…] gives single frames from the video; show without at shows the video to the person (in apps that can, it plays right in the chat; otherwise it opens in the video player).
 - \`npm run footage\` → add_footage (its shot sheet comes back as a picture). Images, sound and the user's own music (name it music.mp3) → add_asset, from a link or a file on this computer. \`npm run translate\` → translate. \`npm run series -- new / status\` → new_series / series_status.
 - \`styles/<name>/rules.md\` → guide with topic "style:<name>". \`engine/score-kit.js\` → guide "score". The gl-transitions list → guide "transitions". The guides script.md, scenes.md, style.md, feedback.md → guide "script", "scenes", "style", "feedback".
 - Not available here; skip them: taste references (\`npm run ref\`, refs/, taste/), \`npm run preview\` (use show), and recording a voice (the person does that in reelkit studio: npm start). If a step says to fetch a link, use your own web tools if you have them.
@@ -270,6 +310,7 @@ function finish(job) {
     const v = newest(cands, started);
     if (code !== 0 || !v) return failed(code === 3 ? 'The render stalled (the browser stopped answering). Run it again.' : `render failed (exit ${code}).`);
     const d = duration(v), s = strip(v, d);
+    chatCopy(v); // ready for show's in-chat player by the time the model asks for it
     return text(`✓ ${rel(v)}: ${d.toFixed(1)} s, ${mb(fs.statSync(v).size)}.${kind === 'draft' ? ' (a fast half-size draft)' : ''} Six frames across the video below; show with at: [seconds] for a closer look at transitions and word hits. Then run ship${kind === 'draft' ? ' (after a full render)' : ''}, and show to open it for the person.`, s ? [image(s)] : []);
   }
   if (kind === 'ship') {
@@ -305,7 +346,7 @@ const server = new McpServer({ name: 'reelkit', title: 'reelkit', version: VERSI
   instructions: `reelkit makes short vertical videos (reels, TikToks, Shorts) on this computer: voiced, captioned, animated and scored, from HTML.
 Before making or changing a reel, call guide (no topic) and follow it: it is how a good reel is made, step by step. Call setup once if a step complains something is missing.
 Slow steps (voice, check, render, ship) return a job: call wait with it until it is done. Look at every picture a result contains: they are how you see your work.
-Finished videos stay in the person's reelkit folder (${ROOT}); show opens one for them.`,
+Finished videos stay in the person's reelkit folder (${ROOT}); show plays one in the chat (or opens it) for them.`,
 });
 const reg = (name, title, description, shape, fn) => server.registerTool(name, { title, description, inputSchema: shape }, tool(fn));
 
@@ -509,28 +550,86 @@ reg('new_series', 'New series', 'Set up a series: several reels from one source,
   return text(`✓ ${rel(dir)}/: ${series.count} reels${series.style ? `, ${series.style} style` : ''}${series.voice ? `, voice "${series.voice}"` : ''}. The source is in ${rel(dir)}/source.txt (read_file).\nNext: guide "series": write ${rel(dir)}/plan.md, then make each part.`);
 });
 
-reg('show', 'Show the video', 'Open a reel\'s newest video in this computer\'s video player for the person, or, with at, return frames from it (seconds) as pictures for you to look at.', {
-  reel: z.string(), at: z.array(z.number()).max(6).optional(),
-}, async ({ reel, at }) => {
+// ---------- show: the player in the chat, or the computer's video player ----------
+// Apps that show MCP Apps views (Claude, ChatGPT, VS Code…) put scripts/mcp-player.html in the chat when show is
+// called; it reads the chat copy through reelkit-video://<slug>/<part>. Other apps get the desktop player.
+const PLAYER = 'ui://reelkit/player.html';
+const showsViews = () => {
+  const ui = getUiCapability(server.server.getClientCapabilities());
+  return !!ui && (!Array.isArray(ui.mimeTypes) || ui.mimeTypes.includes(RESOURCE_MIME_TYPE));
+};
+function openOnDesktop(file) {
+  if (process.env.REELKIT_NO_OPEN) return;
+  const [cmd, a] = process.platform === 'darwin' ? ['open', [file]] : process.platform === 'win32' ? ['explorer.exe', [file]] : ['xdg-open', [file]];
+  try { spawn(cmd, a, { stdio: 'ignore', detached: true, windowsHide: true }).unref(); } catch {}
+}
+registerAppTool(server, 'show', {
+  title: 'Show the video',
+  description: 'Show a reel\'s newest video to the person: it plays in the chat in apps that can show it, or opens in this computer\'s video player (open: true does that too). With at, it returns frames from it (seconds) as pictures for you to look at instead.',
+  inputSchema: { reel: z.string(), at: z.array(z.number()).max(6).optional(), open: z.boolean().optional().describe('also open the full-quality file in the computer\'s video player') },
+  _meta: { ui: { resourceUri: PLAYER } },
+}, tool(async ({ reel, at, open }) => {
   reelPath(reel);
-  const v = (reelInfo(reel)?.videos || [])[0];
-  if (!v) throw new Error(`${reel} has no video yet: run render first`);
-  const file = path.join(OUT, v);
+  const file = newestVideo(reel);
+  if (!file) throw new Error(`${reel} has no video yet: run render first`);
+  const v = path.basename(file), d = duration(file);
   if (at?.length) {
-    const d = duration(file);
     const imgs = at.map(t => Math.min(Math.max(0, +t), Math.max(0, d - 0.05))).map(t => frameAt(file, t)).filter(Boolean).map(image);
     return text(`Frames from out/${v} at ${at.join(', ')} s:`, imgs);
   }
-  if (!process.env.REELKIT_NO_OPEN) {
-    const [cmd, a] = process.platform === 'darwin' ? ['open', [file]] : process.platform === 'win32' ? ['explorer.exe', [file]] : ['xdg-open', [file]];
-    try { spawn(cmd, a, { stdio: 'ignore', detached: true, windowsHide: true }).unref(); } catch {}
+  const inChat = showsViews();
+  if (open || !inChat) openOnDesktop(file);
+  const opened = `Opened out/${v} (${d.toFixed(1)} s) in the video player. It's at ${file}.`;
+  if (!inChat) return text(opened);
+  let copy = null, why = '';
+  try { copy = await within(chatCopy(file), 20000); } catch (e) { why = e.message; }
+  if (!copy) {
+    if (why) { if (!open) openOnDesktop(file); return text(`The in-chat player isn't available (${why}). ${opened}`); }
+    return { ...text(`Still making the preview for the chat (out/${v}, ${d.toFixed(1)} s). Call show again in a moment.`), structuredContent: { reel, pending: true } };
   }
-  return text(`Opened out/${v} (${duration(file).toFixed(1)} s) in the video player. It's at ${file}.`);
+  const size = fs.statSync(copy).size, { width, height } = probeSize(copy);
+  const title = reelInfo(reel)?.title || reel;
+  const nine16 = width && height && Math.abs(width / height - 9 / 16) < 0.02;
+  return {
+    ...text(`${open ? opened + ' It also' : `out/${v} (${d.toFixed(1)} s)`} plays in the chat now (a ${width}×${height} preview). The full-quality file is at ${file}${open ? '' : '; show with open: true opens it in the video player'}.`),
+    structuredContent: { reel, title, file: v, duration: d, width, height, size, parts: Math.ceil(size / PART), mimeType: 'video/mp4', safeZones: nine16 ? UI_ZONES : null },
+  };
+}));
+
+let playerHtml = null;
+registerAppResource(server, 'reelkit player', PLAYER, { description: 'Plays a finished reel inside the chat' }, async () => {
+  if (!playerHtml) {
+    // the SDK's self-contained browser build; its closing `export { … }` becomes window.__mcpApps for the page's script
+    const sdk = fs.readFileSync(new URL(import.meta.resolve('@modelcontextprotocol/ext-apps/app-with-deps')), 'utf8');
+    const m = sdk.match(/export\s*\{([^}]*)\}\s*;?\s*$/);
+    if (!m) throw new Error('the MCP Apps SDK build looks different than expected: reinstall reelkit\'s packages (npm install)');
+    const names = m[1].split(',').map(x => x.trim()).filter(Boolean).map(x => { const [local, as = local] = x.split(/\s+as\s+/); return `${JSON.stringify(as)}:${local}`; });
+    const inline = `${sdk.slice(0, m.index)}\nwindow.__mcpApps={${names.join(',')}};\n`.replace(/<\/(script)/gi, '<\\/$1');
+    playerHtml = fs.readFileSync(path.join(ROOT, 'scripts', 'mcp-player.html'), 'utf8').replace('/*APP_SDK*/', () => inline);
+  }
+  return { contents: [{ uri: PLAYER, mimeType: RESOURCE_MIME_TYPE, text: playerHtml, _meta: { ui: { prefersBorder: false } } }] };
 });
+
+// one part of a reel's chat copy, as base64; only ever the newest render of a reel that exists
+server.registerResource('reel video', new ResourceTemplate('reelkit-video://{reel}/{part}', { list: undefined }),
+  { description: 'Part of a reel\'s preview video, for the in-chat player', mimeType: 'video/mp4' },
+  async (uri, { reel, part }) => {
+    reel = String(Array.isArray(reel) ? reel[0] : reel); part = String(Array.isArray(part) ? part[0] : part);
+    reelPath(reel);
+    const file = newestVideo(reel);
+    if (!file) throw new Error(`${reel} has no video yet`);
+    const copy = await within(chatCopy(file), 20000);
+    if (!copy) throw new Error('the preview is still being made: try again in a moment');
+    const size = fs.statSync(copy).size, n = Math.ceil(size / PART), i = Number(part);
+    if (!/^\d+$/.test(part) || i >= n) throw new Error(`part ${part} doesn't exist: this video has parts 0–${n - 1}`);
+    const len = Math.min(PART, size - i * PART), buf = Buffer.alloc(len);
+    const fd = fs.openSync(copy, 'r'); try { fs.readSync(fd, buf, 0, len, i * PART); } finally { fs.closeSync(fd); }
+    return { contents: [{ uri: uri.href, mimeType: 'video/mp4', blob: buf.toString('base64') }] };
+  });
 
 // ---------- run ----------
 const transport = new StdioServerTransport();
-const bye = () => { stopAllJobs(); try { fs.rmSync(TMP, { recursive: true, force: true }); } catch {} process.exit(0); };
+const bye = () => { stopAllJobs(); for (const { child } of encoders.values()) try { child.kill('SIGKILL'); } catch {} try { fs.rmSync(TMP, { recursive: true, force: true }); } catch {} process.exit(0); };
 process.stdin.on('end', bye); process.stdin.on('close', bye);
 process.on('SIGTERM', bye); process.on('SIGINT', bye);
 await server.connect(transport);

@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { ffmpegPath, ffprobePath } from '../scripts/lib.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const slug = `zz-mcp-test-${process.pid}`, dir = path.join(ROOT, 'reels', slug);
@@ -17,8 +18,9 @@ const jobOf = r => (txt(r).match(/job "(\d+)"/) || [])[1];
 
 // started from another folder, as apps do; run returns a job after 1 s so the wait path is tested too
 const transport = new StdioClientTransport({ command: process.execPath, args: [path.join(ROOT, 'scripts', 'mcp.mjs')], cwd: os.tmpdir(),
-  env: { ...process.env, REELKIT_NO_OPEN: '1', REELKIT_MCP_FIRST_WAIT: '1', REELKIT_MCP_WAIT: '10' }, stderr: 'pipe' });
-const client = new Client({ name: 'reelkit-test', version: '1.0.0' });
+  env: { ...process.env, REELKIT_NO_OPEN: '1', REELKIT_MCP_FIRST_WAIT: '1', REELKIT_MCP_WAIT: '10', REELKIT_MCP_PART: '30000' }, stderr: 'pipe' });
+// an app that shows MCP Apps views (as Claude and ChatGPT do), so show answers with the in-chat player
+const client = new Client({ name: 'reelkit-test', version: '1.0.0' }, { capabilities: { extensions: { 'io.modelcontextprotocol/ui': { mimeTypes: ['text/html;profile=mcp-app'] } } } });
 const call = (name, args = {}) => client.callTool({ name, arguments: args }, undefined, { timeout: 60000 });
 async function until(r, limit = 300) {
   const t0 = Date.now();
@@ -86,6 +88,31 @@ try {
   out.stop = id ? /stopped|already finished/.test(txt(await call('stop', { job: id }))) : null;
   for (let i = 0; i < 25 && fs.existsSync(path.join(dir, '.job')); i++) await new Promise(r => setTimeout(r, 200));
   out.unlocked = !fs.existsSync(path.join(dir, '.job'));
+  // the player in the chat: show links to the ui:// view, which reads the video's chat copy in parts
+  const showTool = (await client.listTools()).tools.find(t => t.name === 'show');
+  out.showUi = showTool?._meta?.ui?.resourceUri === 'ui://reelkit/player.html';
+  out.noVideo = !!(await call('show', { reel: slug })).isError;
+  const render = path.join(ROOT, 'out', `${slug}.mp4`);
+  fs.mkdirSync(path.dirname(render), { recursive: true });
+  spawnSync(ffmpegPath(), ['-nostdin', '-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'testsrc2=size=1080x1920:rate=30:duration=2', '-f', 'lavfi', '-i', 'sine=duration=2',
+    '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-shortest', render]);
+  const sh = await call('show', { reel: slug });
+  const sc = sh.structuredContent || {};
+  out.showPlayer = !sh.isError && sc.parts > 1 && sc.width === 720 && sc.height === 1280 && !!sc.safeZones && /plays in the chat/.test(txt(sh));
+  const view = (await client.readResource({ uri: 'ui://reelkit/player.html' })).contents[0];
+  out.view = view.mimeType === 'text/html;profile=mcp-app' && view.text.includes('window.__mcpApps') && !view.text.includes('/*APP_SDK*/') && view.text.split('</script>').length === 2;
+  const parts = [];
+  for (let i = 0; i < (sc.parts || 0); i++) parts.push((await client.readResource({ uri: `reelkit-video://${slug}/${i}` })).contents[0].blob);
+  const joined = path.join(os.tmpdir(), `reelkit-mcp-${process.pid}.mp4`);
+  fs.writeFileSync(joined, Buffer.from(parts.join(''), 'base64'));
+  const dur = parseFloat(spawnSync(ffprobePath(), ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', joined], { encoding: 'utf8' }).stdout);
+  out.parts = fs.statSync(joined).size === sc.size && Math.abs(dur - sc.duration) < 0.15;
+  fs.rmSync(joined, { force: true });
+  const bad = [];
+  for (const u of [`reelkit-video://${slug}/${sc.parts}`, `reelkit-video://${slug}/-1`, 'reelkit-video://no-such-reel/0', `reelkit-video://..%2F${slug}/0`, `reelkit-video://${slug}/0x1`])
+    await client.readResource({ uri: u }).then(() => {}, () => bad.push(u));
+  out.videoRefused = bad.length;
+  out.frames = images(await call('show', { reel: slug, at: [0.5, 1.5] })) === 2;
   out.list = txt(await call('list_reels')).includes(slug);
   out.options = /riso/.test(txt(await call('options')));
 } catch (e) {
@@ -94,6 +121,7 @@ try {
   await client.close().catch(() => {});
   fs.rmSync(dir, { recursive: true, force: true });
   for (const f of fs.existsSync(path.join(ROOT, 'out')) ? fs.readdirSync(path.join(ROOT, 'out')) : []) if (f.startsWith(slug + '.') || f.startsWith(slug + '-')) fs.rmSync(path.join(ROOT, 'out', f), { recursive: true, force: true });
+  fs.rmSync(path.join(ROOT, 'out', '.chat', `${slug}.mp4`), { force: true });
   fs.rmSync(path.join(ROOT, 'series', `zz-mcp-${process.pid}`), { recursive: true, force: true });
 }
 
