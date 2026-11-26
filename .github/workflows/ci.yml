@@ -44,7 +44,11 @@ jobs:
       - run: npm test
   bundle:
     # the Claude Desktop extension: builds it, unpacks it and makes a reel with its own Node (scripts/pack-mcpb.mjs)
-    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
