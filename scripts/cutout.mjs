@@ -8,7 +8,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseArgs, reelDir, die, ROOT } from './lib.mjs';
+import { parseArgs, reelDir, die, ROOT, shown } from './lib.mjs';
 import { MODELS } from './speech.mjs';
 
 export const CUTOUT_MODEL = 'onnx-community/BiRefNet_lite-ONNX';
@@ -35,10 +35,10 @@ export async function makeCutout(photo, cut) {
 export async function ensureCutouts(dir, { force = false, log = console.log } = {}) {
   const todo = cutoutTargets(dir).filter(t => force || !fs.existsSync(t.cut) || fs.statSync(t.cut).mtimeMs < fs.statSync(t.photo).mtimeMs);
   for (const t of todo) {
-    if (!fs.existsSync(t.photo)) die(`cut-out photo not found: ${path.relative(ROOT, t.photo)}`);
+    if (!fs.existsSync(t.photo)) die(`cut-out photo not found: ${shown(t.photo)}`);
     const t0 = Date.now();
     await makeCutout(t.photo, t.cut);
-    log(`  cut-out: ${path.relative(ROOT, t.cut)} (${((Date.now() - t0) / 1000).toFixed(1)}s)`);
+    log(`  cut-out: ${shown(t.cut)} (${((Date.now() - t0) / 1000).toFixed(1)}s)`);
   }
   return todo.length;
 }

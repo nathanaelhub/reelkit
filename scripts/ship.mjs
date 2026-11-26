@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { parseArgs, reelDir, readJSON, openReel, ffmpegPath, ffprobePath, run, die, OUT, ROOT, TOOL_TIMEOUT } from './lib.mjs';
+import { parseArgs, reelDir, readJSON, openReel, ffmpegPath, ffprobePath, run, die, OUT, ROOT, TOOL_TIMEOUT, shown } from './lib.mjs';
 
 // ---------- captions ----------
 // Short lines: a new line after 7 words, 3 seconds, the end of a sentence, a comma after 4 words, or a scene change.
@@ -143,7 +143,7 @@ async function main() {
   const dir = reelDir(args._[0]), name = path.basename(dir);
   const tp = path.join(dir, 'timeline.json'), video = path.resolve(args.video || path.join(OUT, `${name}.mp4`));
   if (!fs.existsSync(tp)) die(`No timeline.json: npm run voice -- ${name}`);
-  if (!fs.existsSync(video)) die(`No final render at ${path.relative(ROOT, video)}: npm run render -- ${name} (not --draft)`);
+  if (!fs.existsSync(video)) die(`No final render at ${shown(video)}: npm run render -- ${name} (not --draft)`);
   const timeline = readJSON(tp), script = readJSON(path.join(dir, 'script.json'));
   if (fs.statSync(video).mtimeMs < fs.statSync(tp).mtimeMs) console.warn(`⚠ ${path.basename(video)} is older than the voiceover: render again before posting`);
   const outDir = path.resolve(args.out || path.join(OUT, `${name}.ship`)); fs.mkdirSync(outDir, { recursive: true });
@@ -154,7 +154,7 @@ async function main() {
   fs.writeFileSync(path.join(outDir, 'captions.vtt'), toVTT(lines));
   fs.writeFileSync(path.join(outDir, 'post.txt'), draftPost(script, timeline));
   const p = probeVideo(video), checks = checkVideo(p);
-  const report = [`${path.relative(ROOT, video)}: ${p.width}×${p.height}, ${p.fps.toFixed(0)} fps, ${p.seconds.toFixed(1)} s, ${p.mb.toFixed(1)} MB, ${p.vcodec}/${p.acodec || 'no audio'}${p.lufs != null && Number.isFinite(p.lufs) ? `, ${p.lufs.toFixed(1)} LUFS` : ''}`, ''];
+  const report = [`${shown(video)}: ${p.width}×${p.height}, ${p.fps.toFixed(0)} fps, ${p.seconds.toFixed(1)} s, ${p.mb.toFixed(1)} MB, ${p.vcodec}/${p.acodec || 'no audio'}${p.lufs != null && Number.isFinite(p.lufs) ? `, ${p.lufs.toFixed(1)} LUFS` : ''}`, ''];
   for (const plat of ['all', ...Object.keys(PLATFORMS)]) {
     const mine = checks.filter(c => c.platform === plat);
     if (plat === 'all') { mine.forEach(c => report.push(`⚠ ${c.msg}`)); continue; }
@@ -166,7 +166,7 @@ async function main() {
   report.push('', 'Text inside the shaded areas of safe-zones.jpg may be covered by the app (the areas are approximate).');
   fs.writeFileSync(path.join(outDir, 'checks.txt'), report.join('\n') + '\n');
 
-  console.log(`\n✓ ${path.relative(ROOT, outDir)}/`);
+  console.log(`\n✓ ${shown(outDir)}/`);
   console.log(`  cover.jpg       frame at ${at.toFixed(2)} s, captions off (change with --cover 3.2 or --cover @word)`);
   console.log(`  safe-zones.jpg  look at it: nothing important should sit in the shaded areas`);
   console.log(`  captions.srt    ${lines.length} lines (and .vtt)`);

@@ -7,6 +7,25 @@ setup, and you don't pay for a second agent.
 
 ## Add it
 
+### Claude Desktop: the one-click extension
+
+1. Download the extension for your computer from the [latest release](https://github.com/nathanaelhub/reelkit/releases/latest):
+   `reelkit-<version>-mac-arm64.mcpb` (Apple-silicon Mac) or `reelkit-<version>-windows-x64.mcpb`.
+2. Double-click it (or drag it into Claude → Settings → Extensions). Claude shows what it does and asks for a
+   **Reels folder**: where your reels, renders and voices are saved. `Documents/reelkit` is the default.
+3. Ask for a reel. The first one takes a few minutes longer: the model runs `setup`, which downloads a headless browser
+   and the free voice (about 300 MB, once).
+
+- The extension carries everything it runs, including its own copy of Node (Claude's built-in one can't start the
+  helper processes reelkit uses for each step). You don't need Node, npm or a terminal.
+- Updating or removing the extension never touches your reels folder. To move it, change **Reels folder** in the
+  extension's settings and move the folder yourself.
+- ElevenLabs or OpenAI voices: paste a key in the extension's settings; Claude keeps it in your system keychain.
+- Claude says the extension isn't verified because it isn't signed yet. It's built by this repo's release workflow
+  from the tagged source (`.github/workflows/release.yml`, `scripts/pack-mcpb.mjs`).
+
+### Other apps, or from a clone
+
 ```bash
 npm run doctor -- --fix   # once, in your reelkit folder: installs the browser, voice models and the rest
 npm run mcp -- install    # adds reelkit to every AI app it finds

@@ -5,20 +5,20 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseArgs, reelDir, readJSON, serve, die, ROOT, offlineGuard } from './lib.mjs';
+import { parseArgs, reelDir, readJSON, serve, die, ROOT, offlineGuard, shown, urlPath } from './lib.mjs';
 
 export async function renderScore(dir, { quiet = false } = {}) {
   const src = path.join(dir, 'score.js'), out = path.join(dir, 'score.wav');
-  if (!fs.existsSync(src)) die(`No score.js in ${path.relative(ROOT, dir)}. See engine/score-kit.js for how to write one.`);
+  if (!fs.existsSync(src)) die(`No score.js in ${shown(dir)}. See engine/score-kit.js for how to write one.`);
   const tlFile = path.join(dir, 'timeline.json');
-  if (!fs.existsSync(tlFile)) die(`No timeline.json in ${path.relative(ROOT, dir)}. Run: npm run voice -- ${path.basename(dir)}`);
+  if (!fs.existsSync(tlFile)) die(`No timeline.json in ${shown(dir)}. Run: npm run voice -- ${path.basename(dir)}`);
   const tl = readJSON(tlFile);
   const { chromium } = await import('playwright');
   // Scoring in headless Chromium occasionally never finishes (seen on macOS CI): sometimes the render, sometimes the
   // browser itself. Each try, from starting the browser to the finished wav, gets a time limit (REELKIT_STALL_SECONDS,
   // default 120); a stuck try is abandoned (its browser killed) and retried once in a fresh one.
   const LIMIT = +(process.env.REELKIT_STALL_SECONDS || 120) * 1000;
-  const rel = path.relative(ROOT, src).split(path.sep).join('/');
+  const rel = urlPath(src);
   for (let attempt = 1; ; attempt++) {
     const t0 = Date.now(), st = { step: 'starting the page server', gaveUp: false, server: null, browser: null };
     let timer;

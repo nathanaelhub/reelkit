@@ -8,12 +8,28 @@ import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const REELS = path.join(ROOT, 'reels');
-export const OUT = path.join(ROOT, 'out');
+// Your folder: reels, renders, series, voices, models and .env. The code folder (ROOT) unless REELKIT_HOME says
+// otherwise (the Claude Desktop bundle sets it to the folder chosen at install, so updates never touch your reels).
+const home = process.env.REELKIT_HOME && process.env.REELKIT_HOME.trim();
+export const HOME_DIR = home ? path.resolve(home.replace(/^~(?=$|[\\/])/, process.env.HOME || process.env.USERPROFILE || '~')) : ROOT;
+if (HOME_DIR !== ROOT) fs.mkdirSync(HOME_DIR, { recursive: true });
+export const REELS = path.join(HOME_DIR, 'reels');
+export const OUT = path.join(HOME_DIR, 'out');
+export const MODELS = path.join(HOME_DIR, 'models');
+// the top-level folders that live in your folder; everything else (engine/, styles/, scripts/) is the code's
+export const DATA_TOPS = ['reels', 'out', 'series', 'voices', 'taste', 'models'];
+// a path for messages: relative to your folder
+export const shown = f => path.relative(HOME_DIR, f) || '.';
+// the URL path the page server (serve) answers for a file in either folder
+export function urlPath(f) {
+  const r = path.relative(HOME_DIR, f);
+  const inHome = r && !r.startsWith('..') && !path.isAbsolute(r) && DATA_TOPS.includes(r.split(path.sep)[0]);
+  return (inHome ? r : path.relative(ROOT, f)).split(path.sep).join('/');
+}
 
 // ---- .env (no dependency) ----
 export function loadEnv() {
-  const f = path.join(ROOT, '.env');
+  const f = path.join(HOME_DIR, '.env');
   if (!fs.existsSync(f)) return;
   for (const line of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
     const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
@@ -44,7 +60,7 @@ export function reelDir(name) {
     die(`Which reel? Pass its folder name. Available: ${all.join(', ') || '(none — run npm run new -- <name>)'}`);
   }
   const d = path.isAbsolute(name) ? name : path.join(REELS, name.replace(/^reels[\\/]/, ''));
-  if (!fs.existsSync(d)) die(`No reel folder at ${path.relative(ROOT, d)}`);
+  if (!fs.existsSync(d)) die(`No reel folder at ${shown(d)}`);
   return d;
 }
 
@@ -118,8 +134,10 @@ export function serve(port = 0, handler = null) {
       let u;
       try { u = decodeURIComponent(new URL(req.url, 'http://x').pathname); } catch { res.writeHead(400); res.end('bad url'); return; }
       if (handler) { try { if (await handler(req, res, u)) return; } catch (e) { if (!res.headersSent) res.writeHead(500, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); return; } }
-      const f = path.normalize(path.join(ROOT, u));
-      if (!f.startsWith(ROOT) || path.relative(ROOT, f).split(path.sep).some(seg => seg.startsWith('.')) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); res.end('not found'); return; }
+      // /reels/, /out/, … come from your folder; the engine, styles and fonts from the code folder
+      const base = DATA_TOPS.includes(u.split('/').filter(Boolean)[0]) ? HOME_DIR : ROOT;
+      const f = path.normalize(path.join(base, u)), inside = path.relative(base, f);
+      if (!inside || inside.startsWith('..') || path.isAbsolute(inside) || inside.split(path.sep).some(seg => seg.startsWith('.')) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); res.end('not found'); return; }
       const stat = fs.statSync(f);
       const type = TYPES[path.extname(f).toLowerCase()] || 'application/octet-stream';
       const range = req.headers.range;
@@ -137,8 +155,7 @@ export function serve(port = 0, handler = null) {
 }
 
 export function reelURL(server, dir, query = '') {
-  const rel = path.relative(ROOT, path.join(dir, 'reel.html')).split(path.sep).join('/');
-  return server.url(rel) + query;
+  return server.url(urlPath(path.join(dir, 'reel.html'))) + query;
 }
 
 // REELKIT_OFFLINE=1 (set for renders started from an AI app over MCP): the page may only load from the local reel
@@ -155,8 +172,8 @@ export async function offlineGuard(page, errors = null) {
 
 // Open the reel page in headless Chromium, wait for kit.js to be ready.
 export async function openReel(dir, { scale = 1, style = null } = {}) {
-  if (!fs.existsSync(path.join(dir, 'timeline.json'))) die(`No timeline.json in ${path.relative(ROOT, dir)}. Run: npm run voice -- ${path.basename(dir)}`);
-  if (!fs.existsSync(path.join(dir, 'reel.html'))) die(`No reel.html in ${path.relative(ROOT, dir)}.`);
+  if (!fs.existsSync(path.join(dir, 'timeline.json'))) die(`No timeline.json in ${shown(dir)}. Run: npm run voice -- ${path.basename(dir)}`);
+  if (!fs.existsSync(path.join(dir, 'reel.html'))) die(`No reel.html in ${shown(dir)}.`);
   const { chromium } = await import('playwright');
   const server = await serve();
   let browser;

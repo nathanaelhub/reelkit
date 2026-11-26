@@ -19,7 +19,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { parseArgs, reelDir, readJSON, writeJSON, ffmpegPath, mediaDuration, run, die, which, ROOT } from './lib.mjs';
+import { parseArgs, reelDir, readJSON, writeJSON, ffmpegPath, mediaDuration, run, die, which, ROOT, HOME_DIR } from './lib.mjs';
 import { cutTalk, talkSource, talkClipPath, ensureFootage } from './footage.mjs';
 import { chatterbox as chatterboxSay, CHATTERBOX_DEFAULT_VOICE } from './speech.mjs';
 import { languageOf, LANGUAGES } from './languages.mjs';
@@ -118,7 +118,7 @@ async function chatterbox(text, wav) {
 function chatterboxRef() {
   const r = (vcfg.chatterbox || {}).reference;
   if (!r) return CHATTERBOX_DEFAULT_VOICE;
-  const f = [path.resolve(dir, r), path.resolve(ROOT, r)].find(x => fs.existsSync(x));
+  const f = [path.resolve(dir, r), path.resolve(HOME_DIR, r), path.resolve(ROOT, r)].find(x => fs.existsSync(x));
   if (!f) die(`Chatterbox reference voice "${r}" not found (looked in the reel folder and the repo)`);
   return f;
 }

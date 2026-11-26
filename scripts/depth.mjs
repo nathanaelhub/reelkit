@@ -7,7 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseArgs, reelDir, ffmpegPath, run, die, ROOT } from './lib.mjs';
+import { parseArgs, reelDir, ffmpegPath, run, die, ROOT, shown } from './lib.mjs';
 import { MODELS } from './speech.mjs';
 
 export const DEPTH_MODEL = 'onnx-community/depth-anything-v2-small';
@@ -42,10 +42,10 @@ export async function makeDepthMap(photo, map) {
 export async function ensureDepthMaps(dir, { force = false, log = console.log } = {}) {
   const todo = depthTargets(dir).filter(t => t.generated && (force || !fs.existsSync(t.map) || fs.statSync(t.map).mtimeMs < fs.statSync(t.photo).mtimeMs));
   for (const t of todo) {
-    if (!fs.existsSync(t.photo)) die(`depth photo not found: ${path.relative(ROOT, t.photo)}`);
+    if (!fs.existsSync(t.photo)) die(`depth photo not found: ${shown(t.photo)}`);
     const t0 = Date.now();
     await makeDepthMap(t.photo, t.map);
-    log(`  depth map: ${path.relative(ROOT, t.map)} (${((Date.now() - t0) / 1000).toFixed(1)}s)`);
+    log(`  depth map: ${shown(t.map)} (${((Date.now() - t0) / 1000).toFixed(1)}s)`);
   }
   return todo.length;
 }

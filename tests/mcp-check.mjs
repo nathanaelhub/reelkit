@@ -10,7 +10,9 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { ffmpegPath, ffprobePath } from '../scripts/lib.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const slug = `zz-mcp-test-${process.pid}`, dir = path.join(ROOT, 'reels', slug);
+// REELKIT_HOME set: reels live in that folder instead of the code folder (as in the Claude Desktop extension)
+const DATA = process.env.REELKIT_HOME ? path.resolve(process.env.REELKIT_HOME) : ROOT;
+const slug = `zz-mcp-test-${process.pid}`, dir = path.join(DATA, 'reels', slug);
 const out = {};
 const txt = r => r.content.filter(c => c.type === 'text').map(c => c.text).join('\n');
 const images = r => r.content.filter(c => c.type === 'image').length;
@@ -92,7 +94,7 @@ try {
   const showTool = (await client.listTools()).tools.find(t => t.name === 'show');
   out.showUi = showTool?._meta?.ui?.resourceUri === 'ui://reelkit/player.html';
   out.noVideo = !!(await call('show', { reel: slug })).isError;
-  const render = path.join(ROOT, 'out', `${slug}.mp4`);
+  const render = path.join(DATA, 'out', `${slug}.mp4`);
   fs.mkdirSync(path.dirname(render), { recursive: true });
   spawnSync(ffmpegPath(), ['-nostdin', '-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'testsrc2=size=1080x1920:rate=30:duration=2', '-f', 'lavfi', '-i', 'sine=duration=2',
     '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-shortest', render]);
@@ -120,9 +122,9 @@ try {
 } finally {
   await client.close().catch(() => {});
   fs.rmSync(dir, { recursive: true, force: true });
-  for (const f of fs.existsSync(path.join(ROOT, 'out')) ? fs.readdirSync(path.join(ROOT, 'out')) : []) if (f.startsWith(slug + '.') || f.startsWith(slug + '-')) fs.rmSync(path.join(ROOT, 'out', f), { recursive: true, force: true });
-  fs.rmSync(path.join(ROOT, 'out', '.chat', `${slug}.mp4`), { force: true });
-  fs.rmSync(path.join(ROOT, 'series', `zz-mcp-${process.pid}`), { recursive: true, force: true });
+  for (const f of fs.existsSync(path.join(DATA, 'out')) ? fs.readdirSync(path.join(DATA, 'out')) : []) if (f.startsWith(slug + '.') || f.startsWith(slug + '-')) fs.rmSync(path.join(DATA, 'out', f), { recursive: true, force: true });
+  fs.rmSync(path.join(DATA, 'out', '.chat', `${slug}.mp4`), { force: true });
+  fs.rmSync(path.join(DATA, 'series', `zz-mcp-${process.pid}`), { recursive: true, force: true });
 }
 
 // install: merges into a config, keeps other servers, changes nothing the second time, uninstall leaves the rest

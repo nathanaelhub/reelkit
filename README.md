@@ -86,12 +86,16 @@ Choose **A series** in the studio, paste an article, your notes or a link, pick 
 
 ### From Claude Desktop or another AI app
 
+**Claude Desktop, no terminal:** download `reelkit-…-mac-arm64.mcpb` (Apple-silicon Mac) or `reelkit-…-windows-x64.mcpb` from the [latest release](https://github.com/nathanaelhub/reelkit/releases/latest) and double-click it. Claude asks where to save your reels (`Documents/reelkit` by default) and installs it. Everything it needs comes inside, including its own Node; the first reel downloads a headless browser and a free voice (about 300 MB, once).
+
+**Cursor, Claude Code, or an Intel Mac:** from your reelkit folder,
+
 ```bash
 npm run doctor -- --fix   # once: installs everything
 npm run mcp -- install    # adds reelkit to Claude Desktop, Cursor and Claude Code
 ```
 
-Restart the app, then ask it in the chat: *"make a 20-second reel about why octopuses have three hearts, riso style"*. The app's own model writes the script and the scenes, runs voice, check and render through reelkit's tools, looks at the contact sheets, and plays the finished video right in the chat (in apps that support it; otherwise it opens in your video player). Nothing to type in a terminal after setup, and no second bill: the chat you already use does the work. Any app that runs local MCP servers works (`npm run mcp -- --print` shows the settings to paste). What the tools can do, and what they can't reach on your computer, is in [docs/mcp.md](docs/mcp.md).
+Then ask it in the chat: *"make a 20-second reel about why octopuses have three hearts, riso style"*. The app's own model writes the script and the scenes, runs voice, check and render through reelkit's tools, looks at the contact sheets, and plays the finished video right in the chat (in apps that support it; otherwise it opens in your video player). Nothing to type in a terminal after setup, and no second bill: the chat you already use does the work. Any app that runs local MCP servers works (`npm run mcp -- --print` shows the settings to paste). What the tools can do, and what they can't reach on your computer, is in [docs/mcp.md](docs/mcp.md).
 
 ### By talking to the agent
 
@@ -269,7 +273,8 @@ Read their `reel.html` and `score.js` to see everything the kit can do.
 - [ ] Light upscaling for small photos (Swin2SR): see [open tools worth knowing](docs/open-tools.md)
 - [x] An MCP server: make reels from Claude Desktop, Cursor and other AI apps
 - [x] A video player inside the chat (MCP Apps)
-- [ ] A one-click Claude Desktop extension (.mcpb)
+- [x] A one-click Claude Desktop extension (.mcpb), for Apple-silicon Macs and Windows
+- [ ] An Intel Mac build of the extension, and signing it
 
 Ideas and PRs welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).
 

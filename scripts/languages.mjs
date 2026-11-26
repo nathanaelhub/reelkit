@@ -9,10 +9,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
-import { run, ROOT } from './lib.mjs';
+import { run, ROOT, MODELS } from './lib.mjs';
 
 // (not imported from speech.mjs, which imports this file)
-const MODELS = path.join(ROOT, 'models');
 const KOKORO_DIR = path.join(MODELS, 'kokoro-int8-multi-lang-v1_0');
 
 // code → name, eSpeak NG voice, Whisper language, Kokoro voices (first = default). Kokoro v1.0 was trained on these.

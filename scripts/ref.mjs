@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
-import { ROOT, parseArgs, die, which, ffmpegPath, ffprobePath, writeJSON, readJSON } from './lib.mjs';
+import { ROOT, parseArgs, die, which, ffmpegPath, ffprobePath, writeJSON, readJSON, HOME_DIR } from './lib.mjs';
 
 const VIDEO = /\.(mp4|mov|m4v|webm|mkv)$/i;
 const CUT = 0.3;        // ffmpeg scene score above which a frame change counts as a cut
@@ -21,7 +21,7 @@ const MIN_SHOT = 0.25;  // ignore cuts closer together than this (flashes, strob
 
 export function tasteDir(name) {
   if (!name) die('Usage: npm run ref -- <taste> [url-or-file …]');
-  return path.isAbsolute(name) ? name : path.join(ROOT, 'taste', name);
+  return path.isAbsolute(name) ? name : path.join(HOME_DIR, 'taste', name);
 }
 
 function sh(bin, args, opts = {}) {

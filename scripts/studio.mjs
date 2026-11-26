@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { SLUG, reelInfo, listReels, jobs, startJob, stopAllJobs, node, ACTIONS } from './jobs.mjs';
-import { serve, ROOT, REELS, OUT, readJSON, writeJSON, listStyles, which, parseArgs } from './lib.mjs';
+import { serve, ROOT, REELS, OUT, readJSON, writeJSON, listStyles, which, parseArgs, MODELS } from './lib.mjs';
 import { listVoices, voiceName, PARAGRAPH, VOICES } from './myvoice.mjs';
 import { createSeries, listSeries, seriesName, SERIES } from './series.mjs';
 import { LANGUAGES, languageOf } from './languages.mjs';
@@ -98,7 +98,7 @@ async function api(req, res, u) {
   if (u === '/api/state' && req.method === 'GET') {
     return json(res, 200, { reels: listReels(), styles: listStyles().map(({ name, title, description, swatch }) => ({ name, title, description, swatch })),
       agent: !!claudeBin(), languages: Object.entries(LANGUAGES).map(([code, l]) => ({ code, name: l.name })), voices: listVoices(), series: listSeries().map(({ name, title, count, parts }) => ({ name, title, count, parts: parts.length })), paragraph: PARAGRAPH,
-      chatterbox: fs.existsSync(path.join(ROOT, 'models/transformers/onnx-community/chatterbox-ONNX/onnx/language_model_q4.onnx_data')), jobs: [...jobs.values()].map(j => ({ id: j.id, label: j.label, reel: j.reel, running: j.running, code: j.code })) });
+      chatterbox: fs.existsSync(path.join(MODELS, 'transformers/onnx-community/chatterbox-ONNX/onnx/language_model_q4.onnx_data')), jobs: [...jobs.values()].map(j => ({ id: j.id, label: j.label, reel: j.reel, running: j.running, code: j.code })) });
   }
   if (m) {
     const slug = m[1], sub = m[2] || '';
@@ -133,7 +133,7 @@ async function api(req, res, u) {
       const file = path.join(fdir, name);
       await new Promise((resolve, reject) => { const w = fs.createWriteStream(file); req.pipe(w); w.on('finish', resolve); w.on('error', reject); req.on('error', reject); });
       if (!fs.statSync(file).size) return json(res, 400, { error: 'the upload was empty' });
-      const [cmd, a] = node('footage.mjs', [slug, path.relative(ROOT, file), ...(q.get('talk') === '1' ? ['--talk'] : [])]);
+      const [cmd, a] = node('footage.mjs', [slug, file, ...(q.get('talk') === '1' ? ['--talk'] : [])]);
       const job = startJob(`footage ${slug}`, cmd, a, { reel: slug });
       return json(res, 200, { job: job.id });
     }

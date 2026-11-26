@@ -11,7 +11,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseArgs, reelDir, die, serve, ROOT } from './lib.mjs';
+import { parseArgs, reelDir, die, serve, ROOT, shown, urlPath } from './lib.mjs';
 import { MODELS } from './speech.mjs';
 import { findCuts } from './footage.mjs';
 
@@ -104,7 +104,7 @@ async function tracker() {
 
 export async function makeFaceTrack(clip, track, { fps = 6 } = {}) {
   const { page, server } = await tracker();
-  const rel = path.relative(ROOT, clip).split(path.sep).join('/');
+  const rel = urlPath(clip);
   if (rel.startsWith('..')) die(`clip must be inside the repo: ${clip}`);
   const r = await page.evaluate(([u, f]) => window.detectFaces(u, f), [server.url(rel), fps]);
   const cuts = findCuts(clip);
@@ -118,10 +118,10 @@ export async function ensureFaceTracks(dir, { force = false, log = console.log }
   const todo = faceTargets(dir).filter(t => t.generated && (force || !fs.existsSync(t.track) || (fs.existsSync(t.clip) && fs.statSync(t.track).mtimeMs < fs.statSync(t.clip).mtimeMs)));
   try {
     for (const t of todo) {
-      if (!fs.existsSync(t.clip)) die(`clip not found: ${path.relative(ROOT, t.clip)}${t.clip.endsWith('.talk.mp4') ? ' (npm run voice makes talk clips)' : ''}`);
+      if (!fs.existsSync(t.clip)) die(`clip not found: ${shown(t.clip)}${t.clip.endsWith('.talk.mp4') ? ' (npm run voice makes talk clips)' : ''}`);
       const t0 = Date.now();
       const { found, samples } = await makeFaceTrack(t.clip, t.track);
-      log(`  face track: ${path.relative(ROOT, t.track)} (face in ${Math.round(100 * found / samples)}% of frames, ${((Date.now() - t0) / 1000).toFixed(1)}s)`);
+      log(`  face track: ${shown(t.track)} (face in ${Math.round(100 * found / samples)}% of frames, ${((Date.now() - t0) / 1000).toFixed(1)}s)`);
     }
   } finally { if (ctx) await ctx.close(); }
   return todo.length;

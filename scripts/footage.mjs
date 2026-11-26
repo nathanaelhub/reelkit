@@ -22,7 +22,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { parseArgs, reelDir, readJSON, writeJSON, ffmpegPath, ffprobePath, run, die, ROOT, OUT } from './lib.mjs';
+import { parseArgs, reelDir, readJSON, writeJSON, ffmpegPath, ffprobePath, run, die, ROOT, OUT, shown } from './lib.mjs';
 import { transcribeWords } from './speech.mjs';
 
 // ---------- probing ----------
@@ -111,7 +111,7 @@ export const cutLength = cut => cut.reduce((s, [a, b]) => s + b - a, 0);
 export function normalize(input, out) {
   const info = probe(input);
   if (!info.video) die(`${input} has no video stream`);
-  process.stdout.write(`▸ copying into ${path.relative(ROOT, out)} (H.264, keyframe every 10 frames) …`);
+  process.stdout.write(`▸ copying into ${shown(out)} (H.264, keyframe every 10 frames) …`);
   run(ffmpegPath(), ['-y', '-loglevel', 'error', '-i', input, '-vf', "scale='min(1920,iw)':-2,fps=30,format=yuv420p", '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-g', '10',
     ...(info.audio ? ['-c:a', 'aac', '-b:a', '192k', '-ar', '48000'] : ['-an']), '-movflags', '+faststart', out]);
   console.log(' done');
@@ -173,7 +173,7 @@ export async function ensureTalkClips(dir, { log = console.log } = {}) {
   for (const s of readJSON(sp).scenes || []) {
     if (!s.footage || fs.existsSync(talkClipPath(dir, s))) continue;
     cutTalk(dir, s); n++;
-    log(`  talk clip: ${path.relative(ROOT, talkClipPath(dir, s))}`);
+    log(`  talk clip: ${shown(talkClipPath(dir, s))}`);
   }
   return n;
 }
@@ -258,8 +258,8 @@ async function main() {
   const fmt = t => t.toFixed(1).padStart(6);
   console.log(`\n✓ ${rel}: ${info.duration.toFixed(1)}s, ${info.width}×${info.height}, ${shots.length} shots, ${words.length} words`);
   console.log(`  shots: ${shots.map(([a, b], i) => `${i + 1} ${a.toFixed(1)}–${b.toFixed(1)}`).join(' · ')}`);
-  console.log(`  contact sheet (look at it): ${path.relative(ROOT, sheet)}`);
-  console.log(`  details: ${path.relative(ROOT, path.join(fdir, name + '.json'))}`);
+  console.log(`  contact sheet (look at it): ${shown(sheet)}`);
+  console.log(`  details: ${shown(path.join(fdir, name + '.json'))}`);
 
   if (!args.talk) {
     if (words.length) console.log(`\n  said: ${sentences(words).map(s => `[${s[0].start.toFixed(1)}] ${s.map(w => w.w).join(' ')}`).join('\n        ')}`);
