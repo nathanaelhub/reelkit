@@ -42,3 +42,16 @@ jobs:
           key: models-${{ runner.os }}-kokoro-int8-v1_0-whisper-base-q8-depth-v2-small-blazeface-birefnet
       - run: npm run doctor -- --fix
       - run: npm test
+  bundle:
+    # the Claude Desktop extension: builds it, unpacks it and makes a reel with its own Node (scripts/pack-mcpb.mjs)
+    runs-on: macos-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install chromium
+      - run: node scripts/pack-mcpb.mjs

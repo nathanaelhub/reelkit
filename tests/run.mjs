@@ -11,9 +11,9 @@ import { buildTrack } from '../scripts/faces.mjs';
 import { captionLines, toSRT, checkVideo } from '../scripts/ship.mjs';
 import { numberToWords, prepareForKokoro, alignTokens, cmuToKokoro, kokoroInstalled, sherpaInstalled, inflect } from '../scripts/speech.mjs';
 
-const node = (script, args) => {
+const node = (script, args, env = {}) => {
   // a hung script fails its case (named in the output) instead of stalling the whole run
-  const r = spawnSync(process.execPath, [script, ...args], { encoding: 'utf8', timeout: 8 * 60e3 });
+  const r = spawnSync(process.execPath, [script, ...args], { encoding: 'utf8', timeout: 8 * 60e3, env: { ...process.env, ...env } });
   return { status: r.status, out: (r.stdout || '') + (r.stderr || '') + (r.error ? `\n[${r.error.code === 'ETIMEDOUT' ? 'timed out after 8 min' : r.error.message}]` : '') };
 };
 // check a script's exit code, required substrings and forbidden patterns
@@ -23,6 +23,22 @@ const expectRun = (r, { exit, expect = [], forbid = [] }) => {
   return { ok, detail: `exit ${r.status} (wanted ${exit})${missing.length ? '\n  missing: ' + missing.join(' | ') : ''}${hit.length ? '\n  should not appear: ' + hit.join(' | ') : ''}\n${r.out}` };
 };
 
+// the MCP server driven like an AI app does (tests/mcp-check.mjs); env sets e.g. REELKIT_HOME
+const mcpCheck = (env = {}) => {
+    const r = node('tests/mcp-check.mjs', [], env);
+    let j; try { j = JSON.parse(r.out.trim().split('\n').pop()); } catch { return { ok: false, detail: r.out }; }
+    if (j.error) return { ok: false, detail: `${j.error}\n${JSON.stringify(j)}` };
+    const want = { instructions: true, guide: true, guideRiso: true, guideBad: true, newReel: true, newAgain: true, newBadSlug: true, edit: true, editBadJson: true,
+      crlf: true, read: true, del: true, refused: 10, readOutside: true, delScript: true, assetPng: true, assetText: true, assetEnvAsPng: true, assetHttp: true,
+      seriesPath: true, voice: true, check: true, blocked: true, lock: true, busy: true, stop: true, unlocked: true, list: true, options: true,
+      showUi: true, noVideo: true, showPlayer: true, view: true, parts: true, videoRefused: 5, frames: true,
+      install: true, installAgain: true, backup: true, uninstall: true, badJson: true };
+    const problems = Object.entries(want).filter(([k, v]) => j[k] !== v).map(([k, v]) => `${k}: ${j[k]} (wanted ${v})`);
+    if (j.tools.split(',').length !== 18) problems.push(`tools: ${j.tools}`);
+    if (!(j.checkImages >= 1)) problems.push(`check returned ${j.checkImages} contact sheets as pictures`);
+    if (fs.readdirSync(path.resolve('reels')).some(d => d.startsWith('zz-mcp-test-'))) problems.push('the test reel was left behind');
+    return { ok: !problems.length, detail: problems.join('\n  ') };
+  };
 const cases = [
   ['speech: numbers, money, years, ratios and ordinals become words', () => {
     const want = { '1776': 'seventeen seventy-six', '2026': 'twenty twenty-six', '2005': 'two thousand five', '1900': 'nineteen hundred',
@@ -111,20 +127,18 @@ const cases = [
     if (j.voiceMissing !== 404 || j.reelVoiceBad !== 400) problems.push(`unknown voice: delete ${j.voiceMissing}, use in a reel ${j.reelVoiceBad}`);
     return { ok: !problems.length, detail: problems.join('\n  ') };
   }],
-  ['mcp: an AI app can make a reel through the tools, only inside reel folders, one job per reel, offline renders, the in-chat player\'s video, and install merges configs', () => {
-    const r = node('tests/mcp-check.mjs', []);
-    let j; try { j = JSON.parse(r.out.trim().split('\n').pop()); } catch { return { ok: false, detail: r.out }; }
-    if (j.error) return { ok: false, detail: `${j.error}\n${JSON.stringify(j)}` };
-    const want = { instructions: true, guide: true, guideRiso: true, guideBad: true, newReel: true, newAgain: true, newBadSlug: true, edit: true, editBadJson: true,
-      crlf: true, read: true, del: true, refused: 10, readOutside: true, delScript: true, assetPng: true, assetText: true, assetEnvAsPng: true, assetHttp: true,
-      seriesPath: true, voice: true, check: true, blocked: true, lock: true, busy: true, stop: true, unlocked: true, list: true, options: true,
-      showUi: true, noVideo: true, showPlayer: true, view: true, parts: true, videoRefused: 5, frames: true,
-      install: true, installAgain: true, backup: true, uninstall: true, badJson: true };
-    const problems = Object.entries(want).filter(([k, v]) => j[k] !== v).map(([k, v]) => `${k}: ${j[k]} (wanted ${v})`);
-    if (j.tools.split(',').length !== 18) problems.push(`tools: ${j.tools}`);
-    if (!(j.checkImages >= 1)) problems.push(`check returned ${j.checkImages} contact sheets as pictures`);
-    if (fs.readdirSync(path.resolve('reels')).some(d => d.startsWith('zz-mcp-test-'))) problems.push('the test reel was left behind');
-    return { ok: !problems.length, detail: problems.join('\n  ') };
+  ['mcp: an AI app can make a reel through the tools, only inside reel folders, one job per reel, offline renders, the in-chat player\'s video, and install merges configs', () => mcpCheck()],
+  ['home folder: with REELKIT_HOME (the Claude Desktop extension) reels, renders and series live there, the engine still loads, and nothing lands in the code folder', () => {
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), 'reelkit-home-'));
+    const before = ['reels', 'out', 'series'].map(d => fs.existsSync(path.resolve(d)) ? fs.readdirSync(path.resolve(d)).length : 0).join();
+    try {
+      const r = mcpCheck({ REELKIT_HOME: home });
+      const after = ['reels', 'out', 'series'].map(d => fs.existsSync(path.resolve(d)) ? fs.readdirSync(path.resolve(d)).length : 0).join();
+      const problems = r.ok ? [] : [r.detail];
+      if (before !== after) problems.push(`the code folder changed: reels/out/series had ${before} entries, now ${after}`);
+      if (!fs.existsSync(path.join(home, 'out', '.chat'))) problems.push('nothing was rendered into the home folder');
+      return { ok: !problems.length, detail: problems.join('\n  ') };
+    } finally { fs.rmSync(home, { recursive: true, force: true }); }
   }],
   ['mcp player: the reel plays in the chat in a sandboxed view, under the strict default policy (data:) and without it (blob:), with safe zones and open full quality', () => {
     const r = node('tests/player-check.mjs', []);

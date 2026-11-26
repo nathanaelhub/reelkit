@@ -5,11 +5,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { spawnSync } from 'node:child_process';
-import { ROOT, run } from './lib.mjs';
+import { ROOT, run, MODELS } from './lib.mjs';
 import { phonemize, languageOf, voiceLanguage, LANGUAGES } from './languages.mjs';
 
 const require = createRequire(import.meta.url);
-export const MODELS = path.join(ROOT, 'models');
+export { MODELS };
 export const KOKORO_DIR = path.join(MODELS, 'kokoro-int8-multi-lang-v1_0');
 export const KOKORO_URL = 'https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-multi-lang-v1_0.tar.bz2';
 export const WHISPER_MODEL = 'onnx-community/whisper-base_timestamped';

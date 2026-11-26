@@ -13,10 +13,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { parseArgs, die, run, ffmpegPath, mediaDuration, ROOT, readJSON, writeJSON, TOOL_TIMEOUT } from './lib.mjs';
+import { parseArgs, die, run, ffmpegPath, mediaDuration, ROOT, readJSON, writeJSON, TOOL_TIMEOUT, HOME_DIR } from './lib.mjs';
 import { transcribeWords, alignTokens, chatterbox } from './speech.mjs';
 
-export const VOICES = path.join(ROOT, 'voices');
+export const VOICES = path.join(HOME_DIR, 'voices');
 export const PARAGRAPH = "This is my own voice, and I'm recording it for my own videos. Every morning I walk past the bakery on the corner, where warm bread and strong coffee drift out into the street. Sometimes I stop, check the weather, and think about what I'll make next. It's a small routine, but it's a good way to start the day.";
 export const SAMPLE_LINE = "Here's how your reels will sound in this voice. Not bad for twenty seconds of reading.";
 const MIN_SECONDS = 8, MAX_SECONDS = 30, MIN_WORDS = 15, MIN_MATCH = 0.5;

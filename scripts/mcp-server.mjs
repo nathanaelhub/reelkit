@@ -12,7 +12,7 @@ import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mc
 import { registerAppTool, registerAppResource, getUiCapability, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { ROOT, REELS, OUT, readJSON, writeJSON, listStyles, ffmpegPath, ffprobePath } from './lib.mjs';
+import { ROOT, HOME_DIR, REELS, OUT, readJSON, writeJSON, listStyles, ffmpegPath, ffprobePath } from './lib.mjs';
 import { SLUG, reelInfo, listReels, jobs, startJob, stopAllJobs, node, ACTIONS } from './jobs.mjs';
 import { listVoices } from './myvoice.mjs';
 import { createSeries, seriesStatus, seriesName, SERIES } from './series.mjs';
@@ -26,14 +26,14 @@ const WAIT = +(process.env.REELKIT_MCP_WAIT || 25) * 1000;              // wait:
 const IMAGE_BUDGET = 1.5 * 1024 * 1024;                                  // bytes of pictures per result
 const JOB_ENV = { REELKIT_OFFLINE: '1' };                                // see offlineGuard in lib.mjs
 process.env.REELKIT_JOB_FROM = 'an AI app (MCP)';
-process.chdir(ROOT); // apps start this from anywhere; reelkit's scripts and createSeries resolve paths from here
+process.chdir(HOME_DIR); // apps start this from anywhere; createSeries resolves paths from your folder
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'reelkit-mcp-'));
 
 // ---------- small helpers ----------
 const text = (t, extra = []) => ({ content: [{ type: 'text', text: t }, ...extra] });
 const fail = t => ({ content: [{ type: 'text', text: t }], isError: true });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const rel = f => path.relative(ROOT, f).split(path.sep).join('/');
+const rel = f => path.relative(HOME_DIR, f).split(path.sep).join('/');
 const tool = fn => async (args, extra) => { try { return await fn(args || {}, extra); } catch (e) { return fail(e.message || String(e)); } };
 const reelPath = slug => {
   if (!SLUG.test(String(slug || ''))) throw new Error(`"${slug}" isn't a reel name: lowercase letters, digits and dashes (list_reels shows them)`);
@@ -55,10 +55,10 @@ function safePath(p, { text: mustBeText = true } = {}) {
   if (parts.some(x => x.startsWith('.'))) throw new Error(`"${s}": hidden files (starting with a dot) can't be read or written`);
   const [top, name] = parts;
   if (!['reels', 'series'].includes(top) || parts.length < 3) throw new Error(`"${s}": only files inside reels/<slug>/ or series/<name>/ can be read or written`);
-  const home = path.join(ROOT, top, name);
+  const home = path.join(HOME_DIR, top, name);
   if (top === 'reels' && (!SLUG.test(name) || !fs.existsSync(path.join(home, 'script.json')))) throw new Error(`there is no reel "${name}" (new_reel makes one)`);
   if (top === 'series' && (seriesName(name) !== name || !fs.existsSync(path.join(home, 'series.json')))) throw new Error(`there is no series "${name}" (new_series makes one)`);
-  const abs = path.join(ROOT, ...parts);
+  const abs = path.join(HOME_DIR, ...parts);
   // follow symlinks: whatever exists of the path must really be inside that reel or series
   let probe = abs; while (!fs.existsSync(probe)) probe = path.dirname(probe);
   const inside = path.relative(fs.realpathSync(home), fs.realpathSync(probe));
@@ -194,7 +194,7 @@ const SKILL_DIR = path.join(ROOT, '.claude', 'skills', 'make-reel');
 const PREAMBLE = `# Making reels with reelkit's tools
 
 You are working through reelkit's MCP tools, not a terminal. The guide below was written for coding agents, so read it with these swaps:
-- Paths are relative to the reelkit folder (${ROOT}). Write files with write_file / edit_file (reels/<slug>/script.json, reel.html, score.js); read them with read_file.
+- Paths are relative to the person's reelkit folder (${HOME_DIR}), where reels are saved. Write files with write_file / edit_file (reels/<slug>/script.json, reel.html, score.js); read them with read_file.
 - \`npm run doctor\` → setup (setup with fix: true installs what's missing). \`npm run new\` → new_reel. \`npm run styles\`, \`npm run my-voice -- list\` and the voice lists → options.
 - \`npm run voice / check / render / score / ship / depth / cutout / clip -- <slug>\` → run with that step (options: style, from, to, cover). Long steps return a job: call wait with it until it's done.
 - "Open every contact sheet with the Read tool" → run check returns the sheets as pictures. Look at every one, fix, check again.
@@ -295,7 +295,7 @@ function finish(job) {
     const jf = path.join(OUT, `${name}.check.json`);
     if (!fs.existsSync(jf) || fs.statSync(jf).mtimeMs < started - 1500) return failed(`check couldn't run (exit ${code}).`);
     const r = readJSON(jf);
-    const sheets = (r.sheets || []).map(s => path.join(ROOT, s)).filter(f => fs.existsSync(f) && fs.statSync(f).mtimeMs >= started - 1500);
+    const sheets = (r.sheets || []).map(s => path.join(HOME_DIR, s)).filter(f => fs.existsSync(f) && fs.statSync(f).mtimeMs >= started - 1500);
     const errs = r.issues.filter(i => i.level === 'error'), warns = r.issues.filter(i => i.level !== 'error');
     const lines = r.issues.map(i => `${i.level === 'error' ? '✗' : '⚠'} [${i.scene}] ${i.el ? i.el + ': ' : ''}${i.msg}`);
     const still = (r.motion || []).filter(m => m.longest >= 1).map(m => `${m.id} still for ${m.longest.toFixed(1)} s`);
@@ -346,7 +346,7 @@ const server = new McpServer({ name: 'reelkit', title: 'reelkit', version: VERSI
   instructions: `reelkit makes short vertical videos (reels, TikToks, Shorts) on this computer: voiced, captioned, animated and scored, from HTML.
 Before making or changing a reel, call guide (no topic) and follow it: it is how a good reel is made, step by step. Call setup once if a step complains something is missing.
 Slow steps (voice, check, render, ship) return a job: call wait with it until it is done. Look at every picture a result contains: they are how you see your work.
-Finished videos stay in the person's reelkit folder (${ROOT}); show plays one in the chat (or opens it) for them.`,
+Finished videos stay in the person's reelkit folder (${HOME_DIR}, in out/); show plays one in the chat (or opens it) for them.`,
 });
 const reg = (name, title, description, shape, fn) => server.registerTool(name, { title, description, inputSchema: shape }, tool(fn));
 
@@ -543,7 +543,7 @@ reg('new_series', 'New series', 'Set up a series: several reels from one source,
 }, async ({ name, source, count = 5, style, voice }) => {
   const src = String(source || '').trim();
   // only text or a link: createSeries would read a file at a path, and that isn't allowed from here
-  const looksLikePath = !/\s/.test(src) && !isLink(src) && (/^[~/\\.]|^[a-zA-Z]:/.test(src) || fs.existsSync(path.resolve(ROOT, src)));
+  const looksLikePath = !/\s/.test(src) && !isLink(src); // pasted text has spaces; one word is a path or a file name
   if (looksLikePath || /^file:/i.test(src)) throw new Error('give the source as pasted text or an https link (files on this computer can\'t be read from here)');
   if (/^http:\/\//i.test(src)) throw new Error('links must start with https://');
   const { dir, series } = createSeries(name, { from: src, count, style: style || null, voice: voice || null });
@@ -633,4 +633,4 @@ const bye = () => { stopAllJobs(); for (const { child } of encoders.values()) tr
 process.stdin.on('end', bye); process.stdin.on('close', bye);
 process.on('SIGTERM', bye); process.on('SIGINT', bye);
 await server.connect(transport);
-console.error(`reelkit MCP server ${VERSION} ready (${ROOT})`);
+console.error(`reelkit MCP server ${VERSION} ready (code ${ROOT}, reels in ${HOME_DIR})`);

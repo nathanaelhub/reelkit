@@ -6,14 +6,22 @@ import { espeakInstalled } from './languages.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { ROOT, parseArgs, which } from './lib.mjs';
+import { ROOT, parseArgs, which, MODELS, HOME_DIR } from './lib.mjs';
 
 const args = parseArgs();
 const fix = !!args.fix;
 const rows = [];
-const ok = (name, detail) => rows.push(['✓', name, detail]);
-const bad = (name, detail, how) => rows.push(['✗', name, detail + (how ? `\n      fix: ${how}` : '')]);
-const meh = (name, detail) => rows.push(['·', name, detail]);
+// Inside the Claude Desktop extension (REELKIT_BUNDLE=1) there is no npm or terminal: the packages come with it,
+// fixes happen through the setup tool, and keys are in the extension's settings.
+const BUNDLE = process.env.REELKIT_BUNDLE === '1';
+const say = s => !BUNDLE ? s : s
+  .replace(/npm run doctor -- --fix|npx playwright install chromium/g, 'setup with fix: true')
+  .replace(/\bnpm install\b/g, 'reinstall the reelkit extension')
+  .replace(/to \.env\b/g, "in the reelkit extension's settings in Claude")
+  .replace(/put [A-Z_]+=\.\.\. in \.env/g, "add it in the reelkit extension's settings in Claude");
+const ok = (name, detail) => rows.push(['✓', name, say(detail)]);
+const bad = (name, detail, how) => rows.push(['✗', name, say(detail + (how ? `\n      fix: ${how}` : ''))]);
+const meh = (name, detail) => rows.push(['·', name, say(detail)]);
 const sh = (cmd, a) => spawnSync(cmd, a, { cwd: ROOT, stdio: 'inherit', shell: process.platform === 'win32' });
 
 // node
@@ -23,8 +31,8 @@ major >= 18 ? ok('Node.js', 'v' + process.versions.node) : bad('Node.js', `v${pr
 // npm deps
 const need = ['playwright', 'ffmpeg-static', 'sherpa-onnx-node', '@huggingface/transformers', '@fontsource/inter', '@fontsource/anton', '@fontsource/instrument-serif'];
 let missing = need.filter(d => !fs.existsSync(path.join(ROOT, 'node_modules', d)));
-if (missing.length && fix) { console.log('▸ npm install'); sh('npm', ['install', '--no-audit', '--no-fund']); missing = need.filter(d => !fs.existsSync(path.join(ROOT, 'node_modules', d))); }
-missing.length ? bad('npm packages', 'missing ' + missing.join(', '), 'npm install') : ok('npm packages', need.length + ' installed');
+if (missing.length && fix && !BUNDLE) { console.log('▸ npm install'); sh('npm', ['install', '--no-audit', '--no-fund']); missing = need.filter(d => !fs.existsSync(path.join(ROOT, 'node_modules', d))); }
+missing.length ? bad(BUNDLE ? 'packages' : 'npm packages', 'missing ' + missing.join(', '), 'npm install') : ok(BUNDLE ? 'packages' : 'npm packages', need.length + ' installed');
 
 // chromium
 let chromiumOK = false;
@@ -32,7 +40,8 @@ if (!missing.includes('playwright')) {
   const tryLaunch = async () => { const { chromium } = await import('playwright'); const b = await chromium.launch(); await b.close(); };
   try { await tryLaunch(); chromiumOK = true; }
   catch (e) {
-    if (fix) { console.log('▸ npx playwright install chromium'); sh('npx', ['playwright', 'install', 'chromium']); try { await tryLaunch(); chromiumOK = true; } catch {} }
+    // playwright's own installer, run with this Node (no npx needed; the extension has no npm)
+    if (fix) { const what = BUNDLE ? 'chromium-headless-shell' : 'chromium'; console.log(`▸ installing the ${what} browser for Playwright`); spawnSync(process.execPath, [path.join(ROOT, 'node_modules', 'playwright', 'cli.js'), 'install', what], { cwd: ROOT, stdio: 'inherit' }); try { await tryLaunch(); chromiumOK = true; } catch {} }
   }
   chromiumOK ? ok('Chromium (animate)', 'headless browser launches') : bad('Chromium (animate)', 'Playwright browser not installed', 'npx playwright install chromium');
 }
@@ -66,14 +75,15 @@ if (espeakInstalled()) ok('Other languages', 'eSpeak NG downloaded; the free voi
 else meh('Other languages', 'optional: eSpeak NG (GPL-3.0, ~12 MB) downloads the first time a reel is in Spanish, French, Italian or Portuguese');
 
 // AI apps (MCP): Claude Desktop, Cursor
-{
+if (BUNDLE) ok('AI apps (MCP)', `running as the Claude Desktop extension; reels are saved in ${HOME_DIR}`);
+else {
   const { mcpStatus } = await import('./mcp-install.mjs');
   const apps = mcpStatus();
   if (!apps.length) meh('AI apps (MCP)', 'optional: npm run mcp -- install lets Claude Desktop, Cursor or Claude Code make reels');
   else if (apps.every(a => a.ok)) ok('AI apps (MCP)', `added to ${apps.map(a => a.name).join(', ')}`);
   else bad('AI apps (MCP)', `${apps.filter(a => !a.ok).map(a => a.name).join(', ')} would start reelkit with a node or folder that no longer exists`, 'npm run mcp -- install');
 }
-if (fs.existsSync(path.join(ROOT, 'models/transformers/onnx-community/chatterbox-ONNX/onnx/language_model_q4.onnx_data'))) ok('Chatterbox (cloning)', 'downloaded; clone your own voice from a sample in voices/');
+if (fs.existsSync(path.join(MODELS, 'transformers/onnx-community/chatterbox-ONNX/onnx/language_model_q4.onnx_data'))) ok('Chatterbox (cloning)', 'downloaded; clone your own voice from a sample in voices/');
 else meh('Chatterbox (cloning)', 'optional: clones a voice from a 10-30 s sample; downloads on first use (~1.5 GB). See voices/README.md');
 let whisper = false; try { await import('@huggingface/transformers'); whisper = true; } catch {}
 whisper ? ok('Word timing (Whisper)', 'local; aligns captions for every voice (model downloads on first use)') : meh('Word timing (Whisper)', 'not installed: npm install; timings will be estimated');
@@ -87,11 +97,11 @@ else meh('Face reframing', mediapipe ? 'face model not downloaded yet (npm run d
 if (!process.env.ELEVENLABS_API_KEY) meh('ElevenLabs key', 'optional; most expressive voice. Get one at elevenlabs.io → put ELEVENLABS_API_KEY=... in .env');
 
 // yt-dlp (optional: downloads reference videos for npm run ref)
-which('yt-dlp') ? ok('yt-dlp (references)', 'installed') : meh('yt-dlp (references)', 'optional; needed to download reference links: brew install yt-dlp (or pip install yt-dlp)');
+if (!BUNDLE) which('yt-dlp') ? ok('yt-dlp (references)', 'installed') : meh('yt-dlp (references)', 'optional; needed to download reference links: brew install yt-dlp (or pip install yt-dlp)');
 
 // .env
-if (!fs.existsSync(path.join(ROOT, '.env'))) {
-  if (fix && fs.existsSync(path.join(ROOT, '.env.example'))) { fs.copyFileSync(path.join(ROOT, '.env.example'), path.join(ROOT, '.env')); ok('.env', 'created from .env.example, add your keys there'); }
+if (!BUNDLE && !fs.existsSync(path.join(HOME_DIR, '.env'))) {
+  if (fix && fs.existsSync(path.join(ROOT, '.env.example'))) { fs.copyFileSync(path.join(ROOT, '.env.example'), path.join(HOME_DIR, '.env')); ok('.env', 'created from .env.example, add your keys there'); }
   else meh('.env', 'not created yet (cp .env.example .env)');
 }
 

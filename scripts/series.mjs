@@ -11,9 +11,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { parseArgs, die, ROOT, REELS, OUT, readJSON, writeJSON, listStyles } from './lib.mjs';
+import { parseArgs, die, ROOT, REELS, OUT, readJSON, writeJSON, listStyles, shown, HOME_DIR } from './lib.mjs';
 
-export const SERIES = path.join(ROOT, 'series');
+export const SERIES = path.join(HOME_DIR, 'series');
 export const seriesName = n => String(n || '').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
 
 export function createSeries(name, { from, count = 5, style = null, voice = null, title = null } = {}) {
@@ -23,7 +23,7 @@ export function createSeries(name, { from, count = 5, style = null, voice = null
   count = Math.round(+count);
   if (!(count >= 2 && count <= 10)) throw new Error('a series is 2 to 10 reels');
   if (style && !listStyles().some(s => s.name === style)) throw new Error(`unknown style "${style}". npm run styles lists them`);
-  if (voice && voice !== 'free' && !fs.existsSync(path.join(ROOT, 'voices', `${voice}.wav`))) throw new Error(`no voice called "${voice}": npm run my-voice -- list`);
+  if (voice && voice !== 'free' && !fs.existsSync(path.join(HOME_DIR, 'voices', `${voice}.wav`))) throw new Error(`no voice called "${voice}": npm run my-voice -- list`);
   const dir = path.join(SERIES, name);
   if (fs.existsSync(path.join(dir, 'series.json'))) throw new Error(`series/${name} already exists`);
   // the source: a file's text, a link (the agent fetches it), or the text itself
@@ -63,8 +63,8 @@ function main() {
   try {
     if (cmd === 'new') {
       const { dir, series } = createSeries(name, { from: args.from, count: args.count ?? 5, style: args.style, voice: args.voice, title: args.title });
-      console.log(`✓ ${path.relative(ROOT, dir)}/: ${series.count} reels from ${series.source}${series.style ? `, ${series.style} style` : ''}${series.voice ? `, voice "${series.voice}"` : ''}`);
-      console.log(`  next: ask your agent "make the series in ${path.relative(ROOT, dir)}", or use A series in reelkit studio (npm start)`);
+      console.log(`✓ ${shown(dir)}/: ${series.count} reels from ${series.source}${series.style ? `, ${series.style} style` : ''}${series.voice ? `, voice "${series.voice}"` : ''}`);
+      console.log(`  next: ask your agent "make the series in ${shown(dir)}", or use A series in reelkit studio (npm start)`);
     } else if (cmd === 'status') {
       if (!name || !fs.existsSync(path.join(SERIES, seriesName(name), 'series.json'))) die(`no series "${name}". npm run series -- list`);
       const s = seriesStatus(seriesName(name));

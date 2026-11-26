@@ -10,7 +10,7 @@ This repo turns a one-line idea into a finished video. When the user asks for a 
 Ground rules:
 - Run everything from the repo root with the npm scripts (`npm run doctor`, `new`, `voice`, `score`, `check`, `render`).
 - Always run `npm run check -- <reel>` and **open the contact sheet images it lists** before rendering. If you can't view images, say so to the user, since the check alone can't judge taste.
-- Reels live in `reels/<slug>/`; finished videos go to `out/`.
+- Reels live in `reels/<slug>/`; finished videos go to `out/`. With `REELKIT_HOME` set (the Claude Desktop extension sets it), `reels/`, `out/`, `series/`, `voices/`, `models/` and `.env` are in that folder instead, and the code folder stays untouched.
 - Keep the engine deterministic: every frame is a pure function of time. No CSS animations or transitions.
 - Never print or commit `.env`.
 - No terminal? The same steps are MCP tools: `npm run mcp -- install` adds them to Claude Desktop, Cursor and other AI apps ([docs/mcp.md](docs/mcp.md)).

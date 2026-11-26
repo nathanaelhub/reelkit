@@ -7,7 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { parseArgs, reelDir, openReel, OUT, ROOT, readJSON, checkStyle } from './lib.mjs';
+import { parseArgs, reelDir, openReel, OUT, ROOT, readJSON, checkStyle, shown } from './lib.mjs';
 import { tasteDir } from './ref.mjs';
 import { ensureDepthMaps } from './depth.mjs';
 import { ensureCutouts } from './cutout.mjs';
@@ -112,8 +112,8 @@ console.log(`\n▸ check ${name}  (${tl.duration.toFixed(1)}s, ${sceneList.lengt
 for (const i of issues) console.log(`  ${i.level === 'error' ? '✗' : '⚠'} [${i.scene}] ${i.el ? i.el + ': ' : ''}${i.msg}`);
 if (!issues.length) console.log('  ✓ no layout or motion problems found');
 console.log(`\n  motion: ${motion.map(m => `${m.id} ${m.longest < 1 ? 'ok' : 'still ' + m.longest.toFixed(1) + 's'}`).join(' · ')}`);
-console.log(`\n  contact sheets (look at these):\n${sheets.map(s => '    ' + path.relative(ROOT, s)).join('\n')}`);
-if (taste) console.log(`\n  taste "${taste.name}": references show something new every ${taste.T.pace ?? taste.T.avgShot}s (still ${Math.round((taste.T.stillShare ?? 0) * 100)}% of the time); this reel changes scene every ${taste.perScene.toFixed(1)}s.\n  Read ${path.relative(ROOT, taste.md) || taste.md} and compare the sheets above with:\n${taste.sheets.map(s => '    ' + (path.relative(ROOT, s).startsWith('..') ? s : path.relative(ROOT, s))).join('\n')}`);
+console.log(`\n  contact sheets (look at these):\n${sheets.map(s => '    ' + shown(s)).join('\n')}`);
+if (taste) console.log(`\n  taste "${taste.name}": references show something new every ${taste.T.pace ?? taste.T.avgShot}s (still ${Math.round((taste.T.stillShare ?? 0) * 100)}% of the time); this reel changes scene every ${taste.perScene.toFixed(1)}s.\n  Read ${shown(taste.md) || taste.md} and compare the sheets above with:\n${taste.sheets.map(s => '    ' + (shown(s).startsWith('..') ? s : shown(s))).join('\n')}`);
 console.log(`\n  ${errs.length} errors, ${warns.length} warnings\n`);
-fs.writeFileSync(path.join(OUT, `${name}.check.json`), JSON.stringify({ issues, motion, sheets: sheets.map(s => path.relative(ROOT, s)) }, null, 2));
+fs.writeFileSync(path.join(OUT, `${name}.check.json`), JSON.stringify({ issues, motion, sheets: sheets.map(s => shown(s)) }, null, 2));
 process.exit(errs.length ? 2 : 0);
